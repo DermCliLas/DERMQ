@@ -1,0 +1,22 @@
+export const appConfig = {
+  port: parseInt(process.env.PORT || '3000', 10),
+  corsOrigins: process.env.CORS_ORIGINS?.split(',') || [
+    'http://localhost:3001',
+  ],
+  rateLimit: {
+    ttl: 60, // 1 minute
+    limit: 100, // 100 requests per minute
+  },
+  googleCalendar: {
+    clientEmail: process.env.GOOGLE_CLIENT_EMAIL,
+    privateKey: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+  },
+  nubeFact: {
+    url: process.env.NUBEFACT_URL || 'https://api.nubefact.com/v1/ventas',
+    token: process.env.NUBEFACT_TOKEN,
+  },
+  resend: {
+    apiKey: process.env.RESEND_API_KEY,
+    fromEmail: process.env.RESEND_FROM_EMAIL || 'DERMQ <onboarding@resend.dev>',
+  },
+};

@@ -1,0 +1,245 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  RECEPTION
+  DOCTOR
+  PATIENT
+}
+
+model User {
+  id        String   @id @default(uuid())
+  role      Role     @default(PATIENT)
+  email     String   @unique @map("idx_user_email")
+  password  String
+  firstName String
+  lastName  String
+  dni       String?  @unique @map("idx_user_dni")
+  phone     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Campos específicos para Doctores
+  specialty       String?
+  bio             String?
+  avatarUrl       String?
+  googleSyncToken String? // Token o webhook ID para Google Calendar sync
+
+  // Relaciones
+  appointmentsAsDoctor  Appointment[] @relation("DoctorAppointments")
+  appointmentsAsPatient Appointment[] @relation("PatientAppointments")
+  orders                Order[]
+  medicalRecordsAsPatient MedicalRecord[] @relation("PatientRecords")
+  medicalRecordsAsDoctor  MedicalRecord[] @relation("DoctorRecords")
+
+  // Sedes donde trabaja el doctor
+  branches              Branch[]
+
+  // Índices para optimización
+  @@index([role])
+  @@index([createdAt])
+  @@index([email, role])
+}
+
+model Branch {
+  id          String   @id @default(uuid())
+  name        String
+  address     String
+  city        String   @default("Lima")
+  phone       String?
+  isActive    Boolean  @default(true)
+  
+  doctors     User[]
+  appointments Appointment[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Category {
+  id          String    @id @default(uuid())
+  name        String
+  description String?
+  services    Service[]
+}
+
+model Service {
+  id          String   @id @default(uuid())
+  categoryId  String
+  category    Category @relation(fields: [categoryId], references: [id])
+  name        String
+  description String?
+  price       Float
+  durationMin Int      @default(30)
+  isActive    Boolean  @default(true)
+
+  appointments Appointment[]
+
+  // Índices
+  @@index([categoryId])
+  @@index([isActive, price])
+}
+
+model Product {
+  id          String  @id @default(uuid())
+  sku         String  @unique // Indispensable para Lector de Código de Barras POS
+  name        String
+  description String?
+  price       Float
+  stock       Int     @default(0) // El Buffer local de 3 uds se manejará en servicios NestJS
+  imageUrl    String?
+  isActive    Boolean @default(true)
+
+  orderItems OrderItem[]
+
+  // Índices
+  @@index([sku])
+  @@index([isActive, price])
+  @@index([stock])
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  ARRIVED    // El paciente ya está en sala de espera
+  COMPLETED
+  CANCELLED
+}
+
+model Appointment {
+  id        String            @id @default(uuid())
+  patientId String
+  patient   User              @relation("PatientAppointments", fields: [patientId], references: [id])
+  doctorId  String
+  doctor    User              @relation("DoctorAppointments", fields: [doctorId], references: [id])
+  serviceId String
+  service   Service           @relation(fields: [serviceId], references: [id])
+  
+  branchId  String?
+  branch    Branch?           @relation(fields: [branchId], references: [id])
+
+  date      DateTime          @map("idx_appointment_date") // Guarda la fecha y hora de la cita
+  status    AppointmentStatus @default(PENDING)
+  notes     String?
+
+  googleEventId String?       @unique // ID bidireccional del evento en Google Calendar
+  orderId       String?       @unique // Conexión a la transacción de facturación
+  order         Order?        @relation(fields: [orderId], references: [id])
+  
+  medicalRecord MedicalRecord?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Índices para consultas frecuentes
+  @@index([doctorId, date])
+  @@index([patientId, date])
+  @@index([status, date])
+  @@index([serviceId, date])
+  @@index([branchId])
+  @@index([date])
+}
+
+enum OrderSource {
+  WEB  // Compra o Reserva mediante internet
+  POS  // Cobro en sede física (Recepcionista)
+}
+
+enum PaymentMethod {
+  CREDIT_CARD // Pasarela web Culqi o Tarjeta POS local
+  CASH
+  YAPE
+  PLIN
+  TRANSFER
+}
+
+enum DocType {
+  BOLETA
+  FACTURA
+  TICKET_INTERNO
+}
+
+model Order {
+  id     String      @id @default(uuid())
+  userId String?     // ID del Paciente. Opcional si es compra rápida POS
+  user   User?       @relation(fields: [userId], references: [id])
+  source OrderSource @default(POS)
+  total  Float       @default(0.0)
+
+  paymentMethod PaymentMethod?
+  isPaid        Boolean        @default(false)
+
+  // Integración NubeFact
+  documentType   DocType @default(BOLETA)
+  documentNumber String? // ej. B001-000456
+  nubeFactId     String? // Enlace con NubeFact
+  nubeFactPdfUrl String?
+  nubeFactXmlUrl String?
+
+  items       OrderItem[]
+  appointment Appointment? // Relacionado sólo si la orden surge por agendar cita
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Índices
+  @@index([userId, createdAt])
+  @@index([source, isPaid])
+  @@index([createdAt])
+  @@index([isPaid, paymentMethod])
+  @@index([documentNumber])
+  @@index([nubeFactId])
+}
+
+model OrderItem {
+  id        String  @id @default(uuid())
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id])
+  
+  // Opcional: Puede ser la venta de un Producto Físico o el cobro de un Servicio
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id])
+  
+  serviceName String? // Si es cobro de servicio (fallback name)
+  
+  quantity  Int     @default(1)
+  unitPrice Float
+  subTotal  Float
+
+  // Índices
+  @@index([orderId])
+  @@index([productId])
+}
+
+model MedicalRecord {
+  id            String      @id @default(uuid())
+  patientId     String
+  patient       User        @relation("PatientRecords", fields: [patientId], references: [id])
+  doctorId      String
+  doctor        User        @relation("DoctorRecords", fields: [doctorId], references: [id])
+  
+  appointmentId String?     @unique
+  appointment   Appointment? @relation(fields: [appointmentId], references: [id])
+
+  diagnosis     String      @db.Text
+  treatment     String      @db.Text
+  clinicalNotes String      @db.Text
+  physicalExam  String?     @db.Text
+  attachments   String[]    // Array de URLs de fotos clínicas
+
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([patientId])
+  @@index([doctorId])
+  @@index([createdAt])
+}

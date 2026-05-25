@@ -1,0 +1,225 @@
+/* Google Fonts: Material Symbols — must be first @import */
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap');
+
+@import "tailwindcss";
+
+/* ─────────────────────────────────────────────
+   DERMQ Global Styles
+   Theme based on Material Design 3 color tokens
+───────────────────────────────────────────── */
+
+/* ── CSS Custom Properties ── */
+:root {
+  --primary: #02696a;
+  --primary-container: #72c1c1;
+  --on-primary: #ffffff;
+  --background: #f8fafa;
+  --surface: #f8fafa;
+  --on-surface: #191c1d;
+  --on-surface-variant: #3e4948;
+}
+
+/* ── Base Resets ── */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--on-surface);
+  overflow-x: hidden;
+}
+
+::selection {
+  background-color: #72c1c1;
+  color: #004e4f;
+}
+
+/* ── Material Symbols ── */
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  display: inline-block;
+  line-height: 1;
+  user-select: none;
+}
+
+.material-symbols-filled {
+  font-family: 'Material Symbols Outlined';
+  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  display: inline-block;
+  line-height: 1;
+  user-select: none;
+}
+
+/* ── DERMQ Utility Classes ── */
+
+/* Glassmorphism */
+.glass-card {
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.glass-card-white {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.glass-nav {
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+}
+
+/* Gradients */
+.luminous-gradient {
+  background: linear-gradient(135deg, #02696a 0%, #72c1c1 100%);
+}
+
+.luminous-gradient-hover:hover {
+  background: linear-gradient(135deg, #004f50 0%, #5ba9a9 100%);
+}
+
+/* Animations */
+.text-reveal {
+  animation: textReveal 1.2s cubic-bezier(0.77, 0, 0.175, 1) both;
+}
+
+.soft-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.soft-float-delayed {
+  animation: float 6s ease-in-out -3s infinite;
+}
+
+/* Hover Effects */
+.card-lift {
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.4s ease;
+}
+
+.card-lift:hover {
+  transform: translateY(-12px);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+}
+
+.card-lift-sm {
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+}
+
+.card-lift-sm:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+}
+
+.glow-on-hover {
+  transition: all 0.3s ease;
+}
+
+.glow-on-hover:hover {
+  box-shadow: 0 0 25px rgba(2, 105, 106, 0.5);
+}
+
+.colored-shadow-hover {
+  transition: all 0.5s ease;
+}
+
+.colored-shadow-hover:hover {
+  box-shadow: 0 25px 50px -12px rgba(183, 176, 211, 0.6);
+  transform: translateY(-5px);
+}
+
+/* Nav link underline */
+.nav-link-hover {
+  position: relative;
+}
+
+.nav-link-hover::after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 2px;
+  bottom: -4px;
+  left: 50%;
+  background-color: #02696a;
+  transition: all 0.3s ease-out;
+  transform: translateX(-50%);
+}
+
+.nav-link-hover:hover::after {
+  width: 100%;
+}
+
+/* Image zoom hover */
+.image-zoom-hover {
+  overflow: hidden;
+}
+
+.image-zoom-hover img {
+  transition: transform 0.7s ease;
+}
+
+.image-zoom-hover:hover img {
+  transform: scale(1.05);
+}
+
+/* ── Keyframes ── */
+@keyframes textReveal {
+  0% {
+    transform: translateY(40px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-20px); }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 15px rgba(2, 105, 106, 0.3); }
+  50% { box-shadow: 0 0 35px rgba(2, 105, 106, 0.7); }
+}
+
+/* ── Booking Flow Styles ── */
+.booking-radio-card input[type="radio"]:checked + .radio-card-inner {
+  border-color: #02696a;
+  background-color: #f2fcfc;
+  box-shadow: 0 4px 20px rgba(2, 105, 106, 0.1);
+}
+
+.booking-radio-card input[type="radio"]:checked + .radio-card-inner .radio-icon {
+  background-color: #02696a;
+  color: white;
+}
+
+/* ── Scrollbar Styling ── */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f2f4f4;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #bec9c8;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #02696a;
+}
