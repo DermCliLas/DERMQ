@@ -5,8 +5,8 @@ import OrganicDivider from '@/components/ui/OrganicDivider'
 export default function ExpertiseSection() {
   return (
     <section className="py-32 bg-transparent relative z-10 overflow-hidden">
-      <OrganicDivider type="blob" fill="#f8fafa" />
-      <OrganicDivider type="wave" fill="#72C1C1" flip />
+      <OrganicDivider type="slope" fill="#f8fafa" />
+      <OrganicDivider type="slope" fill="#72C1C1" flip />
       <div className="max-w-7xl mx-auto px-6 relative">
         <div className="flex flex-col lg:flex-row relative">
           {/* Doctor Image */}
