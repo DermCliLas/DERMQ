@@ -102,8 +102,8 @@ async function main() {
     where: { email: 'dermatologiaclinicaylasersac@gmail.com' },
     update: {
       specialty: 'Dermatología Clínica e Inyectables',
-      bio: 'Especialista en rejuvenecimiento facial, modelado con ácido hialurónico y patologías cutáneas complejas. Fundadora y Directora Médica de DERMQ.',
-      avatarUrl: '/leiva.png', // Su avatar personalizado
+      bio: 'Especialista en rejuvenecimiento facial, modelado con ácido hialurónico y patologías cutáneas complejas. Directora Médica y Fundadora de DERMQ, con certificaciones de Harvard Medical School (HMX) y ex-Vicepresidenta de la Sociedad Peruana de Dermatología.',
+      avatarUrl: '/leyva.png', // Su avatar personalizado
     },
     create: {
       email: 'dermatologiaclinicaylasersac@gmail.com',
@@ -112,8 +112,8 @@ async function main() {
       lastName: 'Leyva',
       role: Role.DOCTOR,
       specialty: 'Dermatología Clínica e Inyectables',
-      bio: 'Especialista en rejuvenecimiento facial, modelado con ácido hialurónico y patologías cutáneas complejas. Fundadora y Directora Médica de DERMQ.',
-      avatarUrl: '/leiva.png',
+      bio: 'Especialista en rejuvenecimiento facial, modelado con ácido hialurónico y patologías cutáneas complejas. Directora Médica y Fundadora de DERMQ, con certificaciones de Harvard Medical School (HMX) y ex-Vicepresidenta de la Sociedad Peruana de Dermatología.',
+      avatarUrl: '/leyva.png',
       branches: {
         connect: { id: branchPrincipal.id }
       }

@@ -12,7 +12,7 @@ export default function ExpertiseSection() {
           {/* Doctor Image */}
           <div className="w-full lg:w-[65%] h-[500px] lg:h-[700px] rounded-4xl overflow-hidden relative">
             <Image
-              src="/leiva.png"
+              src="/leyva.png"
               alt="Especialista DERMQ"
               fill
               className="object-cover hover:scale-105 transition-all duration-700"
