@@ -11,34 +11,44 @@ export class AppointmentTimeValidator {
     durationMinutes: number,
     excludeAppointmentId?: string,
   ): Promise<boolean> {
-    const appointmentEnd = new Date(date.getTime() + durationMinutes * 60000);
+    const startOfDay = new Date(date);
+    startOfDay.setHours(0, 0, 0, 0);
 
-    const conflictingAppointments = await this.prisma.appointment.count({
+    const endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const dayAppointments = await this.prisma.appointment.findMany({
       where: {
         doctorId,
         id: excludeAppointmentId ? { not: excludeAppointmentId } : undefined,
-        OR: [
-          // Cita nueva empieza durante una cita existente
-          {
-            date: { lte: date },
-            // Calcular fin de cita existente
-          },
-          // Cita nueva termina durante una cita existente
-          {
-            date: { lte: appointmentEnd },
-            // Calcular fin de cita existente
-          },
-          // Cita existente está dentro de la cita nueva
-          {
-            date: { gte: date },
-            // Calcular fin de cita existente
-          },
-        ],
+        date: {
+          gte: startOfDay,
+          lte: endOfDay,
+        },
         status: { in: ['PENDING', 'CONFIRMED'] },
+      },
+      include: {
+        service: {
+          select: { durationMin: true },
+        },
       },
     });
 
-    return conflictingAppointments === 0;
+    const newStart = date.getTime();
+    const newEnd = newStart + durationMinutes * 60000;
+
+    for (const app of dayAppointments) {
+      const appStart = new Date(app.date).getTime();
+      const appEnd = appStart + app.service.durationMin * 60000;
+
+      // Un traslape ocurre si el inicio de uno es menor que el fin del otro
+      // y el fin del uno es mayor que el inicio del otro.
+      if (newStart < appEnd && newEnd > appStart) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   async isWithinBusinessHours(date: Date): Promise<boolean> {

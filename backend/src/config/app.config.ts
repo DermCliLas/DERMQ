@@ -19,4 +19,11 @@ export const appConfig = {
     apiKey: process.env.RESEND_API_KEY,
     fromEmail: process.env.RESEND_FROM_EMAIL || 'DERMQ <onboarding@resend.dev>',
   },
+  izipay: {
+    shopId: process.env.IZIPAY_SHOP_ID,
+    shopKey: process.env.IZIPAY_SHOP_KEY,
+    publicKey: process.env.IZIPAY_PUBLIC_KEY,
+    hmacKey: process.env.IZIPAY_HMAC_KEY,
+    apiUrl: process.env.IZIPAY_API_URL || 'https://api.micuentaweb.pe/api-payment/v4/Charge/CreatePayment',
+  },
 };

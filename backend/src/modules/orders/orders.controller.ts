@@ -18,7 +18,7 @@ export class OrdersController {
 
   @Post()
   create(@Body() createOrderDto: CreateOrderDto, @Request() req: any) {
-    return this.ordersService.create(createOrderDto, req.user.id);
+    return this.ordersService.create(createOrderDto, req.user.userId);
   }
 
   @Get()
@@ -28,7 +28,7 @@ export class OrdersController {
 
   @Get('my-orders')
   findMyOrders(@Request() req: any) {
-    return this.ordersService.findByUser(req.user.id);
+    return this.ordersService.findByUser(req.user.userId);
   }
 
   @Get(':id')

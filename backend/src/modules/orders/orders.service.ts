@@ -8,6 +8,7 @@ import { CreateOrderDto } from './dto/create-order.dto';
 import { OrderSource } from '@prisma/client';
 import { NubeFactService } from '../billing/nubefact.service';
 import { EmailService } from '../notifications/email.service';
+import { IzipayService } from '../payments/izipay.service';
 
 @Injectable()
 export class OrdersService {
@@ -15,10 +16,26 @@ export class OrdersService {
     private prisma: PrismaService,
     private nubeFactService: NubeFactService,
     private emailService: EmailService,
+    private izipayService: IzipayService,
   ) {}
 
   async create(createOrderDto: CreateOrderDto, userId: string) {
-    const { items, paymentMethod, documentType, source } = createOrderDto;
+    const { items, paymentMethod, documentType, source, krAnswer, krHash } = createOrderDto;
+
+    // Validar el pago con Izipay si es tarjeta de crédito desde la web
+    if (paymentMethod === 'CREDIT_CARD' && source === OrderSource.WEB) {
+      if (!krAnswer || !krHash) {
+        throw new BadRequestException(
+          'Faltan parámetros de confirmación de pago de Izipay (krAnswer/krHash).',
+        );
+      }
+      const isPaymentValid = this.izipayService.verifyPayment(krAnswer, krHash);
+      if (!isPaymentValid) {
+        throw new BadRequestException(
+          'Firma de pago de Izipay inválida. Transacción cancelada.',
+        );
+      }
+    }
 
     // 1. Validate all products exist and have enough stock
     const productIds = items.map((i) => i.productId);

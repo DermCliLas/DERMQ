@@ -104,12 +104,25 @@ export interface OrderPayload {
   paymentMethod: 'CREDIT_CARD' | 'YAPE' | 'PLIN' | 'CASH' | 'TRANSFER';
   documentType?: 'BOLETA' | 'FACTURA';
   source?: 'WEB' | 'POS';
+  krAnswer?: string;
+  krHash?: string;
 }
 
 export async function createOrder(orderData: OrderPayload): Promise<any> {
   return fetchFromApi('/orders', {
     method: 'POST',
     body: JSON.stringify(orderData),
+  });
+}
+
+export async function generateIzipayToken(
+  amount: number,
+  email?: string,
+  orderId?: string,
+): Promise<{ formToken: string }> {
+  return fetchFromApi('/payments/izipay/token', {
+    method: 'POST',
+    body: JSON.stringify({ amount, email, orderId }),
   });
 }
 

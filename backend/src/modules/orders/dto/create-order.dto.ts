@@ -35,4 +35,12 @@ export class CreateOrderDto {
   @IsEnum(OrderSource)
   @IsOptional()
   source?: OrderSource;
+
+  @IsString()
+  @IsOptional()
+  krAnswer?: string;
+
+  @IsString()
+  @IsOptional()
+  krHash?: string;
 }

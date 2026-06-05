@@ -6,7 +6,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useCart } from '@/context/CartContext'
 import { useAuth } from '@/context/AuthContext'
-import { createOrder, type OrderPayload } from '@/lib/api'
+import { createOrder, generateIzipayToken, type OrderPayload } from '@/lib/api'
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 type PaymentMethod = 'CREDIT_CARD' | 'YAPE' | 'PLIN' | 'CASH' | 'TRANSFER'
@@ -39,6 +39,8 @@ export default function CheckoutPage() {
   const [processingStep, setProcessingStep] = useState(0)
   const [orderResult, setOrderResult] = useState<any>(null)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
+  const [izipayToken, setIzipayToken] = useState<string | null>(null)
+  const [loadingIzipay, setLoadingIzipay] = useState(false)
 
   const tax = totalPrice * 0.18
   const finalTotal = totalPrice + tax
@@ -82,7 +84,99 @@ export default function CheckoutPage() {
     }
   }
 
+  const initializeKrypton = (token: string) => {
+    const KR = (window as any).KR;
+    if (!KR) {
+      setTimeout(() => initializeKrypton(token), 300);
+      return;
+    }
+
+    KR.setFormConfig({
+      formToken: token,
+      'kr-language': 'es-PE',
+    })
+    .then(({ KR }: any) => {
+      KR.onSubmit(async (event: any) => {
+        try {
+          setStep('processing');
+          setProcessingStep(0);
+          setIzipayToken(null);
+
+          simulateProcessing();
+
+          const payload: OrderPayload = {
+            items: items.map(item => ({ productId: item.id, quantity: item.quantity })),
+            paymentMethod: 'CREDIT_CARD',
+            documentType: docType,
+            source: 'WEB',
+            krAnswer: event.rawClientAnswer,
+            krHash: event.hash,
+          };
+
+          const result = await createOrder(payload);
+          setOrderResult(result);
+          clearCart();
+          setStep('success');
+        } catch (err: any) {
+          setErrorMsg(err.message || 'Error al registrar tu orden pagada. Contacta a soporte.');
+          setStep('error');
+        }
+        return false;
+      });
+      setLoadingIzipay(false);
+    })
+    .catch((err: any) => {
+      console.error(err);
+      setErrorMsg('Error al configurar el formulario de pago.');
+      setLoadingIzipay(false);
+    });
+  };
+
   const handleConfirm = async () => {
+    setErrorMsg(null);
+    if (paymentMethod === 'CREDIT_CARD') {
+      setLoadingIzipay(true);
+      try {
+        const res = await generateIzipayToken(finalTotal, user?.email);
+        const formToken = res.formToken;
+        setIzipayToken(formToken);
+
+        if (!document.getElementById('izipay-krypton-css')) {
+          const link = document.createElement('link');
+          link.id = 'izipay-krypton-css';
+          link.rel = 'stylesheet';
+          link.href = 'https://static.micuentaweb.pe/static/js/krypton-client/V4.0/stable/kr-payment-form.min.css';
+          document.head.appendChild(link);
+        }
+
+        if (!document.getElementById('izipay-krypton-script')) {
+          const script = document.createElement('script');
+          script.id = 'izipay-krypton-script';
+          script.src = 'https://static.micuentaweb.pe/static/js/krypton-client/V4.0/stable/kr-payment-form.min.js';
+          
+          const publicKey = process.env.NEXT_PUBLIC_IZIPAY_PUBLIC_KEY || '85684784:testpublickey_D89Zc6kIq6R8Dk8B8D';
+          script.setAttribute('kr-public-key', publicKey);
+          script.setAttribute('kr-post-url-success', window.location.origin + '/dashboard');
+          script.async = true;
+          
+          script.onload = () => {
+            initializeKrypton(formToken);
+          };
+          script.onerror = () => {
+            setErrorMsg('No se pudo cargar la librería de pagos de Izipay.');
+            setLoadingIzipay(false);
+          };
+          document.head.appendChild(script);
+        } else {
+          initializeKrypton(formToken);
+        }
+      } catch (err: any) {
+        setErrorMsg(err.message || 'Error al iniciar la transacción con Izipay.');
+        setLoadingIzipay(false);
+      }
+      return;
+    }
+
     try {
       await simulateProcessing()
 
@@ -390,10 +484,17 @@ export default function CheckoutPage() {
               <button
                 id="btn-confirm-checkout"
                 onClick={handleConfirm}
-                className="w-full luminous-gradient text-white py-5 rounded-2xl font-bold text-lg glow-on-hover hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3"
+                disabled={loadingIzipay}
+                className="w-full luminous-gradient text-white py-5 rounded-2xl font-bold text-lg glow-on-hover hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-75 disabled:cursor-not-allowed"
               >
-                <span className="material-symbols-outlined">lock</span>
-                Confirmar y Pagar
+                {loadingIzipay ? (
+                  <span className="w-6 h-6 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <>
+                    <span className="material-symbols-outlined">lock</span>
+                    Confirmar y Pagar
+                  </>
+                )}
               </button>
 
               <p className="text-center text-xs text-slate-400 mt-4 flex items-center justify-center gap-1">
@@ -404,6 +505,38 @@ export default function CheckoutPage() {
           </div>
         </div>
       </div>
+
+      {/* Izipay Payment Modal */}
+      {izipayToken && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-6 animate-fade-in">
+          <div className="bg-white rounded-4xl p-10 max-w-md w-full shadow-2xl relative border border-slate-100 text-center animate-scale-up">
+            <button 
+              onClick={() => setIzipayToken(null)} 
+              className="absolute top-6 right-6 p-2 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-all duration-200"
+            >
+              <span className="material-symbols-outlined">close</span>
+            </button>
+            
+            <h3 className="font-headline font-black text-2xl text-[#1a1c1e] mb-2">Pago Seguro Izipay</h3>
+            <p className="text-on-surface-variant text-sm mb-6">
+              Ingresa los datos de tu tarjeta para procesar el pago de <strong>S/ {finalTotal.toFixed(2)}</strong>
+            </p>
+            
+            {/* Contenedor del Formulario Krypton */}
+            <div className="kr-embedded flex flex-col items-center justify-center min-h-[220px] w-full" kr-form-token={izipayToken}>
+              <div className="kr-pan my-2 w-full"></div>
+              <div className="kr-expiry my-2 w-full"></div>
+              <div className="kr-security-code my-2 w-full"></div>
+              
+              <button className="kr-payment-button luminous-gradient text-white w-full py-4 rounded-2xl font-bold mt-6 shadow-lg glow-on-hover hover:scale-[1.02] active:scale-95 transition-all">
+                Pagar Ahora
+              </button>
+              
+              <div className="kr-form-error text-red-500 text-xs font-semibold mt-3"></div>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   )
 }

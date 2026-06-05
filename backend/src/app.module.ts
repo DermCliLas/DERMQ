@@ -12,6 +12,7 @@ import { MedicalRecordsModule } from './modules/medical-records/medical-records.
 import { BranchesModule } from './modules/branches/branches.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { PaymentsModule } from './modules/payments/payments.module';
 import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from './modules/auth/guards/roles.guard';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
@@ -32,6 +33,7 @@ import { appConfig } from './config/app.config';
     ]),
     PrismaModule,
     NotificationsModule,
+    PaymentsModule,
     AuthModule,
     UsersModule,
     AppointmentsModule,
