@@ -251,26 +251,41 @@ async function main() {
   
   try {
     const workbook = XLSX.readFile(excelPath);
-    const sheetName = 'PREPARADOS';
-    const worksheet = workbook.Sheets[sheetName];
-    const data = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[][];
+    
+    // --- HOJA 1: PREPARADOS ---
+    const sheetNameP = 'PREPARADOS';
+    const worksheetP = workbook.Sheets[sheetNameP];
+    const dataP = XLSX.utils.sheet_to_json(worksheetP, { header: 1 }) as any[][];
+    console.log(`- Leyendo ${dataP.length} filas en la hoja ${sheetNameP} del Excel...`);
 
-    console.log(`- Leyendo ${data.length} filas en la hoja ${sheetName} del Excel...`);
-
-    let count = 0;
-    for (let i = 1; i < data.length; i++) {
-      const row = data[i];
+    let countP = 0;
+    for (let i = 1; i < dataP.length; i++) {
+      const row = dataP[i];
       if (!row || row.length < 2) continue;
 
-      const sku = row[0]?.toString().trim();
+      let sku = row[0]?.toString().trim();
       const name = row[1]?.toString().trim();
       const stockVal = row[3];
       const priceVal = row[6];
 
-      if (!sku || !name) continue;
+      if (!name) continue;
+      
+      if (!sku) {
+        if (name.toUpperCase().includes('TRAMEXAMICO')) {
+          sku = 'ATX';
+        } else {
+          sku = `PREP-${i}`;
+        }
+      }
 
-      const stock = typeof stockVal === 'number' ? Math.floor(stockVal) : 10; // 10 de base
-      const price = typeof priceVal === 'number' ? priceVal : 90.00;
+      const stock = typeof stockVal === 'number' ? Math.floor(stockVal) : 10;
+      let price = 90.00;
+      if (typeof priceVal === 'number') {
+        price = priceVal;
+      } else if (typeof priceVal === 'string') {
+        const cleaned = priceVal.replace(/[^\d.]/g, '');
+        price = parseFloat(cleaned) || 90.00;
+      }
 
       await prisma.product.upsert({
         where: { sku },
@@ -292,10 +307,88 @@ async function main() {
           isActive: true,
         },
       });
-      count++;
+      countP++;
     }
+    console.log(`✅ ¡Carga Exitosa de Preparados! Se han sincronizado ${countP} productos.`);
 
-    console.log(`✅ ¡Carga Exitosa! Se han sincronizado ${count} productos desde Excel en la base de datos.`);
+    // --- HOJA 2: DC LASER (Comerciales) ---
+    const sheetNameD = 'DC LASER';
+    const worksheetD = workbook.Sheets[sheetNameD];
+    const dataD = XLSX.utils.sheet_to_json(worksheetD, { header: 1 }) as any[][];
+    console.log(`- Leyendo ${dataD.length} filas en la hoja ${sheetNameD} del Excel...`);
+
+    let countD = 0;
+    for (let i = 4; i < dataD.length; i++) {
+      const row = dataD[i];
+      if (!row || row.length === 0) continue;
+      const name = row[0]?.toString().trim();
+      if (!name || name === 'NOMBRE DEL PRODUCTO') continue;
+
+      // Ignorar cabeceras/separadores
+      if (
+        name.startsWith('CATEGORIA') ||
+        name.includes('UÑAS') ||
+        name.includes('ISDINCEUTICS') ||
+        name.includes('NUHANCIAM') ||
+        name.includes('CICAFISS') ||
+        name.includes('FISSERUM') ||
+        name.includes('FISS DOK') ||
+        name.includes('BAGO') ||
+        name.includes('PRECIOS DE DERMQ') ||
+        name.includes('FOTO ULTRA')
+      ) {
+        if (row.length < 3 || !row[2]) {
+          continue;
+        }
+      }
+
+      const lab = row[1]?.toString().trim() || 'COMERCIAL';
+      const priceVal = row[2];
+      const stockVal = row[3];
+
+      if (!priceVal) continue;
+
+      let price = 0.0;
+      if (typeof priceVal === 'number') {
+        price = priceVal;
+      } else if (typeof priceVal === 'string') {
+        const cleaned = priceVal.replace(/[^\d.]/g, '');
+        price = parseFloat(cleaned) || 0.0;
+      }
+
+      if (price <= 0) continue;
+
+      const stock = typeof stockVal === 'number' ? Math.floor(stockVal) : 10;
+
+      // Generar SKU único
+      const cleanLab = lab.replace(/[^a-zA-Z0-9]/g, '').substring(0, 3).toUpperCase();
+      const cleanName = name.replace(/[^a-zA-Z0-9]/g, '').substring(0, 8).toUpperCase();
+      const sku = `${cleanLab}-${cleanName}-${i}`;
+
+      await prisma.product.upsert({
+        where: { sku },
+        update: {
+          name: `${lab} ${name}`,
+          price,
+          stock,
+          imageUrl: getProductImageUrl(name),
+          description: `Producto comercial dermatológico de laboratorio ${lab}: ${name}.`,
+          isActive: true,
+        },
+        create: {
+          sku,
+          name: `${lab} ${name}`,
+          price,
+          stock,
+          imageUrl: getProductImageUrl(name),
+          description: `Producto comercial dermatológico de laboratorio ${lab}: ${name}.`,
+          isActive: true,
+        },
+      });
+      countD++;
+    }
+    console.log(`✅ ¡Carga Exitosa de Productos Comerciales! Se han sincronizado ${countD} productos.`);
+    console.log(`🎉 Total de productos sincronizados desde Excel: ${countP + countD}`);
 
   } catch (error) {
     console.warn('⚠️ No se pudo procesar el archivo Excel. Sembrando productos mock de fallback...');
