@@ -7,9 +7,9 @@ import { ConfigService } from '@nestjs/config';
 export class FacebookStrategy extends PassportStrategy(Strategy, 'facebook') {
   constructor(private configService: ConfigService) {
     super({
-      clientID: configService.get<string>('FACEBOOK_APP_ID') || '',
-      clientSecret: configService.get<string>('FACEBOOK_APP_SECRET') || '',
-      callbackURL: configService.get<string>('FACEBOOK_CALLBACK_URL') || '',
+      clientID: configService.get<string>('FACEBOOK_APP_ID') || 'mock-facebook-app-id',
+      clientSecret: configService.get<string>('FACEBOOK_APP_SECRET') || 'mock-facebook-app-secret',
+      callbackURL: configService.get<string>('FACEBOOK_CALLBACK_URL') || 'http://localhost:3000/api/v1/auth/facebook/callback',
       profileFields: ['id', 'emails', 'name', 'photos'],
       scope: ['email'],
     });
