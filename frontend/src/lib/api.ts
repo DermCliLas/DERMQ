@@ -34,23 +34,36 @@ export async function fetchFromApi<T>(endpoint: string, options?: RequestInit): 
  * Fetch all available services, properly typings mapped to frontend expectation
  */
 export async function getServices() {
-  return fetchFromApi<{ data: any[], meta: any }>('/services?active=true&limit=100');
+  const res = await fetchFromApi<any>('/services?active=true&limit=250');
+  if (res && res.success && res.data) {
+    return res.data;
+  }
+  return res;
 }
 
 /**
  * Fetch all products
  */
 export async function getProducts(): Promise<any[]> {
-  const res = await fetchFromApi<{ data: any[], meta: any }>('/products?active=true&limit=100');
-  // Return the data array
-  return Array.isArray(res) ? res : res.data || [];
+  const res = await fetchFromApi<any>('/products?active=true&limit=250');
+  if (res && res.success && res.data) {
+    return Array.isArray(res.data.data) ? res.data.data : (Array.isArray(res.data) ? res.data : []);
+  }
+  if (res && res.data) {
+    return Array.isArray(res.data) ? res.data : (Array.isArray(res.data.data) ? res.data.data : []);
+  }
+  return Array.isArray(res) ? res : [];
 }
 
 /**
  * Fetch all doctors
  */
 export async function getDoctors(): Promise<Doctor[]> {
-  return fetchFromApi<Doctor[]>('/users/doctors');
+  const res = await fetchFromApi<any>('/users/doctors');
+  if (res && res.success && res.data) {
+    return Array.isArray(res.data) ? res.data : (res.data.data || []);
+  }
+  return Array.isArray(res) ? res : (res as any).data || [];
 }
 
 /**
@@ -127,27 +140,47 @@ export async function generateIzipayToken(
 }
 
 export async function getMyOrders(): Promise<any[]> {
-  return fetchFromApi('/orders/my-orders');
+  const res = await fetchFromApi<any>('/orders/my-orders');
+  if (res && res.success && res.data) {
+    return Array.isArray(res.data) ? res.data : (res.data.data || []);
+  }
+  return Array.isArray(res) ? res : (res as any).data || [];
 }
 
 // ─── SERVICES & DASHBOARD ──────────────────────────────────────────────────
 
 export async function getServicesCatalog(): Promise<any[]> {
-  return fetchFromApi('/services/full-catalog');
+  const res = await fetchFromApi<any>('/services/full-catalog');
+  if (res && res.success && res.data) {
+    return Array.isArray(res.data) ? res.data : (res.data.data || []);
+  }
+  return Array.isArray(res) ? res : (res as any).data || [];
 }
 
 export async function getPatientDashboard(): Promise<any> {
-  return fetchFromApi('/users/patient-dashboard');
+  const res = await fetchFromApi<any>('/users/patient-dashboard');
+  if (res && res.success && res.data) {
+    return res.data;
+  }
+  return res;
 }
 
 // ─── MEDICAL RECORDS ───────────────────────────────────────────────────────
 
 export async function searchPatientByDni(dni: string): Promise<any> {
-  return fetchFromApi(`/medical-records/search-patient/${dni}`);
+  const res = await fetchFromApi<any>(`/medical-records/search-patient/${dni}`);
+  if (res && res.success && res.data) {
+    return res.data;
+  }
+  return res;
 }
 
 export async function getMedicalHistory(patientId: string): Promise<any[]> {
-  return fetchFromApi(`/medical-records/patient/${patientId}`);
+  const res = await fetchFromApi<any>(`/medical-records/patient/${patientId}`);
+  if (res && res.success && res.data) {
+    return Array.isArray(res.data) ? res.data : (res.data.data || []);
+  }
+  return Array.isArray(res) ? res : (res as any).data || [];
 }
 
 export async function createMedicalRecord(data: any): Promise<any> {
@@ -160,12 +193,20 @@ export async function createMedicalRecord(data: any): Promise<any> {
 // ─── RECEPTION / MASTER AGENDA ──────────────────────────────────────────────
 
 export async function getBranches(): Promise<any[]> {
-  return fetchFromApi('/branches');
+  const res = await fetchFromApi<any>('/branches');
+  if (res && res.success && res.data) {
+    return Array.isArray(res.data) ? res.data : (res.data.data || []);
+  }
+  return Array.isArray(res) ? res : (res as any).data || [];
 }
 
 export async function getAppointments(filters: any): Promise<any> {
   const query = new URLSearchParams(filters).toString();
-  return fetchFromApi(`/appointments?${query}`);
+  const res = await fetchFromApi<any>(`/appointments?${query}`);
+  if (res && res.success && res.data) {
+    return res.data;
+  }
+  return res;
 }
 
 export async function updateAppointmentStatus(id: string, status: string): Promise<any> {
