@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useAuth } from '@/context/AuthContext'
-import { getProducts, createProduct, updateProduct, deleteProduct, updateProductStock } from '@/lib/api'
+import { getProducts, createProduct, updateProduct, deleteProduct, updateProductStock, uploadFile } from '@/lib/api'
 
 export default function AdminProductsPage() {
   const { user, isAuthenticated } = useAuth()
@@ -26,6 +26,22 @@ export default function AdminProductsPage() {
   const [isActive, setIsActive] = useState(true)
   
   const [saving, setSaving] = useState(false)
+  const [uploadingImage, setUploadingImage] = useState(false)
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploadingImage(true)
+    try {
+      const res = await uploadFile(file)
+      setImageUrl(res.url)
+    } catch (err: any) {
+      alert('Error al subir la imagen a Supabase: ' + (err.message || 'Error del servidor'))
+    } finally {
+      setUploadingImage(false)
+    }
+  }
+
 
   const loadProducts = async () => {
     setLoading(true)
@@ -382,17 +398,57 @@ export default function AdminProductsPage() {
                 </div>
               </div>
 
-              {/* URL Imagen */}
-              <div>
-                <label className="block text-xs font-bold text-[#1a1c1e] mb-1.5 uppercase tracking-wider">URL de la Imagen</label>
-                <input 
-                  type="text"
-                  placeholder="https://ejemplo.com/imagen.jpg"
-                  className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-100 rounded-xl focus:outline-none focus:border-primary focus:bg-white transition-all text-[#1a1c1e]"
-                  value={imageUrl}
-                  onChange={(e) => setImageUrl(e.target.value)}
-                />
+              {/* Imagen del Producto */}
+              <div className="space-y-2">
+                <label className="block text-xs font-bold text-[#1a1c1e] uppercase tracking-wider">Imagen del Producto</label>
+                
+                {imageUrl && (
+                  <div className="relative w-32 h-32 bg-slate-50 border border-slate-200 rounded-2xl overflow-hidden group mb-3">
+                    <img src={imageUrl} alt="Vista previa del producto" className="object-cover w-full h-full" />
+                    <button 
+                      type="button"
+                      onClick={() => setImageUrl('')}
+                      className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity font-bold text-xs rounded-2xl"
+                    >
+                      <span className="material-symbols-outlined text-lg mr-1">delete</span>
+                      Quitar
+                    </button>
+                  </div>
+                )}
+                
+                <div className="flex gap-4 items-center">
+                  <label className="flex items-center justify-center gap-2 bg-[#1a1c1e] hover:bg-secondary text-white py-3 px-5 rounded-2xl font-bold cursor-pointer transition-all text-xs shadow-sm shrink-0">
+                    {uploadingImage ? (
+                      <>
+                        <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                        Subiendo...
+                      </>
+                    ) : (
+                      <>
+                        <span className="material-symbols-outlined text-lg">upload_file</span>
+                        Subir Foto
+                      </>
+                    )}
+                    <input 
+                      type="file" 
+                      accept="image/*"
+                      onChange={handleImageUpload} 
+                      disabled={uploadingImage}
+                      className="hidden" 
+                    />
+                  </label>
+                  
+                  {/* Campo de URL como texto (de respaldo) */}
+                  <input 
+                    type="text"
+                    placeholder="O pega la URL de la imagen..."
+                    className="flex-1 px-4 py-3 bg-slate-50 border-2 border-slate-100 rounded-xl focus:outline-none focus:border-primary focus:bg-white transition-all text-[#1a1c1e] text-xs"
+                    value={imageUrl}
+                    onChange={(e) => setImageUrl(e.target.value)}
+                  />
+                </div>
               </div>
+
 
               {/* Checkbox Activo */}
               <div className="flex items-center gap-3 pt-2">

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { getMedicalHistory, createMedicalRecord, searchPatientByDni } from '@/lib/api'
+import { getMedicalHistory, createMedicalRecord, searchPatientByDni, uploadFile } from '@/lib/api'
 import { useAuth } from '@/context/AuthContext'
 
 export default function PatientHistoryPage() {
@@ -16,7 +16,7 @@ export default function PatientHistoryPage() {
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [submitting, setSubmitting] = useState(false)
-
+  
   // Form State
   const [formData, setFormData] = useState({
     diagnosis: '',
@@ -24,6 +24,31 @@ export default function PatientHistoryPage() {
     clinicalNotes: '',
     physicalExam: '',
   })
+
+  const [attachments, setAttachments] = useState<string[]>([])
+  const [uploadingAttachments, setUploadingAttachments] = useState(false)
+
+  const handleAttachmentUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (!files || files.length === 0) return
+    setUploadingAttachments(true)
+    try {
+      const urls: string[] = []
+      for (let i = 0; i < files.length; i++) {
+        const res = await uploadFile(files[i])
+        urls.push(res.url)
+      }
+      setAttachments([...attachments, ...urls])
+    } catch (err: any) {
+      alert('Error al subir los archivos: ' + (err.message || 'Error del servidor'))
+    } finally {
+      setUploadingAttachments(false)
+    }
+  }
+
+  const removeAttachment = (indexToRemove: number) => {
+    setAttachments(attachments.filter((_, idx) => idx !== indexToRemove))
+  }
 
   useEffect(() => {
     async function loadData() {
@@ -53,7 +78,7 @@ export default function PatientHistoryPage() {
       await createMedicalRecord({
         ...formData,
         patientId: id as string,
-        attachments: [], // Placeholder for now
+        attachments: attachments,
       })
       
       // Refresh history and close form
@@ -61,12 +86,14 @@ export default function PatientHistoryPage() {
       setHistory(updatedHistory)
       setShowForm(false)
       setFormData({ diagnosis: '', treatment: '', clinicalNotes: '', physicalExam: '' })
+      setAttachments([])
     } catch (err) {
       alert('Error al guardar el registro médico.')
     } finally {
       setSubmitting(false)
     }
   }
+
 
   if (loading) {
     return (
@@ -156,6 +183,51 @@ export default function PatientHistoryPage() {
                 />
               </div>
 
+              {/* Fotos Clínicas Adjuntas */}
+              <div className="space-y-4">
+                <label className="text-xs font-black uppercase tracking-widest text-slate-400 block">Fotos Clínicas Adjuntas</label>
+                
+                {attachments.length > 0 && (
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
+                    {attachments.map((url, index) => (
+                      <div key={index} className="relative aspect-square bg-slate-50 border border-slate-200 rounded-2xl overflow-hidden group">
+                        <img src={url} alt={`Adjunto ${index + 1}`} className="object-cover w-full h-full" />
+                        <button
+                          type="button"
+                          onClick={() => removeAttachment(index)}
+                          className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center font-bold text-xs shadow-md hover:bg-red-600 transition-colors"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
+                <label className="flex items-center justify-center gap-2 border-2 border-dashed border-slate-200 hover:border-primary/40 bg-slate-50/50 rounded-2xl p-6 cursor-pointer text-slate-500 hover:text-primary transition-all font-bold text-sm">
+                  {uploadingAttachments ? (
+                    <>
+                      <span className="w-5 h-5 border-2 border-slate-400 border-t-primary rounded-full animate-spin" />
+                      Subiendo archivos a Supabase...
+                    </>
+                  ) : (
+                    <>
+                      <span className="material-symbols-outlined">add_a_photo</span>
+                      Adjuntar Imágenes Clínicas
+                    </>
+                  )}
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={handleAttachmentUpload}
+                    disabled={uploadingAttachments}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+
+
               <div className="flex justify-end">
                 <button
                   type="submit"
@@ -221,12 +293,37 @@ export default function PatientHistoryPage() {
                     </div>
                   </div>
 
-                  <div className="p-6 bg-primary/5 rounded-3xl border border-primary/10">
+                  <div className="p-6 bg-primary/5 rounded-3xl border border-primary/10 mb-6">
                     <h4 className="text-[10px] font-black uppercase tracking-widest text-primary mb-2">Notas Clínicas</h4>
                     <p className="text-sm font-medium text-slate-700 leading-relaxed whitespace-pre-line">
                       {record.clinicalNotes}
                     </p>
                   </div>
+
+                  {/* Renderizar Fotos Clínicas de la Evolución */}
+                  {record.attachments && record.attachments.length > 0 && (
+                    <div className="mt-6">
+                      <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Fotos Clínicas Adjuntas</h4>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                        {record.attachments.map((url: string, index: number) => (
+                          <a 
+                            key={index} 
+                            href={url} 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className="relative aspect-square bg-slate-50 border border-slate-200 rounded-2xl overflow-hidden hover:scale-105 transition-all duration-300 shadow-sm hover:shadow-md block group"
+                          >
+                            <img src={url} alt={`Anexo ${index + 1}`} className="object-cover w-full h-full" />
+                            <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity text-xs font-bold" style={{ backgroundColor: 'rgba(0,0,0,0.3)' }}>
+                              <span className="material-symbols-outlined text-sm mr-1">open_in_new</span>
+                              Ver original
+                            </div>
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                 </div>
               </div>
             ))
