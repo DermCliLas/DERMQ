@@ -14,8 +14,24 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    if (!authLoading && isAuthenticated && user) {
+      if (user.role === 'ADMIN') {
+        router.push('/dashboard/admin')
+      } else if (user.role === 'DOCTOR') {
+        router.push('/dashboard/doctor')
+      } else if (user.role === 'RECEPTION') {
+        router.push('/dashboard/recepcion/agenda')
+      }
+    }
+  }, [user, authLoading, isAuthenticated, router])
+
+  useEffect(() => {
     async function fetchDashboardData() {
-      if (!isAuthenticated) return
+      if (!isAuthenticated || !user) return
+      if (user.role !== 'PATIENT') {
+        setLoading(false)
+        return
+      }
       try {
         const result = await getPatientDashboard()
         setData(result)
@@ -26,9 +42,10 @@ export default function DashboardPage() {
       }
     }
     fetchDashboardData()
-  }, [isAuthenticated])
+  }, [isAuthenticated, user])
 
-  if (authLoading || (loading && !data)) {
+  // Allow showing loading only if user is patient or authentication is loading
+  if (authLoading || (loading && !data && user?.role === 'PATIENT')) {
     return (
       <main className="pt-40 pb-24 min-h-screen bg-[#F2F4F4] flex flex-col items-center">
         <span className="w-10 h-10 border-4 border-slate-200 border-t-primary rounded-full animate-spin mb-4" />
@@ -38,6 +55,8 @@ export default function DashboardPage() {
   }
 
   if (!isAuthenticated) return null
+  if (user?.role !== 'PATIENT') return null
+
 
   const stats = [
     { label: 'Citas Totales', value: data?.stats?.appointmentCount || '0', icon: 'event', color: 'bg-primary/10 text-primary' },

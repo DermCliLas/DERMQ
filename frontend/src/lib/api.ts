@@ -214,3 +214,41 @@ export async function updateAppointmentStatus(id: string, status: string): Promi
     method: 'PATCH',
   });
 }
+
+// ─── ADMIN PRODUCTS CRUD & ORDERS ──────────────────────────────────────────
+
+export async function createProduct(productData: any): Promise<any> {
+  return fetchFromApi('/products', {
+    method: 'POST',
+    body: JSON.stringify(productData),
+  });
+}
+
+export async function updateProduct(id: string, productData: any): Promise<any> {
+  return fetchFromApi(`/products/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(productData),
+  });
+}
+
+export async function updateProductStock(id: string, quantity: number, operation: 'add' | 'subtract'): Promise<any> {
+  return fetchFromApi(`/products/${id}/stock`, {
+    method: 'PATCH',
+    body: JSON.stringify({ quantity, operation }),
+  });
+}
+
+export async function deleteProduct(id: string): Promise<any> {
+  return fetchFromApi(`/products/${id}`, {
+    method: 'DELETE',
+  });
+}
+
+export async function getAllOrders(): Promise<any[]> {
+  const res = await fetchFromApi<any>('/orders');
+  if (res && res.success && res.data) {
+    return Array.isArray(res.data) ? res.data : (res.data.data || []);
+  }
+  return Array.isArray(res) ? res : (res as any).data || [];
+}
+
