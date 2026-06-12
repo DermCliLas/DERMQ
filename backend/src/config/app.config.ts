@@ -26,4 +26,10 @@ export const appConfig = {
     hmacKey: process.env.IZIPAY_HMAC_KEY,
     apiUrl: process.env.IZIPAY_API_URL || 'https://api.micuentaweb.pe/api-payment/v4/Charge/CreatePayment',
   },
+  supabase: {
+    url: process.env.SUPABASE_URL,
+    key: process.env.SUPABASE_KEY,
+    bucket: process.env.SUPABASE_BUCKET || 'dermq',
+  },
 };
+

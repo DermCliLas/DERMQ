@@ -252,3 +252,25 @@ export async function getAllOrders(): Promise<any[]> {
   return Array.isArray(res) ? res : (res as any).data || [];
 }
 
+export async function uploadFile(file: File): Promise<{ url: string }> {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const response = await fetch(`${API_BASE_URL}/storage/upload`, {
+    method: 'POST',
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || `Upload Error: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+
