@@ -84,6 +84,25 @@ async function main() {
     },
   });
 
+  // 2.5. Asegurar Usuario Recepcionista
+  console.log('2.5. Creando Usuario Recepcionista...');
+  const receptionPasswordHash = await bcrypt.hash('recepcion2026', salt);
+  
+  await prisma.user.upsert({
+    where: { email: 'recepcion@dermq.com' },
+    update: {},
+    create: {
+      email: 'recepcion@dermq.com',
+      password: receptionPasswordHash,
+      firstName: 'Recepción',
+      lastName: 'DermQ',
+      role: Role.RECEPTION,
+      branches: {
+        connect: { id: branchPrincipal.id }
+      }
+    },
+  });
+
   // 3. Crear Médicos Especialistas
   console.log('3. Creando Médicos Especialistas...');
   const doctorPassword = await bcrypt.hash('123456', salt);

@@ -71,6 +71,20 @@ export class AppointmentsService {
       throw new BadRequestException(validation.errors.join(', '));
     }
 
+    // Validar disponibilidad en Google Calendar
+    if (doctor.email) {
+      const isBusyInGoogle = await this.isBusyInGoogleCalendar(
+        doctor.email,
+        createAppointmentDto.date,
+        service.durationMin,
+      );
+      if (isBusyInGoogle) {
+        throw new BadRequestException(
+          'El doctor no está disponible en ese horario en su Google Calendar',
+        );
+      }
+    }
+
     // Crear la cita
     const appointment = await this.prisma.appointment.create({
       data: {
@@ -636,32 +650,22 @@ export class AppointmentsService {
       },
     });
 
-    // Obtener citas del doctor para ese día
+    // Obtener citas del doctor para ese día en base de datos local
     const startOfDay = new Date(date);
     startOfDay.setHours(0, 0, 0, 0);
 
     const endOfDay = new Date(date);
     endOfDay.setHours(23, 59, 59, 999);
 
-    const appointments = await this.prisma.appointment.findMany({
-      where: {
-        doctorId,
-        date: {
-          gte: startOfDay,
-          lte: endOfDay,
-        },
-        status: { in: ['PENDING', 'CONFIRMED'] },
-      },
-      select: {
-        date: true,
-        service: {
-          select: {
-            durationMin: true,
-          },
-        },
-      },
-      orderBy: { date: 'asc' },
-    });
+    // Obtener eventos de Google Calendar
+    let googleEvents: any[] = [];
+    if (doctor.email) {
+      try {
+        googleEvents = await this.googleCalendar.listEvents(doctor.email, startOfDay, endOfDay);
+      } catch (err) {
+        console.warn('Could not list google calendar events for slots:', err);
+      }
+    }
 
     // Generar slots disponibles
     const slots = [];
@@ -683,13 +687,34 @@ export class AppointmentsService {
         const availableServices = [];
 
         for (const service of services) {
-          const isAvailable = await this.timeValidator.isDoctorAvailable(
+          // 1. Chequear localmente
+          const isLocalAvailable = await this.timeValidator.isDoctorAvailable(
             doctorId,
             slotTime,
             service.durationMin,
           );
 
-          if (isAvailable) {
+          if (!isLocalAvailable) continue;
+
+          // 2. Chequear en Google Calendar
+          let isGoogleAvailable = true;
+          const slotStart = slotTime.getTime();
+          const slotEnd = slotStart + service.durationMin * 60000;
+
+          for (const event of googleEvents) {
+            if (!event.start?.dateTime || !event.end?.dateTime) continue;
+
+            const eventStart = new Date(event.start.dateTime).getTime();
+            const eventEnd = new Date(event.end.dateTime).getTime();
+
+            // Si se solapa, no está disponible
+            if (slotStart < eventEnd && slotEnd > eventStart) {
+              isGoogleAvailable = false;
+              break;
+            }
+          }
+
+          if (isGoogleAvailable) {
             availableServices.push({
               serviceId: service.id,
               serviceName: service.name,
@@ -743,5 +768,42 @@ export class AppointmentsService {
         'No tienes permisos para acceder a esta cita',
       );
     }
+  }
+
+  private async isBusyInGoogleCalendar(
+    doctorEmail: string,
+    date: Date,
+    durationMin: number,
+  ): Promise<boolean> {
+    try {
+      const start = new Date(date);
+      const end = new Date(start.getTime() + durationMin * 60000);
+
+      // Obtener rango de todo el día para mayor eficiencia de red / paginación
+      const startOfDay = new Date(date);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(date);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      const events = await this.googleCalendar.listEvents(doctorEmail, startOfDay, endOfDay);
+      
+      const newStart = start.getTime();
+      const newEnd = end.getTime();
+
+      for (const event of events) {
+        if (!event.start?.dateTime || !event.end?.dateTime) continue;
+
+        const eventStart = new Date(event.start.dateTime).getTime();
+        const eventEnd = new Date(event.end.dateTime).getTime();
+
+        // Traslape
+        if (newStart < eventEnd && newEnd > eventStart) {
+          return true;
+        }
+      }
+    } catch (error) {
+      console.warn('Error checking google calendar busy status:', error);
+    }
+    return false;
   }
 }

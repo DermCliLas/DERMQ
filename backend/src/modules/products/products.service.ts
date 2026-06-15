@@ -24,7 +24,12 @@ export class ProductsService {
     }
 
     const product = await this.prisma.product.create({
-      data: createProductDto,
+      data: {
+        ...createProductDto,
+        expirationDate: createProductDto.expirationDate
+          ? new Date(createProductDto.expirationDate)
+          : undefined,
+      },
     });
 
     return product;
@@ -105,7 +110,12 @@ export class ProductsService {
 
     const updatedProduct = await this.prisma.product.update({
       where: { id },
-      data: updateProductDto,
+      data: {
+        ...updateProductDto,
+        expirationDate: updateProductDto.expirationDate
+          ? new Date(updateProductDto.expirationDate)
+          : undefined,
+      },
     });
 
     return updatedProduct;

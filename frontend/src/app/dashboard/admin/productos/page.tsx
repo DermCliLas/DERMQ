@@ -6,6 +6,26 @@ import Image from 'next/image'
 import { useAuth } from '@/context/AuthContext'
 import { getProducts, createProduct, updateProduct, deleteProduct, updateProductStock, uploadFile } from '@/lib/api'
 
+const getFamilyLabel = (fam: string) => {
+  const map: Record<string, string> = {
+    MP: 'Materia Prima',
+    PI: 'Prod. Intermedio',
+    ME: 'Mat. Envasado',
+    PT: 'Prod. Terminado'
+  }
+  return map[fam] || fam
+}
+
+const getFamilyColor = (fam: string) => {
+  const map: Record<string, string> = {
+    MP: 'bg-purple-100 text-purple-800',
+    PI: 'bg-blue-100 text-blue-800',
+    ME: 'bg-orange-100 text-orange-800',
+    PT: 'bg-emerald-100 text-emerald-800'
+  }
+  return map[fam] || 'bg-slate-100 text-slate-800'
+}
+
 export default function AdminProductsPage() {
   const { user, isAuthenticated } = useAuth()
   
@@ -24,6 +44,9 @@ export default function AdminProductsPage() {
   const [stock, setStock] = useState(0)
   const [imageUrl, setImageUrl] = useState('')
   const [isActive, setIsActive] = useState(true)
+  const [family, setFamily] = useState('')
+  const [lotNumber, setLotNumber] = useState('')
+  const [expirationDate, setExpirationDate] = useState('')
   
   const [saving, setSaving] = useState(false)
   const [uploadingImage, setUploadingImage] = useState(false)
@@ -80,6 +103,9 @@ export default function AdminProductsPage() {
     setStock(0)
     setImageUrl('')
     setIsActive(true)
+    setFamily('')
+    setLotNumber('')
+    setExpirationDate('')
     setIsModalOpen(true)
   }
 
@@ -92,6 +118,9 @@ export default function AdminProductsPage() {
     setStock(p.stock)
     setImageUrl(p.imageUrl || '')
     setIsActive(p.isActive)
+    setFamily(p.family || '')
+    setLotNumber(p.lotNumber || '')
+    setExpirationDate(p.expirationDate ? p.expirationDate.split('T')[0] : '')
     setIsModalOpen(true)
   }
 
@@ -110,7 +139,10 @@ export default function AdminProductsPage() {
       price: Number(price),
       stock: Number(stock),
       imageUrl: imageUrl.trim() || null,
-      isActive
+      isActive,
+      family: family || null,
+      lotNumber: lotNumber.trim() || null,
+      expirationDate: expirationDate || null,
     }
 
     try {
@@ -201,6 +233,7 @@ export default function AdminProductsPage() {
                     <th className="pb-4">Vista</th>
                     <th className="pb-4">SKU / Código</th>
                     <th className="pb-4">Nombre de Producto</th>
+                    <th className="pb-4">Detalles ERP</th>
                     <th className="pb-4">Precio (S/)</th>
                     <th className="pb-4 text-center">Stock</th>
                     <th className="pb-4 text-center">Estado</th>
@@ -210,7 +243,7 @@ export default function AdminProductsPage() {
                 <tbody>
                   {products.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="py-12 text-center text-slate-400 italic">No hay productos creados en la clínica.</td>
+                      <td colSpan={8} className="py-12 text-center text-slate-400 italic">No hay productos creados en la clínica.</td>
                     </tr>
                   ) : (
                     products.map(p => {
@@ -238,6 +271,29 @@ export default function AdminProductsPage() {
                           <td className="py-4 text-xs max-w-xs">
                             <p className="font-bold text-[#1a1c1e] truncate">{p.name}</p>
                             <p className="text-[10px] text-slate-400 truncate mt-0.5">{p.description || 'Sin descripción'}</p>
+                          </td>
+
+                          {/* Detalles ERP */}
+                          <td className="py-4 text-xs">
+                            {p.family && (
+                              <span className={`inline-block px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider mb-1.5 ${getFamilyColor(p.family)}`}>
+                                {getFamilyLabel(p.family)}
+                              </span>
+                            )}
+                            {p.lotNumber && (
+                              <p className="font-bold text-[#1a1c1e] text-[10px]">Lote: {p.lotNumber}</p>
+                            )}
+                            {p.expirationDate && (
+                              <p className={`text-[10px] mt-0.5 ${
+                                new Date(p.expirationDate).getTime() < Date.now() 
+                                  ? 'text-red-600 font-bold' 
+                                  : new Date(p.expirationDate).getTime() < Date.now() + 90 * 24 * 60 * 60 * 1000 
+                                    ? 'text-amber-600 font-bold' 
+                                    : 'text-slate-400'
+                              }`}>
+                                Vence: {new Date(p.expirationDate).toLocaleDateString()}
+                              </p>
+                            )}
                           </td>
 
                           {/* Precio */}
@@ -449,6 +505,45 @@ export default function AdminProductsPage() {
                 </div>
               </div>
 
+
+              {/* Familia de Producto */}
+              <div>
+                <label className="block text-xs font-bold text-[#1a1c1e] mb-1.5 uppercase tracking-wider">Familia de Producto (ERP)</label>
+                <select 
+                  className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-100 rounded-xl focus:outline-none focus:border-primary focus:bg-white transition-all text-[#1a1c1e] font-bold text-sm"
+                  value={family}
+                  onChange={(e) => setFamily(e.target.value)}
+                >
+                  <option value="">Seleccione Familia...</option>
+                  <option value="MP">Materia Prima (MP)</option>
+                  <option value="PI">Producto Intermedio (PI)</option>
+                  <option value="ME">Material de Envasado (ME)</option>
+                  <option value="PT">Producto Terminado (PT)</option>
+                </select>
+              </div>
+
+              {/* Lote y Vencimiento */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-[#1a1c1e] mb-1.5 uppercase tracking-wider">Número de Lote</label>
+                  <input 
+                    type="text"
+                    placeholder="ej. LT-928"
+                    className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-100 rounded-xl focus:outline-none focus:border-primary focus:bg-white transition-all text-[#1a1c1e]"
+                    value={lotNumber}
+                    onChange={(e) => setLotNumber(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-[#1a1c1e] mb-1.5 uppercase tracking-wider">Fecha de Vencimiento</label>
+                  <input 
+                    type="date"
+                    className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-100 rounded-xl focus:outline-none focus:border-primary focus:bg-white transition-all text-[#1a1c1e]"
+                    value={expirationDate}
+                    onChange={(e) => setExpirationDate(e.target.value)}
+                  />
+                </div>
+              </div>
 
               {/* Checkbox Activo */}
               <div className="flex items-center gap-3 pt-2">

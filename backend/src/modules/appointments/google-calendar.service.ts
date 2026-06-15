@@ -151,4 +151,68 @@ export class GoogleCalendarService {
       return false;
     }
   }
+
+  async listEvents(calendarId: string, start: Date, end: Date): Promise<calendar_v3.Schema$Event[]> {
+    if (!this.calendar) return [];
+
+    try {
+      const response = await this.calendar.events.list({
+        calendarId,
+        timeMin: start.toISOString(),
+        timeMax: end.toISOString(),
+        singleEvents: true,
+        orderBy: 'startTime',
+      });
+
+      return response.data.items || [];
+    } catch (error) {
+      this.logger.error(
+        `Error listing events for calendar ${calendarId}: ${error.message}`,
+      );
+      return [];
+    }
+  }
+
+  async watchCalendar(calendarId: string, channelId: string, webhookUrl: string): Promise<any> {
+    if (!this.calendar) return null;
+
+    try {
+      const response = await this.calendar.events.watch({
+        calendarId,
+        requestBody: {
+          id: channelId,
+          type: 'web_hook',
+          address: webhookUrl,
+        },
+      });
+
+      this.logger.log(`Calendar watch set up for ${calendarId} on channel ${channelId}`);
+      return response.data;
+    } catch (error) {
+      this.logger.error(
+        `Error watching calendar ${calendarId}: ${error.message}`,
+      );
+      return null;
+    }
+  }
+
+  async stopWatch(id: string, resourceId: string): Promise<boolean> {
+    if (!this.calendar) return false;
+
+    try {
+      await this.calendar.channels.stop({
+        requestBody: {
+          id,
+          resourceId,
+        },
+      });
+      this.logger.log(`Calendar watch stopped for channel ${id}`);
+      return true;
+    } catch (error) {
+      this.logger.error(
+        `Error stopping watch for channel ${id}: ${error.message}`,
+      );
+      return false;
+    }
+  }
 }

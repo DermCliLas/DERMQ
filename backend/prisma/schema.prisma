@@ -89,15 +89,25 @@ model Service {
   @@index([isActive, price])
 }
 
+enum ProductFamily {
+  MP // Materia Prima
+  PI // Producto Intermedio
+  ME // Material de Envasado
+  PT // Producto Terminado
+}
+
 model Product {
-  id          String  @id @default(uuid())
-  sku         String  @unique // Indispensable para Lector de Código de Barras POS
-  name        String
-  description String?
-  price       Float
-  stock       Int     @default(0) // El Buffer local de 3 uds se manejará en servicios NestJS
-  imageUrl    String?
-  isActive    Boolean @default(true)
+  id             String         @id @default(uuid())
+  sku            String         @unique // Indispensable para Lector de Código de Barras POS
+  name           String
+  description    String?
+  price          Float
+  stock          Int            @default(0) // El Buffer local de 3 uds se manejará en servicios NestJS
+  imageUrl       String?
+  isActive       Boolean        @default(true)
+  family         ProductFamily?
+  lotNumber      String?
+  expirationDate DateTime?
 
   orderItems OrderItem[]
 

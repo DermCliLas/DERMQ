@@ -1,3 +1,4 @@
+import { ProductFamily } from '@prisma/client';
 import {
   IsString,
   IsNumber,
@@ -5,6 +6,8 @@ import {
   IsBoolean,
   Min,
   IsUrl,
+  IsEnum,
+  IsDateString,
 } from 'class-validator';
 
 export class CreateProductDto {
@@ -33,4 +36,16 @@ export class CreateProductDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean = true;
+
+  @IsOptional()
+  @IsEnum(ProductFamily)
+  family?: ProductFamily;
+
+  @IsOptional()
+  @IsString()
+  lotNumber?: string;
+
+  @IsOptional()
+  @IsDateString()
+  expirationDate?: string;
 }

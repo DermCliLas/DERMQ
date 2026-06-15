@@ -12,8 +12,8 @@ export const appConfig = {
     privateKey: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
   },
   nubeFact: {
-    url: process.env.NUBEFACT_URL || 'https://api.nubefact.com/v1/ventas',
-    token: process.env.NUBEFACT_TOKEN,
+    url: process.env.NUBEFACT_API_URL || process.env.NUBEFACT_URL || 'https://api.nubefact.com/v1/ventas',
+    token: process.env.NUBEFACT_API_TOKEN || process.env.NUBEFACT_TOKEN,
   },
   resend: {
     apiKey: process.env.RESEND_API_KEY,
