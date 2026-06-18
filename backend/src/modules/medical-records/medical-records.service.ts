@@ -93,6 +93,41 @@ export class MedicalRecordsService {
     return patient;
   }
 
+  async searchPatients(query: string) {
+    if (!query || query.trim() === '') {
+      return [];
+    }
+
+    const trimmed = query.trim();
+    const isDni = /^\d+$/.test(trimmed);
+
+    const where: any = {
+      role: Role.PATIENT,
+      OR: [
+        { firstName: { contains: trimmed, mode: 'insensitive' } },
+        { lastName: { contains: trimmed, mode: 'insensitive' } },
+      ],
+    };
+
+    if (isDni) {
+      where.OR.push({ dni: { contains: trimmed, mode: 'insensitive' } });
+    }
+
+    return this.prisma.user.findMany({
+      where,
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        phone: true,
+        dni: true,
+        avatarUrl: true,
+      },
+      take: 20,
+    });
+  }
+
   async findOne(id: string, userId: string, userRole: Role) {
     const record = await this.prisma.medicalRecord.findUnique({
       where: { id },

@@ -198,6 +198,12 @@ model Order {
   items       OrderItem[]
   appointment Appointment? // Relacionado sólo si la orden surge por agendar cita
 
+  isCancelled        Boolean   @default(false)
+  cancellationReason String?
+  creditNoteNumber   String?
+  creditNotePdfUrl   String?
+  creditNoteXmlUrl   String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

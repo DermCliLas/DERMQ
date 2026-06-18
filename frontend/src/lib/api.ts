@@ -273,4 +273,28 @@ export async function uploadFile(file: File): Promise<{ url: string }> {
   return response.json();
 }
 
+export async function getPatientProfile(patientId: string): Promise<any> {
+  const res = await fetchFromApi<any>(`/users/${patientId}`);
+  if (res && res.success && res.data) {
+    return res.data;
+  }
+  return res;
+}
+
+export async function searchPatients(query: string): Promise<any[]> {
+  const res = await fetchFromApi<any>(`/medical-records/search?query=${encodeURIComponent(query)}`);
+  if (res && res.success && res.data) {
+    return Array.isArray(res.data) ? res.data : [];
+  }
+  return Array.isArray(res) ? res : [];
+}
+
+export async function cancelOrder(orderId: string, reason: string): Promise<any> {
+  return fetchFromApi(`/orders/${orderId}/cancel`, {
+    method: 'POST',
+    body: JSON.stringify({ reason }),
+  });
+}
+
+
 

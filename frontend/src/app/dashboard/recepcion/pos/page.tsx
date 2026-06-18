@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { getProducts, getServices, createOrder, searchPatientByDni } from '@/lib/api'
+import { getProducts, getServices, createOrder, searchPatientByDni, searchPatients } from '@/lib/api'
 import GlassCard from '@/components/ui/GlassCard'
 
 export default function PosPage() {
@@ -16,6 +16,31 @@ export default function PosPage() {
   const [skuInput, setSkuInput] = useState('')
   const [printerIp, setPrinterIp] = useState('192.168.1.150')
   const [completedOrder, setCompletedOrder] = useState<any>(null)
+
+  // Autocompletado de paciente
+  const [searchQuery, setSearchQuery] = useState('')
+  const [suggestions, setSuggestions] = useState<any[]>([])
+  const [searching, setSearching] = useState(false)
+
+  useEffect(() => {
+    if (searchQuery.trim().length < 2) {
+      setSuggestions([])
+      return
+    }
+    const delayDebounceFn = setTimeout(async () => {
+      setSearching(true)
+      try {
+        const res = await searchPatients(searchQuery)
+        setSuggestions(res || [])
+      } catch (err) {
+        console.error('Error fetching suggestions', err)
+      } finally {
+        setSearching(false)
+      }
+    }, 300)
+
+    return () => clearTimeout(delayDebounceFn)
+  }, [searchQuery])
 
   // Referencias para evitar re-bindear listeners de eventos globales
   const productsRef = useRef<any[]>([])
@@ -442,32 +467,66 @@ export default function PosPage() {
           <div className="lg:col-span-2 space-y-8">
             
             {/* Identificar Paciente */}
-            <div className="bg-white rounded-4xl p-8 shadow-sm border border-slate-100">
+            <div className="bg-white rounded-4xl p-8 shadow-sm border border-slate-100 relative">
                <h2 className="text-lg font-black uppercase text-slate-400 mb-6 flex items-center gap-2">
                  <span className="material-symbols-outlined">person_search</span>
                  Identificar Paciente
                </h2>
-               <form onSubmit={handleSearchPatient} className="flex gap-4">
+               <div className="relative">
                   <input 
                     type="text" 
-                    placeholder="Ingrese DNI del Paciente"
-                    className="flex-1 bg-slate-50 px-6 py-4 rounded-2xl font-bold outline-none border-2 border-transparent focus:border-secondary/20"
-                    value={dni}
-                    onChange={(e) => setDni(e.target.value)}
+                    placeholder="Buscar paciente por Nombre, Apellido o DNI..."
+                    className="w-full bg-slate-50 px-6 py-4 rounded-2xl font-bold outline-none border-2 border-transparent focus:border-secondary/20 text-sm text-[#1a1c1e]"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
                   />
-                  <button type="submit" className="bg-[#1a1c1e] text-white px-8 rounded-2xl font-bold hover:bg-secondary transition-all">
-                    Buscar
-                  </button>
-               </form>
+                  
+                  {/* Menu Desplegable de Sugerencias */}
+                  {suggestions.length > 0 && (
+                    <div className="absolute top-full left-0 right-0 bg-white border border-slate-200 mt-2 rounded-2xl shadow-xl z-50 overflow-hidden max-h-60 overflow-y-auto">
+                      {suggestions.map(p => (
+                        <button
+                          key={p.id}
+                          type="button"
+                          onClick={() => {
+                            setPatient(p)
+                            setSearchQuery('')
+                            setSuggestions([])
+                          }}
+                          className="w-full text-left px-6 py-3.5 hover:bg-slate-50 border-b border-slate-100 last:border-0 flex justify-between items-center transition-colors"
+                        >
+                          <div className="min-w-0 flex-1">
+                            <p className="font-bold text-sm text-[#1a1c1e] truncate">{p.firstName} {p.lastName}</p>
+                            <p className="text-[10px] text-slate-400 font-mono mt-0.5">DNI: {p.dni || 'N/A'}</p>
+                          </div>
+                          <span className="material-symbols-outlined text-slate-300 text-sm">add_circle</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {searching && (
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 border-2 border-slate-200 border-t-secondary rounded-full animate-spin" />
+                  )}
+               </div>
+               
                {patient && (
-                 <div className="mt-6 flex items-center gap-4 p-4 bg-emerald-50 rounded-2xl border border-emerald-100">
-                    <div className="w-12 h-12 rounded-full bg-emerald-500 text-white flex items-center justify-center font-black">
-                      {patient.firstName.charAt(0)}
+                 <div className="mt-6 flex justify-between items-center p-4 bg-emerald-50 rounded-2xl border border-emerald-100 animate-fade-in">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-full bg-emerald-500 text-white flex items-center justify-center font-black">
+                        {patient.firstName.charAt(0)}
+                      </div>
+                      <div>
+                        <p className="font-black text-[#1a1c1e]">{patient.firstName} {patient.lastName}</p>
+                        <p className="text-[10px] font-black uppercase text-emerald-600 tracking-widest">DNI: {patient.dni}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-black text-[#1a1c1e]">{patient.firstName} {patient.lastName}</p>
-                      <p className="text-[10px] font-black uppercase text-emerald-600 tracking-widest">DNI: {patient.dni}</p>
-                    </div>
+                    <button 
+                      onClick={() => setPatient(null)}
+                      className="p-1 rounded-full hover:bg-emerald-100 text-emerald-600"
+                      title="Quitar paciente"
+                    >
+                      <span className="material-symbols-outlined text-lg">close</span>
+                    </button>
                  </div>
                )}
             </div>

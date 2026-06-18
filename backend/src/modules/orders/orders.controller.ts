@@ -9,10 +9,14 @@ import {
 } from '@nestjs/common';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
+import { CancelOrderDto } from './dto/cancel-order.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { Role } from '@prisma/client';
 
 @Controller('orders')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
@@ -29,6 +33,12 @@ export class OrdersController {
   @Get('my-orders')
   findMyOrders(@Request() req: any) {
     return this.ordersService.findByUser(req.user.userId);
+  }
+
+  @Post(':id/cancel')
+  @Roles(Role.ADMIN, Role.RECEPTION)
+  cancel(@Param('id') id: string, @Body() cancelOrderDto: CancelOrderDto) {
+    return this.ordersService.cancel(id, cancelOrderDto.reason);
   }
 
   @Get(':id')

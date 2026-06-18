@@ -2,27 +2,32 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { searchPatientByDni } from '@/lib/api'
+import { searchPatients } from '@/lib/api'
 
 export default function PacientesSearchPage() {
-  const [dni, setDni] = useState('')
-  const [patient, setPatient] = useState<any>(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [patients, setPatients] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [searched, setSearched] = useState(false)
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!dni) return
+    if (!searchQuery.trim()) return
 
     setLoading(true)
     setError('')
-    setPatient(null)
+    setPatients([])
+    setSearched(true)
 
     try {
-      const result = await searchPatientByDni(dni)
-      setPatient(result)
+      const results = await searchPatients(searchQuery)
+      setPatients(results)
+      if (results.length === 0) {
+        setError('No se encontraron pacientes que coincidan con la búsqueda.')
+      }
     } catch (err: any) {
-      setError(err.message || 'No se encontró al paciente.')
+      setError(err.message || 'Error al realizar la búsqueda.')
     } finally {
       setLoading(false)
     }
@@ -37,7 +42,7 @@ export default function PacientesSearchPage() {
             Buscar Paciente
           </h1>
           <p className="text-on-surface-variant mt-4 font-medium">
-            Ingresa el DNI del paciente para acceder a su historia clínica o crear una nueva evolución.
+            Ingresa el nombre, apellido o DNI del paciente para acceder a su historia clínica o crear una nueva evolución.
           </p>
         </div>
 
@@ -47,11 +52,10 @@ export default function PacientesSearchPage() {
               <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">search</span>
               <input
                 type="text"
-                placeholder="Número de DNI (8 dígitos)"
+                placeholder="Nombre, Apellido o DNI..."
                 className="w-full bg-slate-50 border-2 border-transparent focus:border-primary/20 focus:bg-white rounded-2xl py-4 pl-12 pr-4 outline-none transition-all font-bold text-[#1a1c1e]"
-                value={dni}
-                onChange={(e) => setDni(e.target.value)}
-                maxLength={8}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 required
               />
             </div>
@@ -72,50 +76,64 @@ export default function PacientesSearchPage() {
           </form>
 
           {error && (
-            <div className="mt-6 p-4 bg-red-50 text-red-600 rounded-2xl flex items-center gap-3 font-medium">
+            <div className="mt-6 p-4 bg-red-50 text-red-600 rounded-2xl flex items-center gap-3 font-medium text-sm">
               <span className="material-symbols-outlined">error</span>
               {error}
             </div>
           )}
         </div>
 
-        {patient && (
-          <div className="bg-white rounded-4xl p-10 shadow-xl border-t-8 border-primary animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="flex flex-col md:flex-row items-center gap-8">
-              <div className="w-32 h-32 bg-primary/10 rounded-3xl flex items-center justify-center text-primary text-5xl font-black shrink-0 overflow-hidden">
-                {patient.avatarUrl ? (
-                  <img src={patient.avatarUrl} alt={patient.firstName} className="w-full h-full object-cover" />
-                ) : (
-                  patient.firstName.charAt(0)
-                )}
-              </div>
-              <div className="flex-1 text-center md:text-left">
-                <h2 className="text-3xl font-headline font-black text-[#1a1c1e] mb-1">
-                  {patient.firstName} {patient.lastName}
-                </h2>
-                <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 mt-4">
-                  <div className="flex items-center gap-2 bg-slate-100 px-4 py-2 rounded-full text-xs font-bold text-slate-600">
-                    <span className="material-symbols-outlined text-sm">badge</span>
-                    DNI: {patient.dni}
-                  </div>
-                  <div className="flex items-center gap-2 bg-slate-100 px-4 py-2 rounded-full text-xs font-bold text-slate-600">
-                    <span className="material-symbols-outlined text-sm">mail</span>
-                    {patient.email}
-                  </div>
-                  {patient.phone && (
-                    <div className="flex items-center gap-2 bg-slate-100 px-4 py-2 rounded-full text-xs font-bold text-slate-600">
-                      <span className="material-symbols-outlined text-sm">call</span>
-                      {patient.phone}
+        {/* List of Patients Found */}
+        {searched && patients.length > 0 && (
+          <div className="space-y-6">
+            <h3 className="text-xs font-black uppercase text-slate-400 tracking-wider">
+              Resultados de Búsqueda ({patients.length})
+            </h3>
+            
+            <div className="space-y-4">
+              {patients.map(patient => (
+                <div key={patient.id} className="bg-white rounded-4xl p-6 shadow-sm border border-slate-100 hover:shadow-md transition-shadow duration-300">
+                  <div className="flex flex-col sm:flex-row items-center gap-6 justify-between">
+                    <div className="flex items-center gap-4 text-center sm:text-left">
+                      <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center text-primary text-2xl font-black shrink-0 overflow-hidden">
+                        {patient.avatarUrl ? (
+                          <img src={patient.avatarUrl} alt={patient.firstName} className="w-full h-full object-cover" />
+                        ) : (
+                          patient.firstName.charAt(0)
+                        )}
+                      </div>
+                      <div>
+                        <h2 className="text-xl font-headline font-black text-[#1a1c1e]">
+                          {patient.firstName} {patient.lastName}
+                        </h2>
+                        <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 mt-1.5 text-xs text-slate-500 font-bold">
+                          <span className="flex items-center gap-1 bg-slate-50 px-2.5 py-1 rounded-full border border-slate-100">
+                            <span className="material-symbols-outlined text-[14px]">badge</span>
+                            DNI: {patient.dni || 'N/A'}
+                          </span>
+                          <span className="flex items-center gap-1 bg-slate-50 px-2.5 py-1 rounded-full border border-slate-100">
+                            <span className="material-symbols-outlined text-[14px]">mail</span>
+                            {patient.email}
+                          </span>
+                          {patient.phone && (
+                            <span className="flex items-center gap-1 bg-slate-50 px-2.5 py-1 rounded-full border border-slate-100">
+                              <span className="material-symbols-outlined text-[14px]">call</span>
+                              {patient.phone}
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  )}
+                    
+                    <Link
+                      href={`/dashboard/pacientes/${patient.id}`}
+                      className="luminous-gradient text-white px-8 py-3.5 rounded-2xl font-bold glow-on-hover hover:scale-105 transition-all text-sm w-full sm:w-auto text-center"
+                    >
+                      Ver Historia Clínica
+                    </Link>
+                  </div>
                 </div>
-              </div>
-              <Link
-                href={`/dashboard/pacientes/${patient.id}`}
-                className="luminous-gradient text-white px-10 py-5 rounded-2xl font-bold glow-on-hover hover:scale-105 transition-all text-center"
-              >
-                Ver Historia Clínica
-              </Link>
+              ))}
             </div>
           </div>
         )}

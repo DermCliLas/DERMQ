@@ -4,6 +4,7 @@ import {
   Post,
   Body,
   Param,
+  Query,
   UseGuards,
   Request,
 } from '@nestjs/common';
@@ -32,6 +33,12 @@ export class MedicalRecordsController {
       req.user.userId,
       req.user.role,
     );
+  }
+
+  @Get('search')
+  @Roles(Role.DOCTOR, Role.ADMIN, Role.RECEPTION)
+  searchPatients(@Query('query') query: string) {
+    return this.medicalRecordsService.searchPatients(query);
   }
 
   @Get('search-patient/:dni')

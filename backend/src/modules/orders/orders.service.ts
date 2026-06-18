@@ -211,4 +211,98 @@ export class OrdersService {
     if (!order) throw new NotFoundException(`Orden con ID ${id} no encontrada`);
     return order;
   }
+
+  async cancel(orderId: string, reason: string) {
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      include: {
+        items: {
+          include: {
+            product: true,
+          },
+        },
+        user: {
+          select: { id: true, firstName: true, lastName: true, email: true, dni: true },
+        },
+      },
+    });
+
+    if (!order) {
+      throw new NotFoundException(`Orden con ID ${orderId} no encontrada`);
+    }
+
+    if (order.isCancelled) {
+      throw new BadRequestException('Esta orden ya ha sido anulada previamente.');
+    }
+
+    const cancelledOrder = await this.prisma.$transaction(async (tx) => {
+      // 1. Marcar la orden como anulada
+      const updatedOrder = await tx.order.update({
+        where: { id: orderId },
+        data: {
+          isCancelled: true,
+          cancellationReason: reason,
+        },
+        include: {
+          items: {
+            include: {
+              product: {
+                select: { id: true, name: true, sku: true, price: true },
+              },
+            },
+          },
+          user: {
+            select: { id: true, firstName: true, lastName: true, email: true, dni: true },
+          },
+        },
+      });
+
+      // 2. Reponer stock
+      for (const item of order.items) {
+        if (item.productId) {
+          await tx.product.update({
+            where: { id: item.productId },
+            data: {
+              stock: { increment: item.quantity },
+            },
+          });
+        }
+      }
+
+      // 3. Emitir Nota de Crédito
+      try {
+        const creditNoteResult = await this.nubeFactService.generateCreditNote(
+          order,
+          reason,
+        );
+
+        if (creditNoteResult) {
+          return await tx.order.update({
+            where: { id: orderId },
+            data: {
+              creditNoteNumber: creditNoteResult.documentNumber,
+              creditNotePdfUrl: creditNoteResult.pdfUrl,
+              creditNoteXmlUrl: creditNoteResult.xmlUrl,
+            },
+            include: {
+              items: {
+                include: { product: true },
+              },
+              user: {
+                select: { id: true, firstName: true, lastName: true, email: true },
+              },
+            },
+          });
+        }
+      } catch (err) {
+        throw new BadRequestException(
+          `Fallo al emitir la Nota de Crédito en NubeFact: ${err.message}. La anulación no ha sido procesada.`,
+        );
+      }
+
+      return updatedOrder;
+    });
+
+    return cancelledOrder;
+  }
 }

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { getMedicalHistory, createMedicalRecord, searchPatientByDni, uploadFile } from '@/lib/api'
+import { getMedicalHistory, createMedicalRecord, searchPatientByDni, uploadFile, getPatientProfile } from '@/lib/api'
 import { useAuth } from '@/context/AuthContext'
 
 export default function PatientHistoryPage() {
@@ -57,10 +57,11 @@ export default function PatientHistoryPage() {
         const historyData = await getMedicalHistory(id as string)
         setHistory(historyData)
         
-        // Fetch patient basic info (via a mock or a simple user fetch if available)
-        // For now, let's assume historyData includes patient or find another way
-        if (historyData.length > 0) {
-           // We might not have the patient data if history is empty
+        try {
+          const profile = await getPatientProfile(id as string)
+          setPatient(profile)
+        } catch (profileErr) {
+          console.error('Error fetching patient profile', profileErr)
         }
       } catch (e) {
         console.error('Error loading history', e)
@@ -126,6 +127,43 @@ export default function PatientHistoryPage() {
             {showForm ? 'Cancelar' : 'Nueva Evolución'}
           </button>
         </div>
+
+        {/* Patient Premium Profile Card */}
+        {patient && (
+          <div className="bg-white rounded-4xl p-8 shadow-sm border border-slate-100 mb-10 flex flex-col md:flex-row items-center gap-6">
+            <div className="w-20 h-20 bg-primary/10 rounded-2xl flex items-center justify-center text-primary text-3xl font-black shrink-0 overflow-hidden">
+              {patient.avatarUrl ? (
+                <img src={patient.avatarUrl} alt={patient.firstName} className="w-full h-full object-cover" />
+              ) : (
+                patient.firstName.charAt(0)
+              )}
+            </div>
+            <div className="flex-1 min-w-0 text-center md:text-left">
+              <span className="text-[9px] font-black uppercase tracking-widest text-primary bg-primary/10 px-3 py-1 rounded-full mb-2 inline-block">
+                Paciente Registrado
+              </span>
+              <h2 className="text-2xl font-headline font-black text-[#1a1c1e] truncate">
+                {patient.firstName} {patient.lastName}
+              </h2>
+              <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 mt-2 text-xs font-bold text-slate-500">
+                <span className="flex items-center gap-1">
+                  <span className="material-symbols-outlined text-sm">badge</span>
+                  DNI: {patient.dni || 'N/A'}
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="material-symbols-outlined text-sm">mail</span>
+                  {patient.email}
+                </span>
+                {patient.phone && (
+                  <span className="flex items-center gap-1">
+                    <span className="material-symbols-outlined text-sm">call</span>
+                    {patient.phone}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* New Record Form */}
         {showForm && (
