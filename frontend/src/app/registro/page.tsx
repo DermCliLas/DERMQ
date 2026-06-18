@@ -50,7 +50,7 @@ export default function RegisterPage() {
 
   const handleSocialLogin = (provider: 'google' | 'facebook') => {
     setLoading(true)
-    const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1'
+    const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1'
     const backendUrl = apiBaseUrl.replace('/api/v1', '')
     window.location.href = `${backendUrl}/api/v1/auth/${provider}`
   }
