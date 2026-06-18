@@ -27,7 +27,11 @@ export async function fetchFromApi<T>(endpoint: string, options?: RequestInit): 
     throw new Error(errorData.message || `API Error: ${response.status} ${response.statusText}`);
   }
 
-  return response.json();
+  const result = await response.json();
+  if (result && typeof result === 'object' && result.hasOwnProperty('success') && result.hasOwnProperty('data')) {
+    return result.data;
+  }
+  return result;
 }
 
 /**
