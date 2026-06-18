@@ -37,14 +37,21 @@ export default function LoginPage() {
       // Obtener el perfil para hidratar el AuthContext
       getAuthProfile()
         .then(profile => {
-          login(token, {
+          const userData = {
             id: profile.id || profile.userId,
             email: profile.email,
             firstName: profile.firstName,
             lastName: profile.lastName,
             role: profile.role,
-          })
-          router.push('/dashboard')
+          }
+          const redirectTo = profile.role === 'ADMIN'
+            ? '/dashboard/admin'
+            : profile.role === 'DOCTOR'
+            ? '/dashboard/doctor'
+            : profile.role === 'RECEPTION'
+            ? '/dashboard/recepcion/agenda'
+            : '/dashboard'
+          login(token, userData, redirectTo)
         })
         .catch(err => {
           console.error(err)
@@ -61,8 +68,15 @@ export default function LoginPage() {
     
     try {
       const response = await loginUser({ email, password })
-      login(response.access_token, response.user)
-      router.push('/dashboard')
+      const u = response.user
+      const redirectTo = u.role === 'ADMIN'
+        ? '/dashboard/admin'
+        : u.role === 'DOCTOR'
+        ? '/dashboard/doctor'
+        : u.role === 'RECEPTION'
+        ? '/dashboard/recepcion/agenda'
+        : '/dashboard'
+      login(response.access_token, u, redirectTo)
     } catch (err: any) {
       setError(err.message || 'Credenciales incorrectas')
     } finally {

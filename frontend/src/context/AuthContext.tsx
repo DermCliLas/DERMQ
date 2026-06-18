@@ -16,7 +16,7 @@ interface AuthContextType {
   user: User | null
   isLoading: boolean
   isAuthenticated: boolean
-  login: (token: string, userData: User) => void
+  login: (token: string, userData: User, redirectPath?: string) => void
   logout: () => void
 }
 
@@ -73,15 +73,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const handleUnauthorized = () => {
     setIsLoading(false)
-    if (PROTECTED_ROUTES.includes(pathname)) {
+    if (PROTECTED_ROUTES.some((route) => pathname.startsWith(route))) {
       router.push('/login')
     }
   }
 
-  const login = (token: string, userData: User) => {
+  const login = (token: string, userData: User, redirectPath?: string) => {
     localStorage.setItem('token', token)
     setUser(userData)
-    // Optional: could push to dashboard here, but caller typically handles routing
+    if (redirectPath) {
+      router.push(redirectPath)
+    }
   }
 
   const logout = () => {

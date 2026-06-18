@@ -44,8 +44,8 @@ export default function DashboardPage() {
     fetchDashboardData()
   }, [isAuthenticated, user])
 
-  // Allow showing loading only if user is patient or authentication is loading
-  if (authLoading || (loading && !data && user?.role === 'PATIENT')) {
+  // Show spinner while auth is loading OR while waiting for role-based redirect
+  if (authLoading || (isAuthenticated && user && user.role !== 'PATIENT') || (loading && !data && user?.role === 'PATIENT')) {
     return (
       <main className="pt-40 pb-24 min-h-screen bg-[#F2F4F4] flex flex-col items-center">
         <span className="w-10 h-10 border-4 border-slate-200 border-t-primary rounded-full animate-spin mb-4" />
@@ -55,7 +55,6 @@ export default function DashboardPage() {
   }
 
   if (!isAuthenticated) return null
-  if (user?.role !== 'PATIENT') return null
 
 
   const stats = [
