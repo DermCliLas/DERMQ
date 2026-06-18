@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import Link from 'next/link'
 import { getProducts, getServices, createOrder, searchPatientByDni, searchPatients } from '@/lib/api'
 import GlassCard from '@/components/ui/GlassCard'
 
@@ -434,9 +435,21 @@ export default function PosPage() {
         
         {/* Encabezado con Configuración de IP */}
         <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-10">
-          <div>
-            <p className="text-secondary font-bold text-sm uppercase tracking-widest mb-1">POS DERMQ</p>
-            <h1 className="font-headline font-black text-4xl tracking-tighter text-[#1a1c1e]">Punto de Venta</h1>
+          <div className="flex flex-col md:flex-row md:items-end gap-6">
+            <div>
+              <p className="text-secondary font-bold text-sm uppercase tracking-widest mb-1">POS DERMQ</p>
+              <h1 className="font-headline font-black text-4xl tracking-tighter text-[#1a1c1e]">Punto de Venta</h1>
+            </div>
+            
+            <div className="flex gap-3 mb-1">
+              <Link 
+                href="/dashboard/recepcion/agenda"
+                className="bg-white hover:bg-slate-50 text-primary px-6 py-3 rounded-2xl font-bold border border-slate-200 shadow-sm transition-all flex items-center gap-2 text-sm"
+              >
+                <span className="material-symbols-outlined text-lg">calendar_month</span>
+                Ver Agenda Maestra
+              </Link>
+            </div>
           </div>
           
           {/* Configuración del IP de la Impresora */}

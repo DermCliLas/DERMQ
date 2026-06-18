@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { getAppointments, getDoctors, updateAppointmentStatus, getBranches } from '@/lib/api'
 import { format, addHours, startOfDay, eachHourOfInterval, addMinutes } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -69,11 +70,23 @@ export default function MasterAgendaPage() {
     <main className="pt-28 pb-24 bg-[#F2F4F4] min-h-screen">
       <div className="max-w-[1600px] mx-auto px-6">
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6 mb-10">
-          <div>
-            <p className="text-primary font-bold text-sm uppercase tracking-widest mb-2">Administración Clínica</p>
-            <h1 className="font-headline font-black text-4xl md:text-5xl tracking-tighter text-[#1a1c1e]">
-              Agenda Maestra
-            </h1>
+          <div className="flex flex-col md:flex-row md:items-end gap-6">
+            <div>
+              <p className="text-primary font-bold text-sm uppercase tracking-widest mb-2">Administración Clínica</p>
+              <h1 className="font-headline font-black text-4xl md:text-5xl tracking-tighter text-[#1a1c1e]">
+                Agenda Maestra
+              </h1>
+            </div>
+            
+            <div className="flex gap-3 mb-1">
+              <Link 
+                href="/dashboard/recepcion/pos"
+                className="bg-white hover:bg-slate-50 text-secondary px-6 py-3 rounded-2xl font-bold border border-slate-200 shadow-sm transition-all flex items-center gap-2 text-sm"
+              >
+                <span className="material-symbols-outlined text-lg">shopping_cart</span>
+                Ir al POS (Punto de Venta)
+              </Link>
+            </div>
           </div>
           
           <div className="flex flex-wrap gap-4 bg-white p-4 rounded-3xl shadow-sm border border-slate-100">
