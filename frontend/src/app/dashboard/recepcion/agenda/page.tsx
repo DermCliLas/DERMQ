@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { getAppointments, getDoctors, updateAppointmentStatus, getBranches, getServices, getAvailableSlots, searchPatients, createAppointment } from '@/lib/api'
+import { getAppointments, getDoctors, updateAppointmentStatus, getBranches, getServices, getAvailableSlots, searchPatients, createAppointment, registerUser } from '@/lib/api'
 import { format, addHours, startOfDay, eachHourOfInterval, addMinutes } from 'date-fns'
 import { es } from 'date-fns/locale'
 
@@ -28,8 +28,18 @@ export default function MasterAgendaPage() {
   const [bookingNotes, setBookingNotes] = useState('')
   const [availableSlots, setAvailableSlots] = useState<any[]>([])
   const [loadingSlots, setLoadingSlots] = useState(false)
-  const [submittingBooking, setSubmittingBooking] = useState(false)
   const [bookingError, setBookingError] = useState<string | null>(null)
+  const [submittingBooking, setSubmittingBooking] = useState(false)
+
+  // Form states for registering a new patient
+  const [showRegisterForm, setShowRegisterForm] = useState(false)
+  const [regFirstName, setRegFirstName] = useState('')
+  const [regLastName, setRegLastName] = useState('')
+  const [regDni, setRegDni] = useState('')
+  const [regPhone, setRegPhone] = useState('')
+  const [regEmail, setRegEmail] = useState('')
+  const [registeringError, setRegisteringError] = useState<string | null>(null)
+  const [registeringLoader, setRegisteringLoader] = useState(false)
 
   // Calendar configuration
   const HOURES = eachHourOfInterval({
@@ -136,6 +146,52 @@ export default function MasterAgendaPage() {
                aptDate.getHours() === hour.getHours() &&
                aptDate.getMinutes() < 30; // Simplification for 1 hour slots in this view
     })
+  }
+
+  const handleOpenRegisterForm = () => {
+    const query = patientQuery.trim()
+    if (/^\d+$/.test(query) && query.length <= 8) {
+      setRegDni(query)
+    } else {
+      setRegDni('')
+    }
+    setRegFirstName('')
+    setRegLastName('')
+    setRegPhone('')
+    setRegEmail('')
+    setRegisteringError(null)
+    setShowRegisterForm(true)
+  }
+
+  const handleRegisterPatient = async () => {
+    if (!regFirstName.trim() || !regLastName.trim() || !regDni.trim() || !regPhone.trim()) {
+      setRegisteringError('Nombres, Apellidos, DNI y Celular son campos obligatorios.')
+      return
+    }
+    
+    setRegisteringLoader(true)
+    setRegisteringError(null)
+
+    try {
+      const emailVal = regEmail.trim() || `${regDni.trim()}@dermq.com`
+      const passwordVal = regDni.trim()
+      const response = await registerUser({
+        firstName: regFirstName.trim(),
+        lastName: regLastName.trim(),
+        dni: regDni.trim(),
+        phone: regPhone.trim(),
+        email: emailVal,
+        password: passwordVal,
+      })
+
+      const createdUser = response.user || response
+      setSelectedPatient(createdUser)
+      setShowRegisterForm(false)
+    } catch (err: any) {
+      setRegisteringError(err.message || 'Error al registrar al paciente.')
+    } finally {
+      setRegisteringLoader(false)
+    }
   }
 
   const handleCreateAppointment = async (e: React.FormEvent) => {
@@ -341,10 +397,96 @@ export default function MasterAgendaPage() {
                     </div>
                     <button 
                       type="button" 
-                      onClick={() => { setSelectedPatient(null); setPatientQuery(''); }}
+                      onClick={() => { setSelectedPatient(null); setPatientQuery(''); setShowRegisterForm(false); }}
                       className="text-red-500 font-bold text-xs hover:underline uppercase"
                     >
                       Cambiar
+                    </button>
+                  </div>
+                ) : showRegisterForm ? (
+                  <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 space-y-4">
+                    <div className="flex justify-between items-center mb-2">
+                      <h4 className="font-bold text-xs text-slate-600 uppercase">Registrar Nuevo Paciente</h4>
+                      <button 
+                        type="button" 
+                        onClick={() => setShowRegisterForm(false)}
+                        className="text-primary font-bold text-xs hover:underline uppercase"
+                      >
+                        Volver a Buscar
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-bold text-[#1a1c1e] mb-1">Nombres *</label>
+                        <input 
+                          type="text"
+                          required
+                          className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-primary text-[#1a1c1e] font-semibold text-sm"
+                          value={regFirstName}
+                          onChange={(e) => setRegFirstName(e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-[#1a1c1e] mb-1">Apellidos *</label>
+                        <input 
+                          type="text"
+                          required
+                          className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-primary text-[#1a1c1e] font-semibold text-sm"
+                          value={regLastName}
+                          onChange={(e) => setRegLastName(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-bold text-[#1a1c1e] mb-1">DNI *</label>
+                        <input 
+                          type="text"
+                          required
+                          maxLength={8}
+                          className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-primary text-[#1a1c1e] font-mono text-sm"
+                          value={regDni}
+                          onChange={(e) => setRegDni(e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-[#1a1c1e] mb-1">Celular *</label>
+                        <input 
+                          type="text"
+                          required
+                          className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-primary text-[#1a1c1e] font-semibold text-sm"
+                          value={regPhone}
+                          onChange={(e) => setRegPhone(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-[#1a1c1e] mb-1">Correo Electrónico (Opcional)</label>
+                      <input 
+                        type="email"
+                        placeholder="ejemplo@correo.com"
+                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-primary text-[#1a1c1e] font-semibold text-sm"
+                        value={regEmail}
+                        onChange={(e) => setRegEmail(e.target.value)}
+                      />
+                    </div>
+                    {registeringError && (
+                      <p className="text-red-500 text-xs font-bold">{registeringError}</p>
+                    )}
+                    <button
+                      type="button"
+                      disabled={registeringLoader}
+                      onClick={handleRegisterPatient}
+                      className="w-full bg-primary/10 hover:bg-primary/20 text-primary font-bold py-3 rounded-xl transition-all text-xs flex items-center justify-center gap-2"
+                    >
+                      {registeringLoader ? (
+                        <span className="w-5 h-5 border-2 border-primary/40 border-t-primary rounded-full animate-spin" />
+                      ) : (
+                        <>
+                          <span className="material-symbols-outlined text-sm">person_add</span>
+                          Registrar y Seleccionar Paciente
+                        </>
+                      )}
                     </button>
                   </div>
                 ) : (
@@ -363,7 +505,7 @@ export default function MasterAgendaPage() {
                       )}
                     </div>
 
-                    {patientSuggestions.length > 0 && (
+                    {patientSuggestions.length > 0 ? (
                       <div className="absolute top-[100%] left-0 right-0 mt-2 bg-white border border-slate-200 rounded-2xl shadow-xl max-h-48 overflow-y-auto z-50">
                         {patientSuggestions.map(p => (
                           <button
@@ -377,6 +519,20 @@ export default function MasterAgendaPage() {
                           </button>
                         ))}
                       </div>
+                    ) : (
+                      patientQuery.trim().length >= 2 && !searchingPatient && (
+                        <div className="absolute top-[100%] left-0 right-0 mt-2 bg-white border border-slate-200 rounded-2xl shadow-xl p-5 z-50 text-center space-y-3">
+                          <p className="text-xs text-slate-500 font-bold">No se encontraron pacientes con "{patientQuery}".</p>
+                          <button
+                            type="button"
+                            onClick={handleOpenRegisterForm}
+                            className="bg-primary/10 hover:bg-primary/20 text-primary px-5 py-2.5 rounded-xl font-bold text-xs transition-colors inline-flex items-center gap-1"
+                          >
+                            <span className="material-symbols-outlined text-sm">person_add</span>
+                            Registrar como nuevo paciente
+                          </button>
+                        </div>
+                      )
                     )}
                   </>
                 )}
