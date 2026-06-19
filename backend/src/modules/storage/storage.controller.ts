@@ -22,18 +22,22 @@ export class StorageController {
       throw new BadRequestException('No se ha proporcionado ningún archivo en la solicitud.');
     }
     
-    // Validar el tipo de archivo (ej. solo imágenes o PDFs)
+    // Validar el tipo de archivo (ej. imágenes, PDFs o videos)
     const allowedMimeTypes = [
       'image/jpeg',
       'image/png',
       'image/gif',
       'image/webp',
       'application/pdf',
+      'video/mp4',
+      'video/webm',
+      'video/ogg',
+      'video/quicktime',
     ];
 
     if (!allowedMimeTypes.includes(file.mimetype)) {
       throw new BadRequestException(
-        `Tipo de archivo no permitido: ${file.mimetype}. Tipos válidos: JPG, PNG, GIF, WEBP, PDF.`,
+        `Tipo de archivo no permitido: ${file.mimetype}. Tipos válidos: JPG, PNG, GIF, WEBP, PDF, MP4, WEBM, OGG, MOV.`,
       );
     }
 

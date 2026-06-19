@@ -19,9 +19,37 @@ export class StorageService {
       try {
         this.supabase = createClient(url, key);
         this.logger.log('Supabase Storage service initialized successfully.');
+        this.ensureBucketExists();
       } catch (err) {
         this.logger.error('Failed to initialize Supabase Storage client:', err);
       }
+    }
+  }
+
+  /**
+   * Verifies if the bucket exists and creates it if not.
+   */
+  private async ensureBucketExists() {
+    try {
+      const { data: buckets, error: listError } = await this.supabase.storage.listBuckets();
+      if (listError) {
+        this.logger.error('Error listing buckets in Supabase:', listError);
+        return;
+      }
+      const exists = buckets?.some(b => b.name === this.bucketName);
+      if (!exists) {
+        this.logger.log(`Bucket '${this.bucketName}' not found. Creating it...`);
+        const { error: createError } = await this.supabase.storage.createBucket(this.bucketName, {
+          public: true,
+        });
+        if (createError) {
+          this.logger.error(`Failed to create bucket '${this.bucketName}':`, createError);
+        } else {
+          this.logger.log(`Bucket '${this.bucketName}' created successfully.`);
+        }
+      }
+    } catch (err) {
+      this.logger.error('Exception checking/creating bucket:', err);
     }
   }
 
