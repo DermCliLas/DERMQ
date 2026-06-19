@@ -40,9 +40,9 @@ export default function LocationSection() {
   const [content, setContent] = useState<LocationContent>(DEFAULTS)
 
   useEffect(() => {
-    getSiteContent('ubicacion')
+    getSiteContent('location')
       .then((data) => {
-        if (data) setContent({ ...DEFAULTS, ...data })
+        if (data?.data) setContent({ ...DEFAULTS, ...data.data })
       })
       .catch((err) => console.error('Error fetching Ubicacion content:', err))
   }, [])

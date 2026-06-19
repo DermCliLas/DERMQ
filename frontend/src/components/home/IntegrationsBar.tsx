@@ -25,10 +25,10 @@ export default function IntegrationsBar() {
   const [content, setContent] = useState<IntegrationsContent>(DEFAULTS)
 
   useEffect(() => {
-    getSiteContent('integraciones')
+    getSiteContent('integrations')
       .then((data) => {
-        if (data && Array.isArray(data.items)) {
-          setContent(data as IntegrationsContent)
+        if (data?.data && Array.isArray(data.data.items)) {
+          setContent(data.data as IntegrationsContent)
         }
       })
       .catch((err) => console.error('Error fetching Integraciones content:', err))

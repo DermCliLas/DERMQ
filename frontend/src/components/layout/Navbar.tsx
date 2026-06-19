@@ -47,7 +47,7 @@ export default function Navbar() {
   useEffect(() => {
     getSiteContent('navbar')
       .then((data) => {
-        if (data) setContent({ ...DEFAULTS, ...data })
+        if (data?.data) setContent({ ...DEFAULTS, ...data.data })
       })
       .catch((err) => console.error('Error fetching Navbar content:', err))
   }, [])

@@ -52,9 +52,9 @@ export default function TestimonialsSection() {
   const [content, setContent] = useState<TestimonialsContent>(DEFAULTS)
 
   useEffect(() => {
-    getSiteContent('testimonios')
+    getSiteContent('testimonials')
       .then((data) => {
-        if (data) setContent({ ...DEFAULTS, ...data })
+        if (data?.data) setContent({ ...DEFAULTS, ...data.data })
       })
       .catch((err) => console.error('Error fetching Testimonios content:', err))
   }, [])

@@ -65,7 +65,7 @@ export default function Footer() {
   useEffect(() => {
     getSiteContent('footer')
       .then((data) => {
-        if (data) setContent({ ...DEFAULTS, ...data })
+        if (data?.data) setContent({ ...DEFAULTS, ...data.data })
       })
       .catch((err) => console.error('Error fetching Footer content:', err))
   }, [])
