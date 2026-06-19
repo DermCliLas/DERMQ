@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { getSiteContent } from '@/lib/api'
 
-const SLIDES = [
+const DEFAULT_SLIDES = [
   {
     type: 'video',
     src: 'https://assets.mixkit.co/videos/preview/mixkit-medical-professional-examining-patient-skin-40090-large.mp4',
@@ -25,19 +26,32 @@ const SLIDES = [
 ]
 
 export default function HeroSection() {
+  const [slides, setSlides] = useState(DEFAULT_SLIDES)
   const [currentSlide, setCurrentSlide] = useState(0)
 
   useEffect(() => {
+    async function load() {
+      try {
+        const content = await getSiteContent('hero')
+        if (content?.data?.slides && content.data.slides.length > 0) {
+          setSlides(content.data.slides)
+        }
+      } catch { /* fallback to defaults */ }
+    }
+    load()
+  }, [])
+
+  useEffect(() => {
     const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % SLIDES.length)
+      setCurrentSlide((prev) => (prev + 1) % slides.length)
     }, 6000)
     return () => clearInterval(timer)
-  }, [])
+  }, [slides.length])
 
   return (
     <section className="relative h-screen min-h-[800px] flex items-center justify-center overflow-hidden bg-primary-container">
       {/* Carousel Backgrounds */}
-      {SLIDES.map((slide, index) => {
+      {slides.map((slide, index) => {
         const isActive = index === currentSlide
         return (
           <div
@@ -78,11 +92,11 @@ export default function HeroSection() {
         </div>
         
         <h1 className="text-6xl md:text-8xl lg:text-9xl font-headline font-black leading-none tracking-tight mb-8 drop-shadow-2xl text-white">
-          {SLIDES[currentSlide].title}
+          {slides[currentSlide]?.title}
         </h1>
         
         <p className="text-lg md:text-2xl text-white/90 font-serif italic max-w-2xl mb-12 drop-shadow-md">
-          {SLIDES[currentSlide].subtitle}
+          {slides[currentSlide]?.subtitle}
         </p>
         
         <div className="flex flex-col sm:flex-row gap-6">
@@ -103,7 +117,7 @@ export default function HeroSection() {
 
       {/* Slide Indicators */}
       <div className="absolute bottom-12 left-1/2 -translate-x-1/2 z-20 flex gap-4">
-        {SLIDES.map((_, index) => (
+        {slides.map((_, index) => (
           <button
             key={index}
             onClick={() => setCurrentSlide(index)}

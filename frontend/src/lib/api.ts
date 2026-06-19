@@ -300,5 +300,32 @@ export async function cancelOrder(orderId: string, reason: string): Promise<any>
   });
 }
 
+// ─── CMS SITE CONTENT ──────────────────────────────────────────────────────
 
+export async function getAllSiteContent(): Promise<any[]> {
+  const res = await fetchFromApi<any>('/site-content');
+  if (res && res.success && res.data) {
+    return Array.isArray(res.data) ? res.data : [];
+  }
+  return Array.isArray(res) ? res : [];
+}
+
+export async function getSiteContent(section: string): Promise<any> {
+  try {
+    const res = await fetchFromApi<any>(`/site-content/${section}`);
+    if (res && res.success && res.data) {
+      return res.data;
+    }
+    return res;
+  } catch {
+    return null;
+  }
+}
+
+export async function updateSiteContent(section: string, data: any): Promise<any> {
+  return fetchFromApi(`/site-content/${section}`, {
+    method: 'PUT',
+    body: JSON.stringify({ data }),
+  });
+}
 

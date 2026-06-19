@@ -158,6 +158,13 @@ export default function AdminDashboardPage() {
           {/* Navegación de Administración */}
           <div className="flex flex-wrap gap-3">
             <Link 
+              href="/dashboard/admin/cms"
+              className="luminous-gradient text-white px-6 py-3 rounded-2xl font-bold border border-transparent shadow-sm transition-all flex items-center gap-2 hover:scale-105 glow-on-hover"
+            >
+              <span className="material-symbols-outlined text-lg">edit_note</span>
+              Personalizar Sitio Web
+            </Link>
+            <Link 
               href="/dashboard/admin/productos"
               className="bg-white hover:bg-slate-50 text-[#1a1c1e] px-6 py-3 rounded-2xl font-bold border border-slate-200 shadow-sm transition-all flex items-center gap-2"
             >

@@ -1,8 +1,26 @@
+'use client'
+
+import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { SERVICES_DATA } from '@/data/services'
+import { getSiteContent } from '@/lib/api'
+import { SERVICES_DATA as DEFAULT_SERVICES } from '@/data/services'
 
 export default function ServicesGrid() {
+  const [services, setServices] = useState(DEFAULT_SERVICES)
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const content = await getSiteContent('services')
+        if (content?.data?.categories && content.data.categories.length > 0) {
+          setServices(content.data.categories)
+        }
+      } catch { /* fallback to defaults */ }
+    }
+    load()
+  }, [])
+
   return (
     <section className="py-32 bg-[#014d4e] relative overflow-hidden">
       {/* Background Decorative Elements */}
@@ -31,7 +49,7 @@ export default function ServicesGrid() {
 
         {/* 3 Column Vertical Grid (Premium Style) */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {SERVICES_DATA.map((service, index) => (
+          {services.map((service, index) => (
             <Link
               key={service.id}
               href={`/servicios#${service.id}`}
@@ -52,7 +70,7 @@ export default function ServicesGrid() {
               <div className="absolute inset-0 p-10 flex flex-col justify-end text-center">
                 <div className="mb-8 transform transition-transform duration-700 group-hover:-translate-y-4">
                   <h3 className="text-4xl lg:text-5xl font-headline font-bold text-white mb-6 tracking-wide leading-[1.1]">
-                    {service.name.split(' ').map((word, i) => (
+                    {service.name.split(' ').map((word: string, i: number) => (
                       <span key={i} className={i % 2 !== 0 ? 'text-tertiary italic block' : 'block'}>
                         {word}{' '}
                       </span>

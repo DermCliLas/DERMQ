@@ -18,37 +18,53 @@ const manrope = Manrope({
   display: 'swap',
 })
 
-// ─── Metadata ─────────────────────────────────────────────────────────────────
+export async function generateMetadata(): Promise<Metadata> {
+  const DEFAULTS = {
+    titleDefault: 'DERMQ — Clínica Dermatológica de Vanguardia',
+    titleTemplate: '%s | DERMQ',
+    description: 'DERMQ fusiona precisión clínica y estética avanzada para revelar tu luminosidad natural. Especialistas en dermatología clínica, estética y cirugía cutánea en Lima, Perú.',
+    keywords: 'dermatología, clínica dermatológica, estética facial, tratamientos piel, Lima, Perú, DERMQ',
+    ogTitle: 'DERMQ — Clínica Dermatológica de Vanguardia',
+    ogDescription: 'Fusionamos precisión clínica y estética avanzada para revelar tu luminosidad natural.',
+    robotsIndex: true,
+    robotsFollow: true,
+  }
 
-export const metadata: Metadata = {
-  title: {
-    default: 'DERMQ — Clínica Dermatológica de Vanguardia',
-    template: '%s | DERMQ',
-  },
-  description:
-    'DERMQ fusiona precisión clínica y estética avanzada para revelar tu luminosidad natural. Especialistas en dermatología clínica, estética y cirugía cutánea en Lima, Perú.',
-  keywords: [
-    'dermatología',
-    'clínica dermatológica',
-    'estética facial',
-    'tratamientos piel',
-    'Lima',
-    'Perú',
-    'DERMQ',
-  ],
-  openGraph: {
-    type: 'website',
-    locale: 'es_PE',
-    siteName: 'DERMQ',
-    title: 'DERMQ — Clínica Dermatológica de Vanguardia',
-    description:
-      'Fusionamos precisión clínica y estética avanzada para revelar tu luminosidad natural.',
-  },
-  robots: {
-    index: true,
-    follow: true,
-  },
-};
+  let seoData = DEFAULTS
+  try {
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1'
+    const res = await fetch(`${API_BASE_URL}/site-content/seo`, {
+      next: { revalidate: 60 }, // cache for 60 seconds
+    })
+    if (res.ok) {
+      const json = await res.json()
+      const data = json.success && json.data ? json.data : json
+      if (data) seoData = { ...DEFAULTS, ...data }
+    }
+  } catch (err) {
+    // Fallback if backend is not reachable during build time
+  }
+
+  return {
+    title: {
+      default: seoData.titleDefault,
+      template: seoData.titleTemplate,
+    },
+    description: seoData.description,
+    keywords: seoData.keywords.split(',').map((k) => k.trim()),
+    openGraph: {
+      type: 'website',
+      locale: 'es_PE',
+      siteName: 'DERMQ',
+      title: seoData.ogTitle,
+      description: seoData.ogDescription,
+    },
+    robots: {
+      index: seoData.robotsIndex,
+      follow: seoData.robotsFollow,
+    },
+  }
+}
 
 import { AuthProvider } from '@/context/AuthContext'
 import { CartProvider } from '@/context/CartContext'

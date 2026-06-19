@@ -259,3 +259,12 @@ model MedicalRecord {
   @@index([doctorId])
   @@index([createdAt])
 }
+
+// ─── CMS: Contenido editable del sitio web ─────────────────────────────────
+model SiteContent {
+  id        String   @id @default(uuid())
+  section   String   @unique // ej: "hero", "services", "about", "testimonials", "footer", etc.
+  data      Json     // Contenido flexible en JSON
+  updatedAt DateTime @updatedAt
+  updatedBy String?  // ID del admin que editó
+}

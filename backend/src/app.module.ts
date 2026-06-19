@@ -14,6 +14,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { StorageModule } from './modules/storage/storage.module';
+import { SiteContentModule } from './modules/site-content/site-content.module';
 import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from './modules/auth/guards/roles.guard';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
@@ -44,6 +45,7 @@ import { appConfig } from './config/app.config';
     ServicesModule,
     MedicalRecordsModule,
     BranchesModule,
+    SiteContentModule,
   ],
 
   providers: [

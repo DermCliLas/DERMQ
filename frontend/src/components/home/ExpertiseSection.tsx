@@ -1,8 +1,36 @@
+'use client'
+
+import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import OrganicDivider from '@/components/ui/OrganicDivider'
+import { getSiteContent } from '@/lib/api'
+
+const DEFAULTS = {
+  doctorImage: '/leyva.png',
+  title1: 'The Expertise',
+  title2: 'Behind the Glow.',
+  paragraph1: 'Founded by world-renowned dermatologists, DERMQ bridges the gap between high-level laboratory research and luxury skincare experiences.',
+  paragraph2: 'Every consultation is a journey through your skin\u0027s molecular needs, utilizing AI-driven analysis and proprietary laser technology.',
+  stat1Value: '98%', stat1Label: 'Patient Satisfaction',
+  stat2Value: '40k', stat2Label: 'Active Treatments',
+  ctaText: 'Conoce nuestro equipo', ctaHref: '/nosotros',
+  badgeValue: '15+', badgeLine1: 'Years of Clinical', badgeLine2: 'Research',
+}
 
 export default function ExpertiseSection() {
+  const [data, setData] = useState(DEFAULTS)
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const content = await getSiteContent('expertise')
+        if (content?.data) setData({ ...DEFAULTS, ...content.data })
+      } catch { /* fallback */ }
+    }
+    load()
+  }, [])
+
   return (
     <section className="py-32 bg-transparent relative z-10 overflow-hidden">
       <OrganicDivider type="slope" fill="#f8fafa" />
@@ -12,7 +40,7 @@ export default function ExpertiseSection() {
           {/* Doctor Image */}
           <div className="w-full lg:w-[65%] h-[500px] lg:h-[700px] rounded-4xl overflow-hidden relative">
             <Image
-              src="/leyva.png"
+              src={data.doctorImage}
               alt="Especialista DERMQ"
               fill
               className="object-cover hover:scale-105 transition-all duration-700"
@@ -22,20 +50,14 @@ export default function ExpertiseSection() {
           {/* Floating White Card */}
           <div className="w-full lg:w-[45%] lg:absolute lg:right-0 lg:top-1/2 lg:-translate-y-1/2 bg-[#f8fafa] rounded-4xl p-10 md:p-14 shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-white mt-[-4rem] lg:mt-0 z-10 colored-shadow-hover card-lift cursor-default">
             <h2 className="text-4xl md:text-5xl font-headline font-extrabold text-[#1a1c1e] leading-[1.1] mb-8 tracking-tight">
-              The Expertise
+              {data.title1}
               <br />
-              Behind the Glow.
+              {data.title2}
             </h2>
 
             <div className="space-y-6 text-[#52525b] font-medium leading-relaxed mb-10 text-lg">
-              <p>
-                Founded by world-renowned dermatologists, DERMQ bridges the gap between high-level
-                laboratory research and luxury skincare experiences.
-              </p>
-              <p>
-                Every consultation is a journey through your skin&apos;s molecular needs, utilizing
-                AI-driven analysis and proprietary laser technology.
-              </p>
+              <p>{data.paragraph1}</p>
+              <p>{data.paragraph2}</p>
             </div>
 
             <hr className="border-[#e4e4e7] mb-8" />
@@ -43,28 +65,28 @@ export default function ExpertiseSection() {
             <div className="flex gap-12">
               <div>
                 <span className="block text-3xl font-black text-[#02696a] font-headline mb-1">
-                  98%
+                  {data.stat1Value}
                 </span>
                 <span className="text-[10px] uppercase font-extrabold tracking-widest text-[#71717a] block">
-                  Patient Satisfaction
+                  {data.stat1Label}
                 </span>
               </div>
               <div>
                 <span className="block text-3xl font-black text-[#02696a] font-headline mb-1">
-                  40k
+                  {data.stat2Value}
                 </span>
                 <span className="text-[10px] uppercase font-extrabold tracking-widest text-[#71717a] block">
-                  Active Treatments
+                  {data.stat2Label}
                 </span>
               </div>
             </div>
 
             <div className="mt-10">
               <Link
-                href="/nosotros"
+                href={data.ctaHref}
                 className="inline-flex items-center gap-2 font-bold text-[#02696a] hover:gap-4 transition-all"
               >
-                Conoce nuestro equipo
+                {data.ctaText}
                 <span className="material-symbols-outlined">arrow_forward</span>
               </Link>
             </div>
@@ -72,11 +94,11 @@ export default function ExpertiseSection() {
 
           {/* Green Floating Badge */}
           <div className="absolute bottom-[-2rem] lg:bottom-12 left-6 lg:left-[55%] lg:-translate-x-1/2 bg-[#005c5c] text-white p-8 rounded-2xl shadow-xl z-20 w-56 transition-all duration-500 hover:-translate-y-4 hover:rotate-3 hover:shadow-2xl cursor-pointer">
-            <span className="text-4xl font-black font-headline block mb-2">15+</span>
+            <span className="text-4xl font-black font-headline block mb-2">{data.badgeValue}</span>
             <span className="text-[10px] font-extrabold uppercase tracking-widest leading-snug block text-teal-50">
-              Years of Clinical
+              {data.badgeLine1}
               <br />
-              Research
+              {data.badgeLine2}
             </span>
           </div>
         </div>

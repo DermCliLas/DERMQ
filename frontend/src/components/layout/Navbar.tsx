@@ -5,18 +5,36 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
 import { useCart } from '@/context/CartContext'
+import { getSiteContent } from '@/lib/api'
 
-const NAV_LINKS_LEFT = [
-  { label: 'Inicio', href: '/' },
-  { label: 'Nosotros', href: '/nosotros' },
-  { label: 'Servicios', href: '/servicios' },
-]
+interface NavLink {
+  label: string
+  href: string
+}
 
-const NAV_LINKS_RIGHT = [
-  { label: 'Productos', href: '/productos' },
-  { label: 'Portafolio', href: '/portafolio' },
-  { label: 'Contacto', href: '/contacto' },
-]
+interface NavbarContent {
+  logoUrl: string
+  linksLeft: NavLink[]
+  linksRight: NavLink[]
+  ctaText: string
+  ctaLink: string
+}
+
+const DEFAULTS: NavbarContent = {
+  logoUrl: '/logo.png',
+  linksLeft: [
+    { label: 'Inicio', href: '/' },
+    { label: 'Nosotros', href: '/nosotros' },
+    { label: 'Servicios', href: '/servicios' },
+  ],
+  linksRight: [
+    { label: 'Productos', href: '/productos' },
+    { label: 'Portafolio', href: '/portafolio' },
+    { label: 'Contacto', href: '/contacto' },
+  ],
+  ctaText: 'Reservar cita',
+  ctaLink: '/reservar',
+}
 
 export default function Navbar() {
   const pathname = usePathname()
@@ -24,6 +42,15 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const { isAuthenticated, logout } = useAuth()
   const { totalItems } = useCart()
+  const [content, setContent] = useState<NavbarContent>(DEFAULTS)
+
+  useEffect(() => {
+    getSiteContent('navbar')
+      .then((data) => {
+        if (data) setContent({ ...DEFAULTS, ...data })
+      })
+      .catch((err) => console.error('Error fetching Navbar content:', err))
+  }, [])
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 10)
@@ -50,9 +77,9 @@ export default function Navbar() {
 
           <div className="w-full max-w-[1400px] px-6 lg:px-12 flex items-center justify-between relative z-10">
             
-            {/* Left Links - Pushed towards the center but keeping distance from logo */}
+            {/* Left Links */}
             <div className="hidden md:flex w-1/2 items-center justify-end gap-4 lg:gap-8 pr-[75px] lg:pr-[95px]">
-              {NAV_LINKS_LEFT.map((link) => (
+              {content.linksLeft.map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
@@ -67,22 +94,22 @@ export default function Navbar() {
               ))}
             </div>
 
-            {/* Center Logo - White Circle shrinking on scroll */}
+            {/* Center Logo */}
             <div className={`flex-shrink-0 absolute left-1/2 -translate-x-1/2 z-50 transition-all duration-500 ${scrolled ? 'top-2' : 'top-4'}`}>
               <Link href="/" className="flex items-center justify-center group">
                 <div className={`bg-white rounded-full flex items-center justify-center shadow-[0_8px_30px_rgb(0,0,0,0.3)] border-[4px] border-tertiary transition-all duration-500 overflow-hidden group-hover:scale-105 ${scrolled ? 'w-[100px] h-[100px]' : 'w-[140px] h-[140px]'}`}>
                   <img 
-                    src="/logo.png" 
-                    alt="DERMQ Logo" 
+                    src={content.logoUrl || '/logo.png'} 
+                    alt="Logo" 
                     className="w-[75%] h-[75%] object-contain"
                   />
                 </div>
               </Link>
             </div>
 
-            {/* Right Links & Actions - Pushed towards the center but keeping distance from logo */}
+            {/* Right Links & Actions */}
             <div className="hidden md:flex w-1/2 items-center justify-start gap-3 lg:gap-5 pl-[75px] lg:pl-[95px]">
-              {NAV_LINKS_RIGHT.map((link) => (
+              {content.linksRight.map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
@@ -126,10 +153,10 @@ export default function Navbar() {
                 )}
 
                 <Link
-                  href="/reservar"
+                  href={content.ctaLink}
                   className="bg-tertiary text-white px-3 lg:px-6 py-2 rounded-full font-bold text-[10px] lg:text-sm hover:bg-white hover:text-primary-container transition-all flex items-center gap-1 group shadow-lg whitespace-nowrap"
                 >
-                  Reservar cita
+                  {content.ctaText}
                   <span className="material-symbols-outlined text-base lg:text-lg transition-transform group-hover:translate-x-1 hidden xl:block">chevron_right</span>
                 </Link>
               </div>
@@ -157,7 +184,7 @@ export default function Navbar() {
       {mobileOpen && (
         <div className="fixed inset-0 z-40 bg-primary-container/98 backdrop-blur-xl flex flex-col pt-32 px-8 pb-12">
           <nav className="flex flex-col gap-8 items-center flex-1">
-            {[...NAV_LINKS_LEFT, ...NAV_LINKS_RIGHT].map((link) => (
+            {[...content.linksLeft, ...content.linksRight].map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
@@ -167,10 +194,10 @@ export default function Navbar() {
               </Link>
             ))}
             <Link
-              href="/reservar"
+              href={content.ctaLink}
               className="mt-8 bg-tertiary text-white px-8 py-4 rounded-full font-bold text-xl flex items-center justify-center gap-2 w-full max-w-xs"
             >
-              Reservar cita
+              {content.ctaText}
               <span className="material-symbols-outlined">chevron_right</span>
             </Link>
           </nav>

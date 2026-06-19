@@ -1,8 +1,33 @@
+'use client'
+
+import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { getFeaturedProducts } from '@/data/products'
+import { getSiteContent } from '@/lib/api'
+
+const DEFAULTS = {
+  title: 'Tienda.',
+  subtitle: 'Selección dermatológica de grado clínico para tu tratamiento en casa.',
+  ctaText: 'Ver catálogo completo',
+  ctaLink: '/productos',
+  bannerTitle: '¿No sabes qué elegir?',
+  bannerSubtitle: 'Consulta con nuestros especialistas sobre el tratamiento ideal.',
+  bannerBtnText: 'Agendar Cita',
+  bannerBtnLink: '/reservar',
+}
 
 export default function ShopBento() {
+  const [content, setContent] = useState(DEFAULTS)
+
+  useEffect(() => {
+    getSiteContent('tienda')
+      .then((data) => {
+        if (data) setContent({ ...DEFAULTS, ...data })
+      })
+      .catch((err) => console.error('Error fetching Tienda content:', err))
+  }, [])
+
   const featuredProducts = getFeaturedProducts().slice(0, 3);
   const mainProduct = featuredProducts[0];
   const secondaryProducts = featuredProducts.slice(1);
@@ -13,16 +38,16 @@ export default function ShopBento() {
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-end mb-20 gap-8">
           <div>
-            <h2 className="text-5xl font-headline font-extrabold tracking-tight">Tienda.</h2>
+            <h2 className="text-5xl font-headline font-extrabold tracking-tight">{content.title}</h2>
             <p className="text-on-surface-variant text-xl mt-4 max-w-md">
-              Selección dermatológica de grado clínico para tu tratamiento en casa.
+              {content.subtitle}
             </p>
           </div>
           <Link
-            href="/productos"
+            href={content.ctaLink}
             className="flex items-center gap-3 font-bold text-primary group"
           >
-            Ver catálogo completo
+            {content.ctaText}
             <span className="material-symbols-outlined group-hover:translate-x-2 transition-transform">
               trending_flat
             </span>
@@ -101,16 +126,16 @@ export default function ShopBento() {
             style={{ backgroundColor: '#02696a' }}
           >
             <div className="relative z-10 flex-1">
-              <h3 className="text-2xl font-bold mb-2 italic">¿No sabes qué elegir?</h3>
+              <h3 className="text-2xl font-bold mb-2 italic">{content.bannerTitle}</h3>
               <p className="text-white/80 text-sm mb-4">
-                Consulta con nuestros especialistas sobre el tratamiento ideal.
+                {content.bannerSubtitle}
               </p>
               <Link
-                href="/reservar"
+                href={content.bannerBtnLink}
                 className="bg-white px-6 py-3 rounded-full font-bold text-sm hover:scale-105 transition-all inline-block"
                 style={{ color: '#02696a' }}
               >
-                Agendar Cita
+                {content.bannerBtnText}
               </Link>
             </div>
             <div className="relative z-10 w-24 h-24 bg-white/20 rounded-full flex items-center justify-center">
