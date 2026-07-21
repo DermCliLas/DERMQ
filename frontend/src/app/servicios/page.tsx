@@ -26,7 +26,7 @@ export default function ServiciosPage() {
   return (
     <main className="bg-[#f8fafa]">
       {/* Dynamic Carousel Hero - Full Screen to Top */}
-      <section className="relative h-[90vh] min-h-[700px] overflow-hidden bg-black">
+      <section className="relative h-[90vh] min-h-[700px] overflow-hidden bg-black rounded-b-[4rem] lg:rounded-b-[6rem] z-40 shadow-[0_20px_50px_rgba(0,0,0,0.2)]">
         <AnimatePresence mode="wait">
           <motion.div
             key={activeSlide}
@@ -136,20 +136,19 @@ export default function ServiciosPage() {
             ? 'bg-white text-[#014d4e] hover:bg-[#014d4e] hover:text-white' 
             : 'bg-[#014d4e] text-white hover:bg-[#F0A17E] hover:text-white';
 
+        const sectionZIndex = isGreen ? 'z-30' : isLight ? 'z-20' : 'z-10';
+        const sectionShadow = isGreen 
+          ? 'shadow-[0_20px_50px_rgba(0,0,0,0.25)]' 
+          : isLight 
+            ? 'shadow-[0_20px_50px_rgba(0,0,0,0.08)]' 
+            : 'shadow-[0_20px_50px_rgba(0,0,0,0.15)]';
+
         return (
           <section
             key={cat.id}
             id={cat.id}
-            className={`py-32 relative overflow-hidden transition-colors duration-500 ${sectionBg}`}
+            className={`pt-48 pb-32 -mt-24 relative overflow-hidden transition-colors duration-500 rounded-b-[4rem] lg:rounded-b-[6rem] ${sectionZIndex} ${sectionShadow} ${sectionBg}`}
           >
-            {/* Smooth Gradient Transition from Previous Section */}
-            {idx === 1 && (
-              <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-[#014d4e] to-transparent z-0 pointer-events-none" />
-            )}
-            {idx === 2 && (
-              <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-[#f8fafa] to-transparent z-0 pointer-events-none" />
-            )}
-
             {/* Background Texture for Light Section */}
             {isLight && (
               <div className="absolute inset-0 opacity-5 pointer-events-none" style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/cubes.png")' }} />

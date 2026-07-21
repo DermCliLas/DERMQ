@@ -34,6 +34,21 @@ body {
   overflow-x: hidden;
 }
 
+/* Global dot pattern texture overlay */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.045;
+  background-image: url("https://www.transparenttextures.com/patterns/carbon-fibre.png");
+  background-repeat: repeat;
+}
+
 ::selection {
   background-color: #72c1c1;
   color: #004e4f;

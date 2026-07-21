@@ -75,29 +75,12 @@ export default function Navbar() {
           {/* Subtle Background Pattern */}
           <div className="absolute inset-0 opacity-5 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '24px 24px' }}></div>
 
-          <div className="w-full max-w-[1400px] px-6 lg:px-12 flex items-center justify-between relative z-10">
+          <div className="w-full max-w-[1400px] px-6 lg:px-12 flex items-center justify-between relative z-10 gap-4 lg:gap-8">
             
-            {/* Left Links */}
-            <div className="hidden md:flex w-1/2 items-center justify-end gap-4 lg:gap-8 pr-[75px] lg:pr-[95px]">
-              {content.linksLeft.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={`text-sm lg:text-base transition-colors whitespace-nowrap ${
-                    pathname === link.href
-                      ? 'text-tertiary font-bold'
-                      : 'text-white hover:text-tertiary font-medium'
-                  }`}
-                >
-                  {link.label}
-                </Link>
-              ))}
-            </div>
-
-            {/* Center Logo */}
-            <div className={`flex-shrink-0 absolute left-1/2 -translate-x-1/2 z-50 transition-all duration-500 ${scrolled ? 'top-2' : 'top-4'}`}>
+            {/* Left Logo */}
+            <div className={`flex-shrink-0 z-50 transition-all duration-500`}>
               <Link href="/" className="flex items-center justify-center group">
-                <div className={`bg-white rounded-full flex items-center justify-center shadow-[0_8px_30px_rgb(0,0,0,0.3)] border-[4px] border-tertiary transition-all duration-500 overflow-hidden group-hover:scale-105 ${scrolled ? 'w-[100px] h-[100px]' : 'w-[140px] h-[140px]'}`}>
+                <div className={`bg-white rounded-full flex items-center justify-center shadow-[0_4px_20px_rgb(0,0,0,0.15)] border-[3px] border-tertiary transition-all duration-500 overflow-hidden group-hover:scale-105 ${scrolled ? 'w-[70px] h-[70px]' : 'w-[90px] h-[90px]'}`}>
                   <img 
                     src={content.logoUrl || '/logo.png'} 
                     alt="Logo" 
@@ -107,9 +90,9 @@ export default function Navbar() {
               </Link>
             </div>
 
-            {/* Right Links & Actions */}
-            <div className="hidden md:flex w-1/2 items-center justify-start gap-3 lg:gap-5 pl-[75px] lg:pl-[95px]">
-              {content.linksRight.map((link) => (
+            {/* Center Links */}
+            <div className="hidden md:flex flex-1 items-center justify-center gap-4 lg:gap-8">
+              {[...content.linksLeft, ...content.linksRight].map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
@@ -122,8 +105,11 @@ export default function Navbar() {
                   {link.label}
                 </Link>
               ))}
+            </div>
 
-              <div className="flex items-center gap-2 lg:gap-4 ml-auto border-l border-white/20 pl-3 lg:pl-5">
+            {/* Right Actions */}
+            <div className="hidden md:flex flex-shrink-0 items-center justify-end gap-3 lg:gap-5">
+              <div className="flex items-center gap-2 lg:gap-4 pl-3 lg:pl-5">
                 <Link
                   href="/carrito"
                   className="relative text-white hover:text-tertiary transition-colors"

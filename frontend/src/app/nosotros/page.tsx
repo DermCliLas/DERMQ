@@ -124,11 +124,11 @@ export default function NosotrosPage() {
         </div>
       </section>
 
-      {/* ── DRA. LEYVA — Púrpura Oscuro #484360 ── */}
-      <section id="directora" className="relative pt-48 pb-32 -mt-24 overflow-hidden rounded-b-[4rem] lg:rounded-b-[6rem] z-30 shadow-[0_20px_50px_rgba(0,0,0,0.15)]" style={{ background: '#484360' }}>
+      {/* ── DRA. LEYVA — Color Hueso #FDF7E4 ── */}
+      <section id="directora" className="relative pt-48 pb-32 -mt-24 overflow-hidden rounded-b-[4rem] lg:rounded-b-[6rem] z-30 shadow-[0_20px_50px_rgba(0,0,0,0.08)]" style={{ background: '#FDF7E4' }}>
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <div className="absolute top-0 right-0 w-[600px] h-[600px] rounded-full blur-[130px]" style={{ background: 'rgba(183,176,211,0.25)', transform: 'translate(25%,-25%)' }} />
-          <div className="absolute bottom-0 left-0 w-[500px] h-[500px] rounded-full blur-[130px]" style={{ background: 'rgba(114,193,193,0.15)', transform: 'translate(-25%,25%)' }} />
+          <div className="absolute top-0 right-0 w-[600px] h-[600px] rounded-full blur-[130px]" style={{ background: 'rgba(183,176,211,0.15)', transform: 'translate(25%,-25%)' }} />
+          <div className="absolute bottom-0 left-0 w-[500px] h-[500px] rounded-full blur-[130px]" style={{ background: 'rgba(114,193,193,0.1)', transform: 'translate(-25%,25%)' }} />
         </div>
 
         <div className="max-w-7xl mx-auto px-6 relative z-10">
@@ -143,33 +143,18 @@ export default function NosotrosPage() {
               className="relative"
             >
               <div
-                className="absolute -inset-4 rounded-[5rem] blur-xl"
-                style={{ background: 'linear-gradient(135deg, rgba(114,193,193,0.4), rgba(183,176,211,0.3), rgba(240,161,126,0.3))' }}
-              />
-              <div
                 className="relative w-full aspect-[4/5] rounded-[4rem] overflow-hidden"
-                style={{ border: '4px solid rgba(114,193,193,0.6)', boxShadow: '0 40px 80px rgba(0,0,0,0.4)' }}
+                style={{ border: '4px solid #ffffff', boxShadow: '0 40px 80px rgba(0,0,0,0.15)' }}
               >
                 <Image src="/leyva.png" alt="Dra. Marcela Leyva" fill className="object-cover object-center" />
                 <div
                   className="absolute bottom-0 left-0 right-0 p-10 pt-24"
-                  style={{ background: 'linear-gradient(to top, #484360 0%, transparent 100%)' }}
+                  style={{ background: 'linear-gradient(to top, #02696a 0%, transparent 100%)' }}
                 >
                   <h3 className="text-3xl font-headline font-black text-white mb-1">Dra. Marcela Leyva</h3>
                   <p className="font-bold uppercase tracking-widest text-sm" style={{ color: '#72C1C1' }}>Directora Médica · Fundadora</p>
                 </div>
               </div>
-
-              {/* Floating badge */}
-              <motion.div
-                animate={{ y: [-6, 6, -6] }}
-                transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-                className="absolute -bottom-6 -right-6 font-black text-center px-6 py-4 rounded-3xl shadow-xl"
-                style={{ background: '#F0A17E', color: '#5c3320' }}
-              >
-                <div className="text-3xl font-headline">15+</div>
-                <div className="text-xs uppercase tracking-wider">Años activos</div>
-              </motion.div>
             </motion.div>
 
             {/* Contenido */}
@@ -179,51 +164,51 @@ export default function NosotrosPage() {
               viewport={{ once: true }}
               transition={{ duration: 0.8 }}
             >
-              <h2 className="text-5xl font-headline font-black tracking-tight mb-8 text-white leading-[1.1]">
+              <h2 className="text-5xl font-headline font-black tracking-tight mb-8 leading-[1.1]" style={{ color: '#02696A' }}>
                 Transformando vidas,<br />
-                <span style={{ color: '#72C1C1' }}>un diagnóstico</span><br />
+                <span style={{ color: '#8C4E31' }}>un diagnóstico</span><br />
                 a la vez.
               </h2>
 
               <blockquote
-                className="p-6 rounded-3xl mb-8 italic text-white text-lg font-medium leading-relaxed"
-                style={{ background: 'rgba(255,255,255,0.1)', borderLeft: '4px solid #B7B0D3' }}
+                className="p-6 rounded-3xl mb-8 italic text-lg font-medium leading-relaxed text-on-surface"
+                style={{ background: 'rgba(2, 105, 106, 0.05)', borderLeft: '4px solid #02696a' }}
               >
                 "Mi visión al fundar DERMQ fue crear un espacio donde la excelencia médica se encontrara con la empatía genuina. No solo tratamos pieles — restauramos la confianza."
               </blockquote>
 
-              <p className="text-lg leading-relaxed mb-8" style={{ color: 'rgba(255,255,255,0.85)' }}>
+              <p className="text-lg leading-relaxed mb-8 text-on-surface-variant">
                 La Dra. Marcela Leyva Sartori es una destacada especialista en dermatología clínica y estética avanzada. Formada en la Universidad Nacional Mayor de San Marcos (UNMSM), ha complementado su práctica profesional con credenciales avanzadas en Inmunología de Harvard Medical School (HMX Fundamentals & Pro).
               </p>
 
               {/* Highlights del CV */}
               <div className="mb-10 space-y-4">
                 <div className="flex items-start gap-4">
-                  <span className="material-symbols-outlined mt-1" style={{ color: '#72C1C1' }}>school</span>
+                  <span className="material-symbols-outlined mt-1" style={{ color: '#02696a' }}>school</span>
                   <div>
-                    <h4 className="text-white font-bold text-sm">Formación y Residencia</h4>
-                    <p className="text-xs" style={{ color: 'rgba(255,255,255,0.65)' }}>Especialidad en Dermatología por la UNMSM, sede Hospital Nacional Daniel Alcides Carrión.</p>
+                    <h4 className="text-on-surface font-extrabold text-sm">Formación y Residencia</h4>
+                    <p className="text-xs text-on-surface-variant/80">Especialidad en Dermatología por la UNMSM, sede Hospital Nacional Daniel Alcides Carrión.</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-4">
-                  <span className="material-symbols-outlined mt-1" style={{ color: '#72C1C1' }}>workspace_premium</span>
+                  <span className="material-symbols-outlined mt-1" style={{ color: '#02696a' }}>workspace_premium</span>
                   <div>
-                    <h4 className="text-white font-bold text-sm">Harvard Medical School HMX</h4>
-                    <p className="text-xs" style={{ color: 'rgba(255,255,255,0.65)' }}>Certificada en Immunology y Pro Immunology (Terapias biológicas para inflamación crónica y autoinmunidad).</p>
+                    <h4 className="text-on-surface font-extrabold text-sm">Harvard Medical School HMX</h4>
+                    <p className="text-xs text-on-surface-variant/80">Certificada en Immunology y Pro Immunology (Terapias biológicas para inflamación crónica y autoinmunidad).</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-4">
-                  <span className="material-symbols-outlined mt-1" style={{ color: '#72C1C1' }}>groups</span>
+                  <span className="material-symbols-outlined mt-1" style={{ color: '#02696a' }}>groups</span>
                   <div>
-                    <h4 className="text-white font-bold text-sm">Liderazgo Médico</h4>
-                    <p className="text-xs" style={{ color: 'rgba(255,255,255,0.65)' }}>Ex-Vicepresidenta de la Sociedad Peruana de Dermatología (2019-2020) y ex-miembro directivo de Círculo Dermatológico del Perú.</p>
+                    <h4 className="text-on-surface font-extrabold text-sm">Liderazgo Médico</h4>
+                    <p className="text-xs text-on-surface-variant/80">Ex-Vicepresidenta de la Sociedad Peruana de Dermatología (2019-2020) y ex-miembro directivo de Círculo Dermatológico del Perú.</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-4">
-                  <span className="material-symbols-outlined mt-1" style={{ color: '#72C1C1' }}>medical_information</span>
+                  <span className="material-symbols-outlined mt-1" style={{ color: '#02696a' }}>medical_information</span>
                   <div>
-                    <h4 className="text-white font-bold text-sm">Trayectoria Clínica</h4>
-                    <p className="text-xs" style={{ color: 'rgba(255,255,255,0.65)' }}>Dermatóloga Asistente en la Clínica SANNA San Borja, ex-dermatóloga de Jockey Salud y Hospital San José del Callao.</p>
+                    <h4 className="text-on-surface font-extrabold text-sm">Trayectoria Clínica</h4>
+                    <p className="text-xs text-on-surface-variant/80">Dermatóloga Asistente en la Clínica SANNA San Borja, ex-dermatóloga de Jockey Salud y Hospital San José del Callao.</p>
                   </div>
                 </div>
               </div>
@@ -234,7 +219,7 @@ export default function NosotrosPage() {
                   <div
                     key={c.org}
                     className="flex items-center gap-3 rounded-2xl p-4 transition-all"
-                    style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)' }}
+                    style={{ background: 'rgba(2, 105, 106, 0.03)', border: '1px solid rgba(2, 105, 106, 0.08)' }}
                   >
                     <span
                       className="w-10 h-10 rounded-xl flex items-center justify-center font-black text-xs shrink-0"
@@ -242,7 +227,7 @@ export default function NosotrosPage() {
                     >
                       {c.org}
                     </span>
-                    <p className="text-xs font-semibold leading-tight" style={{ color: 'rgba(255,255,255,0.85)' }}>{c.name}</p>
+                    <p className="text-xs font-bold leading-tight text-on-surface-variant">{c.name}</p>
                   </div>
                 ))}
               </div>
