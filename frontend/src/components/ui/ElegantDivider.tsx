@@ -12,7 +12,7 @@ export default function ElegantDivider({
   toBg = '#faf8f5' 
 }: ElegantDividerProps) {
   // Animation variants
-  const lineVariants = {
+  const lineVariants: any = {
     hidden: { scaleX: 0, opacity: 0 },
     visible: { 
       scaleX: 1, 
@@ -21,7 +21,7 @@ export default function ElegantDivider({
     }
   }
 
-  const centerVariants = {
+  const centerVariants: any = {
     hidden: { opacity: 0, scale: 0.6 },
     visible: { 
       opacity: 1, 
@@ -35,7 +35,7 @@ export default function ElegantDivider({
     }
   }
 
-  const dotVariants = (direction: 'left' | 'right') => ({
+  const dotVariants = (direction: 'left' | 'right'): any => ({
     hidden: { x: direction === 'left' ? 20 : -20, opacity: 0 },
     visible: { 
       x: 0, 
@@ -90,7 +90,7 @@ export default function ElegantDivider({
             whileHover={{ 
               rotate: 135,
               scale: 1.1,
-              transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] }
+              transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] as any }
             }}
             className="relative w-7 h-7 flex items-center justify-center cursor-pointer transform rotate-45 group"
           >

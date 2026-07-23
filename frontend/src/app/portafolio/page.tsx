@@ -68,9 +68,7 @@ const FILTERS = ['Todos', 'Clínica', 'Estética']
 
 const STATS = [
   { value: '2,400+', label: 'Casos Tratados', icon: 'groups' },
-  { value: '98%', label: 'Satisfacción', icon: 'verified' },
-  { value: '15+', label: 'Procedimientos', icon: 'medical_services' },
-  { value: '4.9 ★', label: 'Valoración Google', icon: 'grade' },
+  { value: '15+', label: 'Procedimientos Especializados', icon: 'medical_services' },
 ]
 
 export default function PortafolioPage() {
@@ -154,20 +152,12 @@ export default function PortafolioPage() {
                   className="object-cover"
                 />
               </div>
-              <motion.div
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ delay: 0.8, duration: 0.5 }}
-                className="absolute top-[35%] left-[40%] z-40 bg-white rounded-3xl px-6 py-5 shadow-2xl"
-              >
-                <span className="text-3xl font-headline font-black text-[#014d4e] block">98%</span>
-                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Satisfacción</span>
-              </motion.div>
+
             </motion.div>
           </div>
 
           {/* Stats bar */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 relative z-10 -mb-8 md:-mb-10">
+          <div className="grid grid-cols-2 gap-4 max-w-2xl mx-auto relative z-10 -mb-8 md:-mb-10">
             {STATS.map((stat, idx) => (
               <motion.div
                 key={stat.label}
