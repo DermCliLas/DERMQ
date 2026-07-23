@@ -117,23 +117,23 @@ export default function ServiciosPage() {
         let sectionBg = '';
         if (isGreen) sectionBg = 'bg-[#014d4e] text-white';
         else if (isLight) sectionBg = 'bg-[#f8fafa] text-[#014d4e]';
-        else if (isSalmon) sectionBg = 'bg-[#F0A17E] text-[#014d4e]';
+        else if (isSalmon) sectionBg = 'bg-[#F5EDE0] text-[#014d4e]';
 
-        const dividerBg = isGreen ? 'bg-[#F0A17E]' : isSalmon ? 'bg-white' : 'bg-[#014d4e]';
+        const dividerBg = isGreen ? 'bg-[#F0A17E]' : isSalmon ? 'bg-[#02696a]' : 'bg-[#014d4e]';
         const cardBg = isGreen 
           ? 'bg-white/5 border-white/10 hover:bg-white/10' 
           : isSalmon 
-            ? 'bg-white/30 border-white/40 hover:bg-white/50' 
+            ? 'bg-[#fffdf8] border-[#02696a]/15 hover:bg-white' 
             : 'bg-white border-[#014d4e]/10 hover:border-[#014d4e]/30 shadow-sm';
             
         const titleColor = isGreen ? 'text-white' : 'text-[#014d4e]';
-        const numberColor = isSalmon ? 'text-white' : 'text-[#F0A17E]';
-        const descriptionOpacity = isGreen ? 'text-white/80' : isSalmon ? 'text-[#014d4e]/80' : 'text-on-surface-variant';
+        const numberColor = isSalmon ? 'text-[#02696a]' : 'text-[#F0A17E]';
+        const descriptionOpacity = isGreen ? 'text-white/80' : isSalmon ? 'text-[#014d4e]/75' : 'text-on-surface-variant';
         
         const btnStyle = isGreen 
           ? 'bg-[#F0A17E] text-white hover:bg-white hover:text-[#F0A17E]' 
           : isSalmon 
-            ? 'bg-white text-[#014d4e] hover:bg-[#014d4e] hover:text-white' 
+            ? 'bg-[#014d4e] text-white hover:bg-[#02696a] hover:text-white' 
             : 'bg-[#014d4e] text-white hover:bg-[#F0A17E] hover:text-white';
 
         const sectionZIndex = isGreen ? 'z-30' : isLight ? 'z-20' : 'z-10';
@@ -160,12 +160,12 @@ export default function ServiciosPage() {
                 {/* Text Content */}
                 <div className="lg:w-1/2 flex flex-col z-20 py-10">
                   <div className={`w-20 h-20 rounded-3xl flex items-center justify-center mb-10 shadow-2xl border border-white/20 transform rotate-3 ${
-                    isGreen ? 'bg-tertiary/20 text-tertiary' : isSalmon ? 'bg-white/30 text-white' : 'bg-[#014d4e]/10 text-[#014d4e]'
-                  }`}>
-                    <span className="material-symbols-outlined text-5xl">
-                      {isGreen ? 'clinical_notes' : isSalmon ? 'auto_awesome' : 'medical_services'}
-                    </span>
-                  </div>
+                    isGreen ? 'bg-tertiary/20 text-tertiary' : isSalmon ? 'bg-[#014d4e]/10 text-[#014d4e]' : 'bg-[#014d4e]/10 text-[#014d4e]'
+                    }`}>
+                      <span className="material-symbols-outlined text-5xl">
+                        {isGreen ? 'clinical_notes' : isSalmon ? 'auto_awesome' : 'medical_services'}
+                      </span>
+                    </div>
                   
                   <div className="mb-12">
                     <h2 className={`text-4xl md:text-5xl md:text-7xl font-headline font-extrabold tracking-tighter mb-8 leading-none ${titleColor}`}>
@@ -193,7 +193,7 @@ export default function ServiciosPage() {
                             <h4 className={`text-xl font-bold tracking-wide mb-2 ${titleColor}`}>
                               {service.name}
                             </h4>
-                            <p className={`text-base leading-relaxed ${isGreen ? 'text-white/70' : isSalmon ? 'text-[#014d4e]/80' : 'text-on-surface-variant/80'}`}>
+                            <p className={`text-base leading-relaxed ${isGreen ? 'text-white/70' : isSalmon ? 'text-[#014d4e]/70' : 'text-on-surface-variant/80'}`}>
                               {service.description}
                             </p>
                           </div>
