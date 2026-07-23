@@ -69,7 +69,7 @@ export default function ShopBento() {
             <span className="text-tertiary font-headline font-black tracking-[0.45em] uppercase text-[10px] block mb-4">
               Cuidado en Casa
             </span>
-            <h2 className="text-5xl md:text-7xl font-headline font-black tracking-tight text-primary-container uppercase leading-none">
+            <h2 className="text-4xl sm:text-5xl md:text-7xl font-headline font-black tracking-tight text-primary-container uppercase leading-none">
               Boutique <span className="font-serif italic font-light text-tertiary lowercase">dermocosmética</span>
             </h2>
             <p className="text-on-surface-variant/75 text-lg md:text-xl mt-6 max-w-xl font-serif italic leading-relaxed">
@@ -89,7 +89,7 @@ export default function ShopBento() {
 
         {/* Bento Grid */}
         <motion.div 
-          className="grid grid-cols-1 md:grid-cols-4 md:grid-rows-2 gap-8 md:h-[760px]"
+          className="grid grid-cols-1 md:grid-cols-4 md:grid-rows-2 gap-6 md:gap-8 md:h-[760px]"
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
@@ -99,7 +99,7 @@ export default function ShopBento() {
           {mainProduct && (
             <motion.div 
               variants={cardVariants}
-              className="md:col-span-2 md:row-span-2 bg-white/70 backdrop-blur-md rounded-5xl p-12 flex flex-col justify-between shadow-[0_24px_70px_rgba(2,105,106,0.06)] border border-white hover:shadow-[0_30px_90px_rgba(2,105,106,0.12)] transition-all duration-500 group cursor-pointer border-b-4 hover:border-b-tertiary relative overflow-hidden"
+              className="md:col-span-2 md:row-span-2 bg-white/70 backdrop-blur-md rounded-4xl md:rounded-5xl p-8 md:p-12 flex flex-col justify-between shadow-[0_24px_70px_rgba(2,105,106,0.06)] border border-white hover:shadow-[0_30px_90px_rgba(2,105,106,0.12)] transition-all duration-500 group cursor-pointer border-b-4 hover:border-b-tertiary relative overflow-hidden"
             >
               <div className="absolute top-0 right-0 w-64 h-64 bg-tertiary/5 rounded-full blur-3xl -mr-20 -mt-20 group-hover:bg-tertiary/10 transition-colors duration-700" />
               
@@ -141,7 +141,7 @@ export default function ShopBento() {
             <motion.div
               key={product.id}
               variants={cardVariants}
-              className="md:col-span-1 bg-white/90 backdrop-blur-xl border border-white rounded-5xl p-8 flex flex-col justify-between shadow-[0_20px_50px_rgba(0,0,0,0.015)] hover:shadow-[0_32px_80px_rgba(140,78,49,0.06)] hover:border-tertiary/20 transition-all duration-700 group min-h-[340px] cursor-pointer relative overflow-hidden"
+              className="md:col-span-1 bg-white/90 backdrop-blur-xl border border-white rounded-4xl md:rounded-5xl p-6 md:p-8 flex flex-col justify-between shadow-[0_20px_50px_rgba(0,0,0,0.015)] hover:shadow-[0_32px_80px_rgba(140,78,49,0.06)] hover:border-tertiary/20 transition-all duration-700 group min-h-[280px] md:min-h-[340px] cursor-pointer relative overflow-hidden"
             >
               <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-2xl -mr-10 -mt-10 group-hover:bg-primary/10 transition-colors" />
 
@@ -182,7 +182,7 @@ export default function ShopBento() {
           {/* CTA Banner (Luxury Velvet Editorial) */}
           <motion.div 
             variants={cardVariants}
-            className="md:col-span-2 text-white rounded-5xl p-12 flex flex-col md:flex-row items-center gap-8 overflow-hidden relative group shadow-[0_24px_70px_rgba(2,105,106,0.06)] hover:shadow-[0_32px_90px_rgba(2,105,106,0.16)] transition-all duration-700 hover:-translate-y-1.5 cursor-pointer bg-gradient-to-br from-[#002122] via-[#02696a] to-[#3a3550]"
+            className="md:col-span-2 text-white rounded-4xl md:rounded-5xl p-8 md:p-12 flex flex-col md:flex-row items-center gap-6 md:gap-8 overflow-hidden relative group shadow-[0_24px_70px_rgba(2,105,106,0.06)] hover:shadow-[0_32px_90px_rgba(2,105,106,0.16)] transition-all duration-700 hover:-translate-y-1.5 cursor-pointer bg-gradient-to-br from-[#002122] via-[#02696a] to-[#3a3550]"
           >
             <div className="relative z-10 flex-1">
               <span className="text-[9px] uppercase font-black tracking-[0.25em] text-tertiary bg-white/5 border border-white/10 px-4 py-1.5 rounded-full inline-block mb-5">

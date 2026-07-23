@@ -94,7 +94,7 @@ export default function ServicesGrid() {
           <span className="text-tertiary font-headline font-bold tracking-[0.4em] uppercase text-xs block mb-6 px-4 py-1.5 border border-tertiary/30 rounded-full">
             Excelencia Médica
           </span>
-          <h2 className="text-5xl md:text-7xl lg:text-8xl font-headline font-black tracking-tight text-white mb-8 leading-none">
+          <h2 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-headline font-black tracking-tight text-white mb-8 leading-none">
             Especialidades <br />
             <span className="italic font-serif font-light text-tertiary">de Vanguardia</span>
           </h2>
@@ -120,7 +120,7 @@ export default function ServicesGrid() {
             >
               <Link
                 href={`/servicios#${service.id}`}
-                className={`relative h-[650px] rounded-3xl overflow-hidden block border border-white/10 ${getBorderColor(service.id)} transition-all duration-700 ${getGlowColor(service.id)} transform hover:-translate-y-2 shadow-2xl`}
+                className={`relative h-[420px] md:h-[650px] rounded-3xl overflow-hidden block border border-white/10 ${getBorderColor(service.id)} transition-all duration-700 ${getGlowColor(service.id)} transform hover:-translate-y-2 shadow-2xl`}
               >
                 <Image
                   src={service.imageUrl}
@@ -134,7 +134,7 @@ export default function ServicesGrid() {
                 <div className="absolute inset-0 border-[1px] border-white/10 m-5 rounded-2xl transition-all duration-700 group-hover:border-white/20 pointer-events-none" />
                 
                 {/* Content */}
-                <div className="absolute inset-0 p-10 flex flex-col justify-end text-center z-10">
+                <div className="absolute inset-0 p-6 md:p-10 flex flex-col justify-end text-center z-10">
                   <div className="mb-6 transform transition-transform duration-700 group-hover:-translate-y-3">
                     <span className={`inline-block px-3 py-1 text-[10px] uppercase font-bold tracking-widest rounded-full border mb-4 ${getBadgeColor(service.id)}`}>
                       {service.id.replace('-', ' ')}

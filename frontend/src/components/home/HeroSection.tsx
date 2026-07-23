@@ -97,7 +97,7 @@ export default function HeroSection() {
   }, [currentSlide, slides.length, videoDuration, slides])
 
   return (
-    <section className="relative h-screen min-h-[800px] flex items-center overflow-hidden bg-primary-container">
+    <section className="relative h-screen min-h-[600px] flex items-center overflow-hidden bg-primary-container">
       {/* Carousel Backgrounds */}
       {slides.map((slide, index) => {
         const isActive = index === currentSlide
@@ -136,7 +136,7 @@ export default function HeroSection() {
       })}
 
       {/* Content Container (Left-aligned, mimicking Catedral de Lima layout) */}
-      <div className="relative z-20 max-w-7xl mx-auto px-6 lg:px-12 w-full flex items-center justify-start h-full pt-20">
+      <div className="relative z-20 max-w-7xl mx-auto px-6 lg:px-12 w-full flex items-center justify-start h-full pt-16 md:pt-20">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentSlide}
@@ -150,7 +150,7 @@ export default function HeroSection() {
               Bienvenidos a la
             </span>
 
-            <h1 className="text-5xl md:text-7xl lg:text-8xl font-headline font-black leading-tight tracking-tight mb-4 text-white">
+            <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-headline font-black leading-tight tracking-tight mb-4 text-white">
               {slides[currentSlide]?.title}
             </h1>
 
@@ -172,7 +172,7 @@ export default function HeroSection() {
       </div>
 
       {/* Slide Indicators */}
-      <div className="absolute bottom-12 right-12 z-20 flex gap-3">
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 md:left-auto md:translate-x-0 md:right-12 md:bottom-12 z-20 flex gap-3">
         {slides.map((_, index) => (
           <button
             key={index}

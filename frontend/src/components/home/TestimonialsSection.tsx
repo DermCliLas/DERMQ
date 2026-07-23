@@ -91,7 +91,7 @@ export default function TestimonialsSection() {
     <section className="py-32 bg-[#F2F4F4] overflow-hidden relative">
       <div className="max-w-7xl mx-auto px-6">
         <motion.div 
-          className="grid grid-cols-12 gap-12 items-center"
+          className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center"
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
@@ -99,7 +99,7 @@ export default function TestimonialsSection() {
         >
           {/* Left: Image + Testimonial */}
           <motion.div 
-            className="col-span-12 lg:col-span-5 relative"
+            className="col-span-12 lg:col-span-5 relative pb-20 sm:pb-24 lg:pb-0"
             variants={leftVariants}
           >
             <div className="aspect-square bg-slate-100 rounded-[3.5rem] overflow-hidden shadow-premium border-4 border-white">
@@ -114,7 +114,7 @@ export default function TestimonialsSection() {
             
             {/* Absolute Testimonial bubble */}
             <motion.div 
-              className="absolute -bottom-8 -right-4 md:-right-8 glass-card-white border border-white/60 text-[#1a1c1e] p-8 md:p-10 rounded-[2.5rem] shadow-2xl max-w-sm"
+              className="absolute -bottom-16 left-4 right-4 sm:left-auto sm:-bottom-8 sm:-right-4 md:-right-8 glass-card-white border border-white/60 text-[#1a1c1e] p-6 md:p-8 lg:p-10 rounded-[2rem] lg:rounded-[2.5rem] shadow-2xl max-w-full sm:max-w-sm"
               initial={{ scale: 0.9, opacity: 0 }}
               whileInView={{ scale: 1, opacity: 1 }}
               viewport={{ once: true }}
@@ -135,7 +135,7 @@ export default function TestimonialsSection() {
 
           {/* Right: Trust Points */}
           <motion.div 
-            className="col-span-12 lg:col-span-6 lg:col-start-8 space-y-12"
+            className="col-span-12 lg:col-span-6 lg:col-start-8 space-y-8 lg:space-y-12"
             variants={rightVariants}
           >
             <span className="text-primary font-headline font-bold tracking-[0.4em] uppercase text-xs block mb-4">

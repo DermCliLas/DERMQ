@@ -42,7 +42,7 @@ export default function ExpertiseSection() {
           
           {/* Doctor Image Block */}
           <motion.div 
-            className="w-full lg:w-[65%] h-[500px] lg:h-[700px] rounded-5xl overflow-hidden relative shadow-premium border-4 border-white"
+            className="w-full lg:w-[65%] h-[350px] sm:h-[450px] lg:h-[700px] rounded-3xl lg:rounded-5xl overflow-hidden relative shadow-premium border-4 border-white"
             initial={{ opacity: 0, scale: 0.95 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
@@ -60,7 +60,7 @@ export default function ExpertiseSection() {
 
           {/* Floating White Card */}
           <motion.div 
-            className="w-full lg:w-[45%] lg:absolute lg:right-0 lg:top-1/2 lg:-translate-y-1/2 glass-card-white rounded-5xl p-10 md:p-14 shadow-premium mt-[-4rem] lg:mt-0 z-10 cursor-default"
+            className="w-full lg:w-[45%] lg:absolute lg:right-0 lg:top-1/2 lg:-translate-y-1/2 glass-card-white rounded-3xl lg:rounded-5xl p-8 md:p-14 shadow-premium mt-6 lg:mt-0 z-10 cursor-default"
             initial={{ opacity: 0, x: 50 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
@@ -111,7 +111,7 @@ export default function ExpertiseSection() {
 
           {/* Green Floating Badge */}
           <motion.div 
-            className="absolute bottom-[-2rem] lg:bottom-12 left-6 lg:left-[55%] lg:-translate-x-1/2 bg-[#005c5c] text-white p-8 rounded-3xl shadow-2xl z-20 w-56 cursor-pointer"
+            className="absolute bottom-2 lg:bottom-12 left-6 lg:left-[55%] lg:-translate-x-1/2 bg-[#005c5c] text-white p-6 lg:p-8 rounded-3xl shadow-2xl z-20 w-44 lg:w-56 cursor-pointer"
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}

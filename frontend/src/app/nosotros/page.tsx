@@ -75,7 +75,7 @@ export default function NosotrosPage() {
                 Quiénes Somos
               </span>
 
-              <h1 className="text-7xl md:text-[5.5rem] font-headline font-black tracking-tighter text-white mb-8 leading-[0.92]">
+              <h1 className="text-5xl sm:text-7xl md:text-[5.5rem] font-headline font-black tracking-tighter text-white mb-8 leading-[0.92]">
                 La ciencia<br />
                 <span style={{ color: '#72C1C1' }}>que cuida</span><br />
                 tu piel.
@@ -254,7 +254,7 @@ export default function NosotrosPage() {
             >
               Nuestros Pilares
             </span>
-            <h2 className="text-6xl font-headline font-black tracking-tighter mb-5" style={{ color: '#02696A' }}>
+            <h2 className="text-4xl sm:text-6xl font-headline font-black tracking-tighter mb-5" style={{ color: '#02696A' }}>
               Lo que nos <em style={{ color: '#8C4E31' }}>define.</em>
             </h2>
             <p className="text-xl max-w-2xl mx-auto font-medium" style={{ color: 'rgba(26,28,30,0.6)' }}>
@@ -312,7 +312,7 @@ export default function NosotrosPage() {
             >
               Historia
             </span>
-            <h2 className="text-6xl font-headline font-black tracking-tighter text-white mb-4">
+            <h2 className="text-4xl sm:text-6xl font-headline font-black tracking-tighter text-white mb-4">
               Nuestra <em style={{ color: '#F0A17E' }}>Trayectoria.</em>
             </h2>
             <p className="text-xl font-medium" style={{ color: 'rgba(255,255,255,0.65)' }}>15 años construyendo confianza.</p>
@@ -329,11 +329,11 @@ export default function NosotrosPage() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: index * 0.15 }}
-                  className={`flex items-center gap-10 ${index % 2 === 0 ? 'flex-row' : 'flex-row-reverse'}`}
+                  className={`flex items-center gap-6 md:gap-10 ${index % 2 === 0 ? 'flex-col sm:flex-row' : 'flex-col sm:flex-row-reverse'}`}
                 >
                   <div className="flex-1">
                     <div
-                      className={`rounded-3xl p-8 transition-all ${index % 2 === 0 ? 'text-right' : 'text-left'}`}
+                      className={`rounded-3xl p-6 md:p-8 transition-all w-full ${index % 2 === 0 ? 'sm:text-right text-left' : 'text-left'}`}
                       style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)' }}
                     >
                       <span

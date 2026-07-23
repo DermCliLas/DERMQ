@@ -48,7 +48,7 @@ export default function LocationSection() {
   }, [])
 
   return (
-    <section className="relative py-32 overflow-hidden bg-white">
+    <section className="relative py-16 md:py-32 overflow-hidden bg-white">
       <div className="max-w-7xl mx-auto px-6 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           
@@ -114,7 +114,7 @@ export default function LocationSection() {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] as any }}
-            className="relative h-[550px] rounded-[3.5rem] overflow-hidden shadow-premium group border-4 border-white"
+            className="relative h-[350px] md:h-[550px] rounded-[2rem] md:rounded-[3.5rem] overflow-hidden shadow-premium group border-4 border-white"
           >
             <iframe 
               src={content.mapIframeUrl} 

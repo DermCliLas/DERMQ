@@ -26,7 +26,7 @@ export default function ServiciosPage() {
   return (
     <main className="bg-[#f8fafa]">
       {/* Dynamic Carousel Hero - Full Screen to Top */}
-      <section className="relative h-[90vh] min-h-[700px] overflow-hidden bg-black rounded-b-[4rem] lg:rounded-b-[6rem] z-40 shadow-[0_20px_50px_rgba(0,0,0,0.2)]">
+      <section className="relative h-[80vh] min-h-[500px] md:h-[90vh] md:min-h-[700px] overflow-hidden bg-black rounded-b-[2rem] md:rounded-b-[4rem] lg:rounded-b-[6rem] z-40 shadow-[0_20px_50px_rgba(0,0,0,0.2)]">
         <AnimatePresence mode="wait">
           <motion.div
             key={activeSlide}
@@ -64,7 +64,7 @@ export default function ServiciosPage() {
                 </span>
               </div>
               
-              <h1 className="text-5xl md:text-7xl lg:text-[5rem] font-headline font-black tracking-tighter text-white mb-8 leading-[1.05]">
+              <h1 className="text-3xl sm:text-5xl md:text-7xl lg:text-[5rem] font-headline font-black tracking-tighter text-white mb-6 md:mb-8 leading-[1.05]">
                 {SERVICES_DATA[activeSlide].name.split(' ').map((word, i) => {
                   const isHighlight = word.toLowerCase() === 'láser' || word.toLowerCase() === 'estética' || word.toLowerCase() === 'quirúrgica';
                   return (
@@ -168,7 +168,7 @@ export default function ServiciosPage() {
                   </div>
                   
                   <div className="mb-12">
-                    <h2 className={`text-5xl md:text-7xl font-headline font-extrabold tracking-tighter mb-8 leading-none ${titleColor}`}>
+                    <h2 className={`text-4xl md:text-5xl md:text-7xl font-headline font-extrabold tracking-tighter mb-8 leading-none ${titleColor}`}>
                       {cat.name}
                     </h2>
                     <div className={`h-[4px] w-24 mb-10 ${dividerBg}`} />

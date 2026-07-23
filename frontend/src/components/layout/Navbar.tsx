@@ -70,7 +70,7 @@ export default function Navbar() {
         }`}
       >
         {/* Main Navbar Bar */}
-        <nav className={`w-full relative flex items-center justify-center transition-all duration-500 ${scrolled ? 'h-[75px]' : 'h-[105px]'}`}>
+        <nav className={`w-full relative flex items-center justify-center transition-all duration-500 ${scrolled ? 'h-[64px] md:h-[75px]' : 'h-[80px] md:h-[105px]'}`}>
           
           {/* Subtle Background Pattern */}
           <div className="absolute inset-0 opacity-5 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '24px 24px' }}></div>
@@ -80,7 +80,7 @@ export default function Navbar() {
             {/* Left Logo */}
             <div className={`flex-shrink-0 z-50 transition-all duration-500`}>
               <Link href="/" className="flex items-center justify-center group">
-                <div className={`bg-white rounded-full flex items-center justify-center shadow-[0_4px_20px_rgb(0,0,0,0.15)] border-[3px] border-tertiary transition-all duration-500 overflow-hidden group-hover:scale-105 ${scrolled ? 'w-[70px] h-[70px]' : 'w-[90px] h-[90px]'}`}>
+                <div className={`bg-white rounded-full flex items-center justify-center shadow-[0_4px_20px_rgb(0,0,0,0.15)] border-[3px] border-tertiary transition-all duration-500 overflow-hidden group-hover:scale-105 ${scrolled ? 'w-[56px] h-[56px] md:w-[70px] md:h-[70px]' : 'w-[70px] h-[70px] md:w-[90px] md:h-[90px]'}`}>
                   <img 
                     src={content.logoUrl || '/logo.png'} 
                     alt="Logo" 
@@ -164,7 +164,7 @@ export default function Navbar() {
       </div>
 
       {/* Spacer to prevent content from going under the navbar since it's fixed */}
-      <div className="h-[105px] w-full" style={{ background: '#02696a' }} />
+      <div className="h-[80px] md:h-[105px] w-full" style={{ background: '#02696a' }} />
 
       {/* Mobile Menu */}
       {mobileOpen && (
