@@ -58,7 +58,7 @@ export default function ContactoPage() {
               <span className="inline-block px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold uppercase tracking-widest mb-8">
                 Estamos aquí
               </span>
-              <h1 className="text-5xl md:text-7xl font-headline font-extrabold tracking-tighter text-[#1a1c1e] mb-8 leading-[1.05]">
+              <h1 className="text-4xl sm:text-5xl md:text-7xl font-headline font-extrabold tracking-tighter text-[#1a1c1e] mb-8 leading-[1.05]">
                 Hablemos de{' '}
                 <span className="text-primary italic">tu piel.</span>
               </h1>
@@ -109,7 +109,7 @@ export default function ContactoPage() {
             </div>
 
             {/* Right Form */}
-            <div className="bg-white rounded-4xl p-10 shadow-xl border border-slate-100">
+            <div className="bg-white rounded-3xl md:rounded-4xl p-6 md:p-10 shadow-xl border border-slate-100">
               {submitted ? (
                 // Success state
                 <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -133,7 +133,7 @@ export default function ContactoPage() {
                     Envíanos un mensaje
                   </h2>
                   <form className="space-y-5" onSubmit={handleSubmit}>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Nombre</label>
                         <input

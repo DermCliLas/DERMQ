@@ -124,7 +124,7 @@ export default function ReservarPaso1() {
   }
 
   return (
-    <main className="pt-40 pb-24 relative overflow-hidden bg-surface-container-lowest min-h-screen">
+    <main className="pt-24 md:pt-40 pb-24 relative overflow-hidden bg-surface-container-lowest min-h-screen">
       {/* Ambient blurs */}
       <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[150px] pointer-events-none soft-float" />
       <div className="absolute bottom-10 left-10 w-[400px] h-[400px] bg-secondary-fixed/20 rounded-full blur-[100px] pointer-events-none soft-float-delayed" />
@@ -135,7 +135,7 @@ export default function ReservarPaso1() {
           <span className="inline-block px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold uppercase tracking-widest mb-6">
             Concierge Dermatológico
           </span>
-          <h1 className="font-headline font-black text-6xl md:text-7xl tracking-tighter text-[#1a1c1e] mb-6 leading-tight">
+          <h1 className="font-headline font-black text-4xl sm:text-5xl md:text-6xl lg:text-7xl tracking-tighter text-[#1a1c1e] mb-6 leading-tight">
             Agenda tu{' '}
             <span className="italic text-primary">Experiencia.</span>
           </h1>
@@ -224,7 +224,7 @@ export default function ReservarPaso1() {
                           <button
                             key={svc.id}
                             onClick={() => handleServiceSelect(svc)}
-                            className={`w-full text-left flex items-center justify-between p-6 rounded-2xl border-2 transition-all ${
+                            className={`w-full text-left flex flex-col sm:flex-row items-start sm:items-center sm:justify-between gap-3 p-5 md:p-6 rounded-2xl border-2 transition-all ${
                               isSelected
                                 ? 'border-primary bg-[#f2fcfc]'
                                 : 'border-transparent bg-slate-50 hover:border-primary/30'

@@ -74,7 +74,7 @@ export default function ProductosPage() {
               <span className="inline-block px-4 py-1.5 rounded-full bg-[#014d4e]/10 border border-[#014d4e]/20 text-[#014d4e] text-xs font-bold uppercase tracking-widest mb-6">
                 DERMQ Shop
               </span>
-              <h1 className="text-5xl md:text-7xl font-headline font-extrabold tracking-tighter text-[#1a1c1e] leading-[1.05]">
+              <h1 className="text-4xl sm:text-5xl md:text-7xl font-headline font-extrabold tracking-tighter text-[#1a1c1e] leading-[1.05]">
                 Cuida tu piel,{' '}
                 <span className="text-[#F0A17E] italic">cada día.</span>
               </h1>
@@ -102,7 +102,7 @@ export default function ProductosPage() {
               
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className={`flex items-center gap-2 px-8 py-4 rounded-2xl font-bold transition-all ${
+                className={`w-full md:w-auto flex items-center justify-center gap-2 px-8 py-4 rounded-2xl font-bold transition-all ${
                   showFilters || selectedCategory
                     ? 'bg-[#014d4e] text-white shadow-lg' 
                     : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
@@ -166,9 +166,9 @@ export default function ProductosPage() {
               <p className="font-semibold text-lg">No hay productos disponibles para esa búsqueda.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8">
               {filteredProducts.map(product => (
-                <div key={product.id} className="bg-white border border-slate-100 rounded-4xl p-8 group cursor-pointer hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 flex flex-col relative overflow-hidden">
+                <div key={product.id} className="bg-white border border-slate-100 rounded-3xl md:rounded-4xl p-5 md:p-8 group cursor-pointer hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 flex flex-col relative overflow-hidden">
                   <span className="self-start bg-[#014d4e]/10 text-[#014d4e] px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest mb-4">
                     {product.code}
                   </span>

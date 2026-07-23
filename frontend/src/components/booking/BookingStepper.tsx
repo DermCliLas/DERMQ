@@ -18,7 +18,7 @@ export default function BookingStepper({ currentStep }: BookingStepperProps) {
   const pathname = usePathname()
 
   return (
-    <div className="grid grid-cols-4 gap-4 md:gap-8 mb-20 max-w-4xl mx-auto md:mx-0 relative">
+    <div className="grid grid-cols-4 gap-2 md:gap-8 mb-12 md:mb-20 max-w-4xl mx-auto md:mx-0 relative">
       <div className="absolute bottom-0 left-0 w-full h-[3px] bg-slate-100" />
 
       {STEPS.map((step, index) => {
@@ -38,14 +38,14 @@ export default function BookingStepper({ currentStep }: BookingStepperProps) {
             } ${isClickable ? 'cursor-pointer' : 'cursor-default'}`}
           >
             <span
-              className={`block text-[10px] font-black uppercase tracking-[0.2em] mb-2 transition-colors ${
+              className={`hidden sm:block text-[10px] font-black uppercase tracking-[0.2em] mb-2 transition-colors ${
                 isActive ? 'text-primary' : isCompleted ? 'text-primary/70' : 'text-slate-400'
               }`}
             >
               Paso {step.number}
             </span>
             <span
-              className={`font-headline font-extrabold text-lg transition-colors ${
+              className={`font-headline font-extrabold text-sm md:text-lg transition-colors ${
                 isActive ? 'text-primary' : isCompleted ? 'text-slate-600' : 'text-slate-400'
               }`}
             >
