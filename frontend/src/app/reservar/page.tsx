@@ -62,8 +62,16 @@ export default function ReservarPaso1() {
     async function loadServices() {
       try {
         setIsLoading(true)
+        setError(null)
         const response = await getServices()
-        const fetchedServices = response.data
+        const fetchedServices = Array.isArray(response)
+          ? response
+          : (Array.isArray(response?.data) ? response.data : [])
+
+        if (fetchedServices.length === 0) {
+          setCategories(CATEGORIES)
+          return
+        }
 
         // Group by category
         const categoryMap = new Map<string, ServiceCategoryOption>()
@@ -92,9 +100,14 @@ export default function ReservarPaso1() {
           })
         }
 
-        setCategories(Array.from(categoryMap.values()))
+        if (categoryMap.size > 0) {
+          setCategories(Array.from(categoryMap.values()))
+        } else {
+          setCategories(CATEGORIES)
+        }
       } catch (err: any) {
-        setError(err.message || 'Error cargando los servicios')
+        console.warn('Could not fetch services from API, using default catalog:', err)
+        setCategories(CATEGORIES)
       } finally {
         setIsLoading(false)
       }

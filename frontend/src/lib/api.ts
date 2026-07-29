@@ -40,6 +40,9 @@ export async function fetchFromApi<T>(endpoint: string, options?: RequestInit): 
 export async function getServices() {
   const res = await fetchFromApi<any>('/services?active=true&limit=250');
   if (res && res.success && res.data) {
+    return Array.isArray(res.data.data) ? res.data.data : res.data;
+  }
+  if (res && Array.isArray(res.data)) {
     return res.data;
   }
   return res;
