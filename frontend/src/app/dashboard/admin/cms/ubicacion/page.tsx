@@ -8,7 +8,7 @@ const DEFAULTS = {
   badge: 'Ubicación Primaria',
   title1: 'Encuéntranos en',
   title2: 'San Isidro.',
-  address: 'Av. Camino Real 1234, Piso 4\nSan Isidro, Lima - Perú',
+  address: 'Av. José Gálvez Barrenechea 127, Oficina 604\nSan Isidro, Lima - Perú',
   schedule: 'Lunes a Viernes: 9:00 AM — 7:00 PM\nSábados: 9:00 AM — 1:00 PM',
   parking: 'Contamos con valet parking gratuito para todos nuestros pacientes.',
   mapsEmbedUrl: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3901.325997233827!2d-77.0371!3d-12.0964!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x9105c8695029c049%3A0xc3c5092a95c490a!2sAv.%20Camino%20Real%201234%2C%20San%20Isidro%2015073!5e0!3m2!1ses-419!2spe!4v1700000000000!5m2!1ses-419!2spe',

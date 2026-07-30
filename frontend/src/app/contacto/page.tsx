@@ -4,15 +4,15 @@ import { useState } from 'react'
 import Link from 'next/link'
 
 const CONTACT_INFO = [
-  { icon: 'location_on', title: 'Sede Principal', value: 'Av. Camino Real 1234, San Isidro, Lima.', color: 'bg-primary/10 text-primary', href: 'https://maps.google.com' },
-  { icon: 'call', title: 'Teléfono', value: '+51 1 234 5678', color: 'bg-primary/10 text-primary', href: 'tel:+5112345678' },
-  { icon: 'mail', title: 'Correo', value: 'hola@dermq.pe', color: 'bg-secondary/10 text-secondary', href: 'mailto:hola@dermq.pe' },
+  { icon: 'location_on', title: 'Sede Principal', value: 'Av. José Gálvez Barrenechea 127, Oficina 604, San Isidro, Lima.', color: 'bg-primary/10 text-primary', href: 'https://www.google.com/maps/search/?api=1&query=Av.+Jos%C3%A9+G%C3%A1lvez+Barrenechea+127%2C+San+Isidro' },
+  { icon: 'call', title: 'Teléfono', value: '+51 996 235 890', color: 'bg-primary/10 text-primary', href: 'tel:+51996235890' },
+  { icon: 'mail', title: 'Correo', value: 'dclaserconsultorio@gmail.com', color: 'bg-secondary/10 text-secondary', href: 'mailto:dclaserconsultorio@gmail.com' },
   { icon: 'schedule', title: 'Horario', value: 'Lun–Vie: 8am–7pm · Sáb: 9am–1pm', color: 'bg-tertiary/10 text-tertiary', href: null },
 ]
 
 const SOCIALS = [
   { icon: 'camera_alt', label: 'Instagram', href: '#', color: 'hover:bg-pink-50 hover:text-pink-600' },
-  { icon: 'chat', label: 'WhatsApp', href: '#', color: 'hover:bg-green-50 hover:text-green-600' },
+  { icon: 'chat', label: 'WhatsApp', href: 'https://wa.me/51996235890', color: 'hover:bg-green-50 hover:text-green-600' },
   { icon: 'public', label: 'Facebook', href: '#', color: 'hover:bg-blue-50 hover:text-blue-600' },
 ]
 

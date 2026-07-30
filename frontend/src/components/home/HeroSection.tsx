@@ -9,7 +9,7 @@ const DEFAULT_SLIDES = [
   {
     type: 'video',
     src: 'https://gsyvzfkkqiucaeinyddc.supabase.co/storage/v1/object/public/dermq/clinic_intro.mp4',
-    title: 'Clínica DERMQ',
+    title: 'Dermatología Clínica y Láser',
     subtitle: 'La cúspide de la excelencia dermatológica y estética.',
   },
   {

@@ -15,43 +15,21 @@ const pool = new Pool({ connectionString });
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter } as any);
 
-// Mapeador de imágenes ficticias estéticas según el nombre del producto para conservar el diseño premium
+// Mapeador de imágenes estéticas según el nombre del producto
 function getProductImageUrl(name: string): string {
   const lowercaseName = name.toLowerCase();
-  if (lowercaseName.includes('gel')) {
+  if (lowercaseName.includes('serum') || lowercaseName.includes('concentrate') || lowercaseName.includes('sérum') || lowercaseName.includes('solución') || lowercaseName.includes('fluid')) {
     return '/product_serum.png';
-  } else if (lowercaseName.includes('solución') || lowercaseName.includes('loción') || lowercaseName.includes('fco')) {
-    return '/product_serum.png';
-  } else if (lowercaseName.includes('caps') || lowercaseName.includes('cápsulas')) {
+  } else if (lowercaseName.includes('caps') || lowercaseName.includes('cápsulas') || lowercaseName.includes('comprimidos')) {
     return '/product_capsules.png';
-  } else if (lowercaseName.includes('talco')) {
-    return '/product_serum.png';
-  } else if (lowercaseName.includes('espuma') || lowercaseName.includes('shampoo') || lowercaseName.includes('capilar')) {
+  } else if (lowercaseName.includes('espuma') || lowercaseName.includes('shampoo') || lowercaseName.includes('champu') || lowercaseName.includes('spray')) {
     return '/product_hair.png';
-  } else if (lowercaseName.includes('ungüento') || lowercaseName.includes('crema')) {
-    return '/product_tube.png';
   }
-  return '/product_tube.png'; // Fallback
-}
-
-// Asignar categoría comercial estética para productos
-function getProductCategory(name: string): string {
-  const lowercaseName = name.toLowerCase();
-  if (lowercaseName.includes('retinoico')) return 'Renovadores Celulares';
-  if (lowercaseName.includes('benzoilo') || lowercaseName.includes('acné')) return 'Anti-Acné';
-  if (lowercaseName.includes('hidroquinona') || lowercaseName.includes('despigmentante')) return 'Despigmentantes';
-  if (lowercaseName.includes('láctico') || lowercaseName.includes('salicílico') || lowercaseName.includes('urea')) return 'Queratolíticos';
-  if (lowercaseName.includes('clobetasol') || lowercaseName.includes('triamcinolona')) return 'Corticoides';
-  if (lowercaseName.includes('aluminio')) return 'Astringentes';
-  if (lowercaseName.includes('eritromicina')) return 'Antibióticos';
-  if (lowercaseName.includes('econazol')) return 'Antimicóticos';
-  if (lowercaseName.includes('minoxidil')) return 'Tratamiento Capilar';
-  if (lowercaseName.includes('anestesia') || lowercaseName.includes('lidocaina')) return 'Anestésicos';
-  return 'Cuidado Dermatológico'; // Categoria default
+  return '/product_tube.png';
 }
 
 async function main() {
-  console.log('--- 🚀 Iniciando Proceso de Seed Completo (Excel + Mocks Clínicos) ---');
+  console.log('--- 🚀 Iniciando Proceso de Seed Completo (Catálogo Comercial DC LASER) ---');
 
   // 1. Asegurar Sede Principal
   console.log('1. Creando Sede Principal...');
@@ -60,183 +38,113 @@ async function main() {
     update: {},
     create: {
       id: 'sede-principal-id',
-      name: 'DERMQ Sede Principal - Lima',
-      address: 'Av. Javier Prado Este 1234, San Isidro',
+      name: 'DERMQ - Sede Principal Surco',
+      address: 'Av. José Gálvez Barrenechea 127, Oficina 604, San Isidro, Lima',
+      phone: '+51 996 235 890',
       city: 'Lima',
-      phone: '01-4445566',
+      isActive: true,
     },
   });
 
-  // 2. Asegurar Usuario Administrador
-  console.log('2. Creando Usuario Administrador...');
-  const salt = await bcrypt.genSalt(10);
-  const passwordHash = await bcrypt.hash('dermq2026', salt);
-  
+  // 2. Crear Usuarios (Admin y Médico)
+  console.log('2. Creando Usuarios por Defecto...');
+  const adminPasswordHash = await bcrypt.hash('admin123', 10);
+  const doctorPasswordHash = await bcrypt.hash('doctor123', 10);
+
   await prisma.user.upsert({
-    where: { email: 'admin@dermq.com' },
+    where: { email: 'admin@dermq.pe' },
     update: {},
     create: {
-      email: 'admin@dermq.com',
-      password: passwordHash,
-      firstName: 'Admin',
-      lastName: 'DermQ',
+      email: 'admin@dermq.pe',
+      password: adminPasswordHash,
+      firstName: 'Administrador',
+      lastName: 'DERMQ',
       role: Role.ADMIN,
+      phone: '+51 999 888 777',
     },
   });
 
-  // 2.5. Asegurar Usuario Recepcionista
-  console.log('2.5. Creando Usuario Recepcionista...');
-  const receptionPasswordHash = await bcrypt.hash('recepcion2026', salt);
-  
   await prisma.user.upsert({
-    where: { email: 'recepcion@dermq.com' },
+    where: { email: 'dra.leyva@dermq.pe' },
     update: {},
     create: {
-      email: 'recepcion@dermq.com',
-      password: receptionPasswordHash,
-      firstName: 'Recepción',
-      lastName: 'DermQ',
-      role: Role.RECEPTION,
-      branches: {
-        connect: { id: branchPrincipal.id }
-      }
-    },
-  });
-
-  // 3. Crear Médicos Especialistas
-  console.log('3. Creando Médicos Especialistas...');
-  const doctorPassword = await bcrypt.hash('123456', salt);
-
-  // Asegurar que solo exista la Dra. Marcela Leyva (eliminando otros doctores de prueba de base de datos)
-  await prisma.user.deleteMany({
-    where: {
-      email: {
-        in: ['doctora.ana@dermq.com', 'marcela.leyva@dermq.com']
-      }
-    }
-  });
-
-  // Doctora 1 (Marcela Leyva)
-  const docMarcela = await prisma.user.upsert({
-    where: { email: 'dermatologiaclinicaylasersac@gmail.com' },
-    update: {
-      specialty: 'Dermatología Clínica e Inyectables',
-      bio: 'Especialista en rejuvenecimiento facial, modelado con ácido hialurónico y patologías cutáneas complejas. Directora Médica y Fundadora de DERMQ, con certificaciones de Harvard Medical School (HMX) y ex-Vicepresidenta de la Sociedad Peruana de Dermatología.',
-      avatarUrl: '/leyva.png', // Su avatar personalizado
-    },
-    create: {
-      email: 'dermatologiaclinicaylasersac@gmail.com',
-      password: doctorPassword,
-      firstName: 'Marcela',
+      email: 'dra.leyva@dermq.pe',
+      password: doctorPasswordHash,
+      firstName: 'Dra. Vanessa',
       lastName: 'Leyva',
       role: Role.DOCTOR,
-      specialty: 'Dermatología Clínica e Inyectables',
-      bio: 'Especialista en rejuvenecimiento facial, modelado con ácido hialurónico y patologías cutáneas complejas. Directora Médica y Fundadora de DERMQ, con certificaciones de Harvard Medical School (HMX) y ex-Vicepresidenta de la Sociedad Peruana de Dermatología.',
-      avatarUrl: '/leyva.png',
-      branches: {
-        connect: { id: branchPrincipal.id }
-      }
+      phone: '+51 999 111 222',
+      specialty: 'Dermatología Médica y Estética',
     },
   });
 
-  // 4. Asegurar Categorías y Servicios Clínicos
-  console.log('4. Creando Categorías y Servicios Clínicos...');
-  
-  // Categoría 1: Clínica
-  const catClinica = await prisma.category.upsert({
-    where: { id: 'CLINICA' },
-    update: {
-      name: 'Clínica',
-      description: 'Tratamientos médicos para patologías de la piel, pelo y uñas.',
-    },
-    create: {
-      id: 'CLINICA',
-      name: 'Clínica',
-      description: 'Tratamientos médicos para patologías de la piel, pelo y uñas.',
-    },
-  });
-
-  const serviciosClinicos = [
-    { id: 'c1', name: 'Consulta Dermatológica General', description: '45 min • Primera consulta y evaluación de lunares', price: 120, durationMin: 45 },
-    { id: 'c2', name: 'Diagnóstico por Dermatoscopia', description: '60 min • Análisis digital avanzado de nevus y lunares', price: 180, durationMin: 60 },
-    { id: 'c3', name: 'Tratamiento de Acné Clínico', description: '45 min • Protocolo anti-acné personalizado e infiltraciones', price: 150, durationMin: 45 },
-  ];
-
-  for (const s of serviciosClinicos) {
-    await prisma.service.upsert({
-      where: { id: s.id },
-      update: {
-        name: s.name,
-        description: s.description,
-        price: s.price,
-        durationMin: s.durationMin,
-        categoryId: catClinica.id,
-      },
-      create: {
-        id: s.id,
-        name: s.name,
-        description: s.description,
-        price: s.price,
-        durationMin: s.durationMin,
-        categoryId: catClinica.id,
-      },
-    });
-  }
-
-  // Categoría 2: Estética
+  // 3. Crear Categorías de Servicios
+  console.log('3. Creando Categorías de Servicios...');
   const catEstetica = await prisma.category.upsert({
-    where: { id: 'ESTETICA' },
-    update: {
-      name: 'Estética',
-      description: 'Rejuvenecimiento y cuidado avanzado de la piel facial y corporal.',
-    },
+    where: { id: 'cat-estetica' },
+    update: { name: 'Dermatología Estética' },
     create: {
-      id: 'ESTETICA',
-      name: 'Estética',
-      description: 'Rejuvenecimiento y cuidado avanzado de la piel facial y corporal.',
+      id: 'cat-estetica',
+      name: 'Dermatología Estética',
+      description: 'Tratamientos faciales y corporales de rejuvenecimiento y cuidado avanzado.',
     },
   });
 
+  const catClinica = await prisma.category.upsert({
+    where: { id: 'cat-clinica' },
+    update: { name: 'Dermatología Clínica' },
+    create: {
+      id: 'cat-clinica',
+      name: 'Dermatología Clínica',
+      description: 'Consultas especializadas, diagnóstico de patologías de la piel, pelo y uñas.',
+    },
+  });
+
+  const catQuirurgica = await prisma.category.upsert({
+    where: { id: 'cat-quirurgica' },
+    update: { name: 'Dermatología Quirúrgica' },
+    create: {
+      id: 'cat-quirurgica',
+      name: 'Dermatología Quirúrgica',
+      description: 'Procedimientos quirúrgicos menores, extirpación de lesiones y criocirugía.',
+    },
+  });
+
+  // 4. Crear Servicios Dermatológicos
+  console.log('4. Creando Servicios Dermatológicos...');
   const serviciosEsteticos = [
-    { id: 'e1', name: 'Limpieza Facial Profunda con Hidratación', description: '60 min • Tecnología DERMQ Pure de extracción e hidratación', price: 85, durationMin: 60 },
-    { id: 'e2', name: 'Peeling Químico Revitalizante', description: '45 min • Renovación celular completa y luminosidad', price: 120, durationMin: 45 },
-    { id: 'e3', name: 'Terapia de Luz LED (Skin Glow)', description: '30 min • Protocolo anti-inflamatorio y regenerador', price: 65, durationMin: 30 },
+    { id: 'est-1', name: 'Limpieza Facial Profunda con Armónico', description: '60 min • Higiene cutánea profunda, extracción de impurezas, peeling ultrasónico y fototerapia LED', price: 180, durationMin: 60 },
+    { id: 'est-2', name: 'Peeling Químico Médico', description: '45 min • Renovación celular con ácidos médicos (glicólico, mandélico, salicílico o TCA)', price: 250, durationMin: 45 },
+    { id: 'est-3', name: 'Hydrafacial / Microdermoabrasión', description: '50 min • Exfoliación profunda con puntas de diamante e infusión de sueros antioxidantes', price: 280, durationMin: 50 },
+    { id: 'est-4', name: 'Toxina Botulínica (Bótox)', description: '30 min • Atenuación de arrugas de expresión (frente, entrecejo y patas de gallo)', price: 650, durationMin: 30 },
+    { id: 'est-5', name: 'Relleno con Ácido Hialurónico', description: '45 min • Volumetría labial, surcos nasogenianos o perfilado mandibular', price: 950, durationMin: 45 },
+    { id: 'est-6', name: 'Dermapen / Microneedling', description: '60 min • Inducción percutánea de colágeno con factores de crecimiento e infusión de activos', price: 320, durationMin: 60 },
+    { id: 'est-7', name: 'Luz Pulsada Intensa (IPL) Facial', description: '45 min • Rejuvenecimiento, atenuación de manchas solares y rojeces/rosácea', price: 380, durationMin: 45 },
+    { id: 'est-8', name: 'Láser CO2 Fraccionado (Rostro Completo)', description: '90 min • Rejuvenecimiento ablativo profundo, cicatrices de acné y firmeza cutánea', price: 1200, durationMin: 90 },
   ];
 
   for (const s of serviciosEsteticos) {
     await prisma.service.upsert({
       where: { id: s.id },
-      update: {
-        name: s.name,
-        description: s.description,
-        price: s.price,
-        durationMin: s.durationMin,
-        categoryId: catEstetica.id,
-      },
-      create: {
-        id: s.id,
-        name: s.name,
-        description: s.description,
-        price: s.price,
-        durationMin: s.durationMin,
-        categoryId: catEstetica.id,
-      },
+      update: { name: s.name, description: s.description, price: s.price, durationMin: s.durationMin, categoryId: catEstetica.id },
+      create: { id: s.id, name: s.name, description: s.description, price: s.price, durationMin: s.durationMin, categoryId: catEstetica.id },
     });
   }
 
-  // Categoría 3: Quirúrgica
-  const catQuirurgica = await prisma.category.upsert({
-    where: { id: 'QUIRURGICA' },
-    update: {
-      name: 'Quirúrgica',
-      description: 'Procedimientos menores y cirugía dermatológica especializada.',
-    },
-    create: {
-      id: 'QUIRURGICA',
-      name: 'Quirúrgica',
-      description: 'Procedimientos menores y cirugía dermatológica especializada.',
-    },
-  });
+  const serviciosClinicos = [
+    { id: 'cli-1', name: 'Consulta Dermatológica Especializada', description: '30 min • Evaluación clínica integral de piel, pelo y uñas por especialista', price: 200, durationMin: 30 },
+    { id: 'cli-2', name: 'Dermatoscopía de Lunares (Mapeo Corporal)', description: '45 min • Evaluación microscópica de nevos y prevención de melanoma', price: 280, durationMin: 45 },
+    { id: 'cli-3', name: 'Tratamiento de Acné Activo / Rosácea', description: '40 min • Protocolo médico personalizado con aparatología y terapia tópica/sistémica', price: 220, durationMin: 40 },
+    { id: 'cli-4', name: 'Terapia Corticoide Intralesional', description: '20 min • Infiltración para queloides, cicatrices hipertróficas o alopecia areata', price: 180, durationMin: 20 },
+  ];
+
+  for (const s of serviciosClinicos) {
+    await prisma.service.upsert({
+      where: { id: s.id },
+      update: { name: s.name, description: s.description, price: s.price, durationMin: s.durationMin, categoryId: catClinica.id },
+      create: { id: s.id, name: s.name, description: s.description, price: s.price, durationMin: s.durationMin, categoryId: catClinica.id },
+    });
+  }
 
   const serviciosQuirurgicos = [
     { id: 'q1', name: 'Extirpación de Lesiones Benignas', description: '30–60 min • Cirugía menor ambulatoria de lunares/quistes', price: 350, durationMin: 45 },
@@ -246,91 +154,32 @@ async function main() {
   for (const s of serviciosQuirurgicos) {
     await prisma.service.upsert({
       where: { id: s.id },
-      update: {
-        name: s.name,
-        description: s.description,
-        price: s.price,
-        durationMin: s.durationMin,
-        categoryId: catQuirurgica.id,
-      },
-      create: {
-        id: s.id,
-        name: s.name,
-        description: s.description,
-        price: s.price,
-        durationMin: s.durationMin,
-        categoryId: catQuirurgica.id,
-      },
+      update: { name: s.name, description: s.description, price: s.price, durationMin: s.durationMin, categoryId: catQuirurgica.id },
+      create: { id: s.id, name: s.name, description: s.description, price: s.price, durationMin: s.durationMin, categoryId: catQuirurgica.id },
     });
   }
 
-  // 5. Procesar Productos desde Excel / Mocks estéticos
-  console.log('5. Cargando catálogo de productos...');
-  const excelPath = path.join(__dirname, '../PRECIOS PRODUCTOS ACTUALES DCLASER Enero 2026.xlsx');
+  // 5. Procesar Productos Comerciales (DC LASER & Hoja1)
+  console.log('5. Sincronizando catálogo de productos comerciales (DC LASER)...');
+  
+  // Desactivar fórmulas de laboratorio (PREPARADOS) de la tienda pública
+  await prisma.product.updateMany({
+    where: {
+      OR: [
+        { sku: { startsWith: 'PREP-' } },
+        { sku: { in: ['AAR1', 'AAR2', 'AAR3', 'AAR4', 'AAR9', 'DES-3', 'DES-6', 'QUE-1', 'QUE-3', 'QUE-6', 'COR-7', 'COR-8', 'COR-11', 'COR-12', 'AST-2', 'MIN-5', 'ATX'] } },
+        { description: { contains: 'magistral' } },
+      ],
+    },
+    data: { isActive: false },
+  });
+
+  const excelPath = path.join(__dirname, '../../PRECIOS PRODUCTOS ACTUALES DCLASER Enero 2026.xlsx');
   
   try {
     const workbook = XLSX.readFile(excelPath);
     
-    // --- HOJA 1: PREPARADOS ---
-    const sheetNameP = 'PREPARADOS';
-    const worksheetP = workbook.Sheets[sheetNameP];
-    const dataP = XLSX.utils.sheet_to_json(worksheetP, { header: 1 }) as any[][];
-    console.log(`- Leyendo ${dataP.length} filas en la hoja ${sheetNameP} del Excel...`);
-
-    let countP = 0;
-    for (let i = 1; i < dataP.length; i++) {
-      const row = dataP[i];
-      if (!row || row.length < 2) continue;
-
-      let sku = row[0]?.toString().trim();
-      const name = row[1]?.toString().trim();
-      const stockVal = row[3];
-      const priceVal = row[6];
-
-      if (!name) continue;
-      
-      if (!sku) {
-        if (name.toUpperCase().includes('TRAMEXAMICO')) {
-          sku = 'ATX';
-        } else {
-          sku = `PREP-${i}`;
-        }
-      }
-
-      const stock = typeof stockVal === 'number' ? Math.floor(stockVal) : 10;
-      let price = 90.00;
-      if (typeof priceVal === 'number') {
-        price = priceVal;
-      } else if (typeof priceVal === 'string') {
-        const cleaned = priceVal.replace(/[^\d.]/g, '');
-        price = parseFloat(cleaned) || 90.00;
-      }
-
-      await prisma.product.upsert({
-        where: { sku },
-        update: {
-          name,
-          price,
-          stock,
-          imageUrl: getProductImageUrl(name),
-          description: `Producto magistral dermatológico: ${name}. Uso sugerido bajo indicación clínica.`,
-          isActive: true,
-        },
-        create: {
-          sku,
-          name,
-          price,
-          stock,
-          imageUrl: getProductImageUrl(name),
-          description: `Producto magistral dermatológico: ${name}. Uso sugerido bajo indicación clínica.`,
-          isActive: true,
-        },
-      });
-      countP++;
-    }
-    console.log(`✅ ¡Carga Exitosa de Preparados! Se han sincronizado ${countP} productos.`);
-
-    // --- HOJA 2: DC LASER (Comerciales) ---
+    // --- HOJA: DC LASER (Productos Comerciales para Consumidor Final) ---
     const sheetNameD = 'DC LASER';
     const worksheetD = workbook.Sheets[sheetNameD];
     const dataD = XLSX.utils.sheet_to_json(worksheetD, { header: 1 }) as any[][];
@@ -339,33 +188,13 @@ async function main() {
     let countD = 0;
     for (let i = 4; i < dataD.length; i++) {
       const row = dataD[i];
-      if (!row || row.length === 0) continue;
-      const name = row[0]?.toString().trim();
-      if (!name || name === 'NOMBRE DEL PRODUCTO') continue;
+      if (!row || !row[0]) continue;
 
-      // Ignorar cabeceras/separadores
-      if (
-        name.startsWith('CATEGORIA') ||
-        name.includes('UÑAS') ||
-        name.includes('ISDINCEUTICS') ||
-        name.includes('NUHANCIAM') ||
-        name.includes('CICAFISS') ||
-        name.includes('FISSERUM') ||
-        name.includes('FISS DOK') ||
-        name.includes('BAGO') ||
-        name.includes('PRECIOS DE DERMQ') ||
-        name.includes('FOTO ULTRA')
-      ) {
-        if (row.length < 3 || !row[2]) {
-          continue;
-        }
-      }
-
-      const lab = row[1]?.toString().trim() || 'COMERCIAL';
+      const rawName = row[0]?.toString().trim();
+      const rawLab = row[1]?.toString().trim() || '';
       const priceVal = row[2];
-      const stockVal = row[3];
 
-      if (!priceVal) continue;
+      if (priceVal === undefined || priceVal === null) continue;
 
       let price = 0.0;
       if (typeof priceVal === 'number') {
@@ -377,60 +206,69 @@ async function main() {
 
       if (price <= 0) continue;
 
-      const stock = typeof stockVal === 'number' ? Math.floor(stockVal) : 10;
+      if (rawName === 'NOMBRE DEL PRODUCTO' || rawName.includes('PRECIOS DE DERMQ')) continue;
 
-      // Generar SKU único
-      const cleanLab = lab.replace(/[^a-zA-Z0-9]/g, '').substring(0, 3).toUpperCase();
-      const cleanName = name.replace(/[^a-zA-Z0-9]/g, '').substring(0, 8).toUpperCase();
-      const sku = `${cleanLab}-${cleanName}-${i}`;
+      let lab = rawLab;
+      let name = rawName;
+
+      if (!lab) {
+        if (name.startsWith('CETAPHIL') || name.startsWith('EPIDUO') || name.startsWith('TRILUMA') || name.startsWith('LOCERYL') || name.startsWith('SOOLANTRA')) {
+          lab = 'GALDERMA';
+        } else if (name.startsWith('FOTOPROTECTOR') || name.startsWith('ISDIN') || name.startsWith('NUTRATOPIC') || name.startsWith('NUTRADEICA') || name.startsWith('UREADIN')) {
+          lab = 'ISDIN';
+        } else if (name.startsWith('EAU THERMALE') || name.startsWith('ROSELIANE') || name.startsWith('BARIÉDERM')) {
+          lab = 'URIAGE';
+        } else {
+          lab = 'COMERCIAL';
+        }
+      }
+
+      const fullName = lab && !name.toUpperCase().startsWith(lab.toUpperCase()) ? `${lab} ${name}` : name;
+      const cleanLab = lab.replace(/[^a-zA-Z0-9]/g, '').substring(0, 4).toUpperCase();
+      const sku = `DCL-${cleanLab}-${i}`;
+      const stock = 15;
 
       await prisma.product.upsert({
         where: { sku },
         update: {
-          name: `${lab} ${name}`,
+          name: fullName,
           price,
           stock,
-          imageUrl: getProductImageUrl(name),
-          description: `Producto comercial dermatológico de laboratorio ${lab}: ${name}.`,
+          imageUrl: getProductImageUrl(fullName),
+          description: `Producto dermatológico comercial de laboratorio ${lab}. Listo para uso clínico y personal.`,
           isActive: true,
         },
         create: {
           sku,
-          name: `${lab} ${name}`,
+          name: fullName,
           price,
           stock,
-          imageUrl: getProductImageUrl(name),
-          description: `Producto comercial dermatológico de laboratorio ${lab}: ${name}.`,
+          imageUrl: getProductImageUrl(fullName),
+          description: `Producto dermatológico comercial de laboratorio ${lab}. Listo para uso clínico y personal.`,
           isActive: true,
         },
       });
       countD++;
     }
-    console.log(`✅ ¡Carga Exitosa de Productos Comerciales! Se han sincronizado ${countD} productos.`);
-    console.log(`🎉 Total de productos sincronizados desde Excel: ${countP + countD}`);
+    console.log(`✅ ¡Carga Exitosa de Productos Comerciales! Se han sincronizado ${countD} productos comerciales activos.`);
 
   } catch (error) {
-    console.warn('⚠️ No se pudo procesar el archivo Excel. Sembrando productos mock de fallback...');
+    console.warn('⚠️ No se pudo procesar el archivo Excel. Sembrando productos comerciales mock de fallback...', error);
     
-    // Fallback Mock de Productos del frontend
-    const MOCK_PRODUCTS = [
-      { sku: 'AAR1', name: 'ACIDO RETINOICO 0.025% CREMA X 30 GR', price: 90.00, stock: 15 },
-      { sku: 'AAR2', name: 'ACIDO RETINOICO 0.05% CREMA X 30 GR', price: 90.00, stock: 12 },
-      { sku: 'AAR3', name: 'ACIDO RETINOICO 0.1% CREMA X 30 GR', price: 90.00, stock: 10 },
-      { sku: 'AAR4', name: 'PEROXIDO BENZOILO 5% GEL X 30 GR', price: 90.00, stock: 20 },
-      { sku: 'AAR9', name: 'METRONIDAZOL 1% FLUOCINONIDA 0.01% GEL X 30 GR', price: 90.00, stock: 8 },
-      { sku: 'DES-3', name: 'HIDROQUINONA 3% CREMA X 30 GR', price: 90.00, stock: 18 },
-      { sku: 'DES-6', name: 'HIDROQUINONA 6% A.RETINOICO 0.025% FLUOCINONIDA 0.01% CREMA X 30 GR', price: 90.00, stock: 14 },
-      { sku: 'QUE-1', name: 'ACIDO LACTICO 17% ACIDO SALICILICO 17% COLODION FLEXIBLE 13 ML', price: 90.00, stock: 25 },
-      { sku: 'QUE-3', name: 'UREA 10% SALICILICO 3% RETINOICO 0.05% TRIAMC 0.025% CREMA X 30 GR', price: 90.00, stock: 16 },
-      { sku: 'COR-7', name: 'CLOBETASOL 0.05% UREA 10% ACIDO SALICILICO 4% UNGÜENTO X 50 GR', price: 100.00, stock: 30 },
-      { sku: 'AST-2', name: 'CLORURO ALUMINIO 20% SOLUCION OH X 100 ML', price: 80.00, stock: 22 },
-      { sku: 'MIN-5', name: 'MINOXIDIL 5% ESPUMA FCO X 100 ML', price: 100.00, stock: 40 },
-      { sku: 'ATX', name: 'ACIDO TRAMEXAMICO 250 MG FCO 30 CAPSULAS', price: 130.00, stock: 15 }
+    const MOCK_COMMERCIAL_PRODUCTS = [
+      { sku: 'DCL-GAL-1', name: 'GALDERMA CETAPHIL BARRA LIMPIADORA', price: 80.00, stock: 15 },
+      { sku: 'DCL-GAL-2', name: 'GALDERMA CETAPHIL LOCIÓN LIMPIADORA PIEL SENSIBLE 473ML', price: 130.00, stock: 12 },
+      { sku: 'DCL-GAL-3', name: 'GALDERMA CETAPHIL LIMPIADOR PIEL GRASA 237ML', price: 100.00, stock: 10 },
+      { sku: 'DCL-GAL-4', name: 'GALDERMA CETAPHIL PRO-AC CONTROL ESPUMA', price: 130.00, stock: 20 },
+      { sku: 'DCL-ISD-1', name: 'ISDIN FOTOPROTECTOR FUSION WATER MAGIC SPF50', price: 140.00, stock: 25 },
+      { sku: 'DCL-ISD-2', name: 'ISDIN NUTRATOPIC PRO-AMP CREMA FACIAL 50ML', price: 90.00, stock: 18 },
+      { sku: 'DCL-URI-1', name: 'URIAGE EAU THERMALE SPRAY 300ML', price: 100.00, stock: 14 },
+      { sku: 'DCL-URI-2', name: 'URIAGE ROSELIANE CREMA SPF30 ANTIROJECES', price: 100.00, stock: 16 },
+      { sku: 'DCL-SIE-1', name: 'SIEGFRIED ROACCUTAN 20MG X 30 COMPRIMIDOS', price: 220.00, stock: 10 },
     ];
 
     let count = 0;
-    for (const p of MOCK_PRODUCTS) {
+    for (const p of MOCK_COMMERCIAL_PRODUCTS) {
       await prisma.product.upsert({
         where: { sku: p.sku },
         update: {
@@ -438,7 +276,7 @@ async function main() {
           price: p.price,
           stock: p.stock,
           imageUrl: getProductImageUrl(p.name),
-          description: `Producto magistral dermatológico de alta potencia. Uso clínico.`,
+          description: `Producto dermatológico comercial listo para consumidor.`,
           isActive: true,
         },
         create: {
@@ -447,13 +285,13 @@ async function main() {
           price: p.price,
           stock: p.stock,
           imageUrl: getProductImageUrl(p.name),
-          description: `Producto magistral dermatológico de alta potencia. Uso clínico.`,
+          description: `Producto dermatológico comercial listo para consumidor.`,
           isActive: true,
         },
       });
       count++;
     }
-    console.log(`✅ ¡Fallback Exitoso! Se han creado ${count} productos de prueba en la base de datos.`);
+    console.log(`✅ ¡Fallback Exitoso! Se han creado ${count} productos comerciales de prueba.`);
   }
 
   console.log('--- 🎉 Proceso de Sembrado DERMQ Completado con Éxito ---');

@@ -75,8 +75,8 @@ export default function IntroLoader({ onComplete }: IntroLoaderProps) {
                 DERMQ
               </h2>
               <div className="h-[1px] w-12 bg-tertiary mx-auto" />
-              <p className="text-tertiary font-headline font-semibold text-[10px] md:text-xs tracking-[0.4em] uppercase">
-                Clínica Dermatológica
+              <p className="text-tertiary font-headline font-semibold text-[10px] md:text-xs tracking-[0.25em] uppercase">
+                Dermatología Clínica y Láser
               </p>
             </motion.div>
           </div>

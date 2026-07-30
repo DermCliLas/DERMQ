@@ -70,26 +70,29 @@ export default function Navbar() {
         }`}
       >
         {/* Main Navbar Bar */}
-        <nav className={`w-full relative flex items-center justify-center transition-all duration-500 ${scrolled ? 'h-[64px] md:h-[75px]' : 'h-[80px] md:h-[105px]'}`}>
+        <nav className={`w-full relative flex items-center justify-between transition-all duration-500 ${scrolled ? 'h-[64px] md:h-[75px]' : 'h-[80px] md:h-[105px]'}`}>
           
           {/* Subtle Background Pattern */}
           <div className="absolute inset-0 opacity-5 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '24px 24px' }}></div>
 
-          <div className="w-full max-w-[1400px] px-6 lg:px-12 flex items-center justify-between relative z-10 gap-4 lg:gap-8">
-            
-            {/* Left Logo */}
-            <div className={`flex-shrink-0 z-50 transition-all duration-500`}>
-              <Link href="/" className="flex items-center justify-center group">
-                <div className={`bg-white rounded-full flex items-center justify-center shadow-[0_4px_20px_rgb(0,0,0,0.15)] border-[3px] border-tertiary transition-all duration-500 overflow-hidden group-hover:scale-105 ${scrolled ? 'w-[56px] h-[56px] md:w-[70px] md:h-[70px]' : 'w-[70px] h-[70px] md:w-[90px] md:h-[90px]'}`}>
-                  <img 
-                    src={content.logoUrl || '/logo.png'} 
-                    alt="Logo" 
-                    className="w-[75%] h-[75%] object-contain"
-                  />
-                </div>
-              </Link>
-            </div>
+          {/* Left Logo - White Capsule Tab flush to absolute left edge of screen */}
+          <div className="h-full flex-shrink-0 z-20">
+            <Link href="/" className="h-full flex items-center group">
+              <div className="bg-white rounded-r-full md:rounded-r-[50px] flex items-center shadow-lg transition-all duration-500 overflow-hidden h-full pl-4 sm:pl-6 md:pl-10 lg:pl-12 pr-6 sm:pr-8 md:pr-10 lg:pr-12 py-1.5 md:py-2">
+                <img 
+                  src={content.logoUrl || '/logo.png'} 
+                  alt="DERMQ Logo" 
+                  className={`object-contain transition-all duration-500 group-hover:scale-105 ${
+                    scrolled ? 'max-h-[54px] md:max-h-[66px] w-auto' : 'max-h-[72px] md:max-h-[94px] w-auto'
+                  }`}
+                />
+              </div>
+            </Link>
+          </div>
 
+          {/* Center Links & Right Actions Container */}
+          <div className="flex-1 flex items-center justify-between pl-4 pr-6 lg:pr-12 relative z-10 gap-4 lg:gap-8">
+            
             {/* Center Links */}
             <div className="hidden md:flex flex-1 items-center justify-center gap-4 lg:gap-8">
               {[...content.linksLeft, ...content.linksRight].map((link) => (

@@ -25,15 +25,15 @@ const DEFAULTS: LocationContent = {
   title1: 'Encuéntranos en',
   title2: 'San Isidro.',
   addressTitle: 'Nuestra Sede',
-  addressLine1: 'Av. Camino Real 1234, Piso 4',
+  addressLine1: 'Av. José Gálvez Barrenechea 127, Oficina 604',
   addressLine2: 'San Isidro, Lima - Perú',
   hoursTitle: 'Horario de Atención',
   hoursLine1: 'Lunes a Viernes: 9:00 AM — 7:00 PM',
   hoursLine2: 'Sábados: 9:00 AM — 1:00 PM',
   parkingTitle: 'Estacionamiento',
   parkingDescription: 'Contamos con valet parking gratuito para todos nuestros pacientes.',
-  mapIframeUrl: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3901.325997233827!2d-77.0371!3d-12.0964!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x9105c8695029c049%3A0xc3c5092a95c490a!2sAv.%20Camino%20Real%201234%2C%20San%20Isidro%2015073!5e0!3m2!1ses-419!2spe!4v1700000000000!5m2!1ses-419!2spe',
-  googleMapsUrl: 'https://maps.app.goo.gl/uX3L5q6fX6X6X6X6',
+  mapIframeUrl: 'https://maps.google.com/maps?q=Av.+Jos%C3%A9+G%C3%A1lvez+Barrenechea+127%2C+San+Isidro&t=&z=16&ie=UTF8&iwloc=&output=embed',
+  googleMapsUrl: 'https://www.google.com/maps/search/?api=1&query=Av.+Jos%C3%A9+G%C3%A1lvez+Barrenechea+127%2C+San+Isidro',
 }
 
 export default function LocationSection() {

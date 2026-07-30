@@ -14,7 +14,7 @@ const DEFAULT_SLIDES: Slide[] = [
   {
     type: 'video',
     src: 'https://assets.mixkit.co/videos/preview/mixkit-medical-professional-examining-patient-skin-40090-large.mp4',
-    title: 'DERMQ LIMA',
+    title: 'Dermatología Clínica y Láser',
     subtitle: 'La cúspide de la excelencia dermatológica.',
   },
   {
