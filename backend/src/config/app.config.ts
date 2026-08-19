@@ -1,8 +1,12 @@
 export const appConfig = {
   port: parseInt(process.env.PORT || '3000', 10),
-  corsOrigins: process.env.CORS_ORIGINS?.split(',') || [
-    'http://localhost:3001',
-  ],
+  corsOrigins: process.env.CORS_ORIGINS
+    ? process.env.CORS_ORIGINS.split(',').map((origin) => origin.trim())
+    : [
+        'http://localhost:3001',
+        'https://draleyva.com',
+        'https://www.draleyva.com',
+      ],
   rateLimit: {
     ttl: 60, // 1 minute
     limit: 100, // 100 requests per minute
