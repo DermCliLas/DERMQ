@@ -154,7 +154,7 @@ export default function CheckoutPage() {
           script.id = 'izipay-krypton-script';
           script.src = 'https://static.micuentaweb.pe/static/js/krypton-client/V4.0/stable/kr-payment-form.min.js';
           
-          const publicKey = process.env.NEXT_PUBLIC_IZIPAY_PUBLIC_KEY || '85684784:testpublickey_D89Zc6kIq6R8Dk8B8D';
+          const publicKey = process.env.NEXT_PUBLIC_IZIPAY_PUBLIC_KEY || '68343271:publickey_aIoNmzVPNrnJ6KDzqZ9TTFL1dtNOJtvGWjg3CfoUJkogu';
           script.setAttribute('kr-public-key', publicKey);
           script.setAttribute('kr-post-url-success', window.location.origin + '/dashboard');
           script.async = true;
