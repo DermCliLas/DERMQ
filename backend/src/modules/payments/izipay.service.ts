@@ -8,7 +8,14 @@ export class IzipayService {
   private readonly shopId = appConfig.izipay.shopId;
   private readonly shopKey = appConfig.izipay.shopKey;
   private readonly hmacKey = appConfig.izipay.hmacKey;
-  private readonly apiUrl = appConfig.izipay.apiUrl;
+  private readonly rawApiUrl = appConfig.izipay.apiUrl;
+
+  private get apiUrl(): string {
+    const defaultUrl =
+      'https://api.micuentaweb.pe/api-payment/V4/Charge/CreatePayment';
+    const url = this.rawApiUrl || defaultUrl;
+    return url.replace('/api-payment/v4/', '/api-payment/V4/');
+  }
 
   constructor() {
     if (!this.shopId || !this.shopKey) {
