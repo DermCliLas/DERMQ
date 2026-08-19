@@ -143,9 +143,8 @@ export class OrdersService {
           });
         }
       } catch (err) {
-        // El error hará que la transacción de Prisma haga ROLLBACK
-        throw new BadRequestException(
-          `Fallo en Facturación Electrónica: ${err.message}. La venta no ha sido procesada.`,
+        console.warn(
+          `[NubeFact] No se pudo emitir comprobante electrónico: ${err.message}`,
         );
       }
 

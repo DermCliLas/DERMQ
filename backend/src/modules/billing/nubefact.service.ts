@@ -30,15 +30,22 @@ export class NubeFactService {
         body: JSON.stringify(payload),
       });
 
-      const data = await response.json();
+      let data: any = {};
+      const responseText = await response.text();
+      try {
+        data = JSON.parse(responseText);
+      } catch (parseError) {
+        this.logger.warn(
+          `NubeFact no devolvió un JSON válido (Status ${response.status}): ${responseText.substring(0, 100)}`,
+        );
+        return null;
+      }
 
       if (!response.ok || data.errors) {
         this.logger.error(
           `NubeFact Error: ${JSON.stringify(data.errors || data)}`,
         );
-        throw new InternalServerErrorException(
-          data.errors || 'Error al comunicarse con NubeFact',
-        );
+        return null;
       }
 
       return {
@@ -49,7 +56,7 @@ export class NubeFactService {
       };
     } catch (error) {
       this.logger.error(`Critical Billing Error: ${error.message}`);
-      throw error;
+      return null;
     }
   }
 
