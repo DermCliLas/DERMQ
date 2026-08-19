@@ -1,13 +1,24 @@
 import { Controller, Post, Body, UseGuards } from '@nestjs/common';
+import { IsNumber, IsOptional, IsString } from 'class-validator';
 import { IzipayService } from './izipay.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Public } from '../../common/decorators/public.decorator';
 
 class CreatePaymentTokenDto {
+  @IsNumber()
   amount: number;
+
+  @IsOptional()
+  @IsString()
   currency?: string;
+
+  @IsOptional()
+  @IsString()
   orderId?: string;
+
+  @IsOptional()
+  @IsString()
   email?: string;
 }
 
