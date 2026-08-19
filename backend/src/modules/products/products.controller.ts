@@ -24,7 +24,7 @@ export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
   @Post()
-  @Roles(Role.ADMIN, Role.RECEPTION)
+  @Roles(Role.ADMIN, Role.RECEPTION, Role.DOCTOR)
   create(@Body() createProductDto: CreateProductDto) {
     return this.productsService.create(createProductDto);
   }
@@ -72,13 +72,13 @@ export class ProductsController {
   }
 
   @Patch(':id')
-  @Roles(Role.ADMIN, Role.RECEPTION)
+  @Roles(Role.ADMIN, Role.RECEPTION, Role.DOCTOR)
   update(@Param('id') id: string, @Body() updateProductDto: UpdateProductDto) {
     return this.productsService.update(id, updateProductDto);
   }
 
   @Patch(':id/stock')
-  @Roles(Role.ADMIN, Role.RECEPTION)
+  @Roles(Role.ADMIN, Role.RECEPTION, Role.DOCTOR)
   updateStock(
     @Param('id') id: string,
     @Body('quantity') quantity: number,
@@ -88,7 +88,7 @@ export class ProductsController {
   }
 
   @Delete(':id')
-  @Roles(Role.ADMIN)
+  @Roles(Role.ADMIN, Role.DOCTOR)
   remove(@Param('id') id: string) {
     return this.productsService.remove(id);
   }
