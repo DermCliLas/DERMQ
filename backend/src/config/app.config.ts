@@ -28,7 +28,7 @@ export const appConfig = {
     shopKey: process.env.IZIPAY_SHOP_KEY,
     publicKey: process.env.IZIPAY_PUBLIC_KEY,
     hmacKey: process.env.IZIPAY_HMAC_KEY,
-    apiUrl: process.env.IZIPAY_API_URL || 'https://api.micuentaweb.pe/api-payment/v4/Charge/CreatePayment',
+    apiUrl: process.env.IZIPAY_API_URL || 'https://api.micuentaweb.pe/api-payment/V4/Charge/CreatePayment',
   },
   supabase: {
     url: process.env.SUPABASE_URL,
