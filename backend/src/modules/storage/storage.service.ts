@@ -6,23 +6,34 @@ import * as crypto from 'crypto';
 @Injectable()
 export class StorageService {
   private readonly logger = new Logger(StorageService.name);
-  private supabase: SupabaseClient;
-  private readonly bucketName = appConfig.supabase.bucket;
+  private supabase: SupabaseClient | null = null;
+  private get bucketName(): string {
+    return process.env.SUPABASE_BUCKET || appConfig.supabase.bucket || 'dermq';
+  }
 
   constructor() {
-    const { url, key } = appConfig.supabase;
+    this.initSupabase();
+  }
+
+  private initSupabase(): SupabaseClient {
+    if (this.supabase) return this.supabase;
+
+    const url = process.env.SUPABASE_URL || appConfig.supabase?.url;
+    const key = process.env.SUPABASE_KEY || appConfig.supabase?.key;
+
     if (!url || !key) {
-      this.logger.warn(
-        'Supabase Storage URL or Key are not defined. Uploads will run in mock mode.',
-      );
-    } else {
-      try {
-        this.supabase = createClient(url, key);
-        this.logger.log('Supabase Storage service initialized successfully.');
-        this.ensureBucketExists();
-      } catch (err) {
-        this.logger.error('Failed to initialize Supabase Storage client:', err);
-      }
+      this.logger.error('SUPABASE_URL o SUPABASE_KEY no están configurados en el entorno.');
+      throw new BadRequestException('Las credenciales de Supabase Storage no están configuradas.');
+    }
+
+    try {
+      this.supabase = createClient(url, key);
+      this.logger.log(`Supabase Storage service inicializado exitosamente (Bucket: ${this.bucketName}).`);
+      this.ensureBucketExists();
+      return this.supabase;
+    } catch (err: any) {
+      this.logger.error('Error al inicializar cliente de Supabase Storage:', err);
+      throw new BadRequestException(`Fallo al inicializar almacenamiento: ${err.message}`);
     }
   }
 
@@ -31,6 +42,7 @@ export class StorageService {
    */
   private async ensureBucketExists() {
     try {
+      if (!this.supabase) return;
       const { data: buckets, error: listError } = await this.supabase.storage.listBuckets();
       if (listError) {
         this.logger.error('Error listing buckets in Supabase:', listError);
@@ -57,37 +69,32 @@ export class StorageService {
    * Uploads a file to Supabase Storage and returns its public URL.
    */
   async uploadFile(file: Express.Multer.File): Promise<string> {
-    if (!this.supabase) {
-      this.logger.warn(
-        `[MOCK STORAGE] Cargando archivo simulado: ${file.originalname}`,
-      );
-      // Retornar una URL de fallback útil en desarrollo
-      return `https://images.unsplash.com/photo-1579684389782-64d84b5e901a?q=80&w=800`;
-    }
+    const supabase = this.initSupabase();
 
     try {
       // 1. Obtener la extensión y construir nombre único con UUID
-      const fileExt = file.originalname.split('.').pop() || '';
+      const fileExt = file.originalname.split('.').pop() || 'jpg';
       const uniqueId = crypto.randomUUID();
-      const fileName = `${uniqueId}.${fileExt}`;
+      const fileName = `uploads/${uniqueId}.${fileExt}`;
 
-      this.logger.log(`Subiendo archivo a Supabase: ${fileName} (${file.mimetype})`);
+      this.logger.log(`Subiendo archivo a Supabase: ${fileName} (${file.mimetype}, ${file.size} bytes)`);
 
       // 2. Subir buffer
-      const { data, error } = await this.supabase.storage
+      const { data, error } = await supabase.storage
         .from(this.bucketName)
         .upload(fileName, file.buffer, {
           contentType: file.mimetype,
           cacheControl: '31536000', // 1 año de caché
-          upsert: false,
+          upsert: true,
         });
 
       if (error) {
+        this.logger.error(`Error Supabase upload: ${error.message}`);
         throw new Error(error.message);
       }
 
       // 3. Obtener la URL pública del bucket
-      const { data: publicUrlData } = this.supabase.storage
+      const { data: publicUrlData } = supabase.storage
         .from(this.bucketName)
         .getPublicUrl(fileName);
 
@@ -95,9 +102,9 @@ export class StorageService {
         throw new Error('No se pudo obtener la URL pública de Supabase');
       }
 
-      this.logger.log(`Archivo subido exitosamente: ${publicUrlData.publicUrl}`);
+      this.logger.log(`Archivo subido exitosamente a Supabase: ${publicUrlData.publicUrl}`);
       return publicUrlData.publicUrl;
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(`Error al subir archivo a Supabase: ${error.message}`);
       throw new BadRequestException(
         `Error en carga de archivos a almacenamiento: ${error.message}`,

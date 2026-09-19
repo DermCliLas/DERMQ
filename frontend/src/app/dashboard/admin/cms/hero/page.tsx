@@ -93,10 +93,15 @@ export default function HeroCmsPage() {
     setUploading(true)
     try {
       const result = await uploadFile(file)
-      const url = result.url || result
-      handleUpdateSlide(index, 'src', url as string)
-    } catch (e) {
+      const url = result?.url || (typeof result === 'string' ? result : '')
+      if (url) {
+        handleUpdateSlide(index, 'src', url)
+      } else {
+        alert('No se pudo obtener la URL de la imagen.')
+      }
+    } catch (e: any) {
       console.error('Error uploading image', e)
+      alert('Error al subir imagen: ' + (e.message || 'Error de conexión'))
     } finally {
       setUploading(false)
     }
