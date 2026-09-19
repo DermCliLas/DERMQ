@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateOrderDto } from './dto/create-order.dto';
-import { OrderSource } from '@prisma/client';
+import { OrderSource, DocType } from '@prisma/client';
 import { NubeFactService } from '../billing/nubefact.service';
 import { EmailService } from '../notifications/email.service';
 import { IzipayService } from '../payments/izipay.service';
@@ -20,7 +20,34 @@ export class OrdersService {
   ) {}
 
   async create(createOrderDto: CreateOrderDto, userId: string) {
-    const { items, paymentMethod, documentType, source, krAnswer, krHash } = createOrderDto;
+    const {
+      items,
+      paymentMethod,
+      documentType,
+      source,
+      krAnswer,
+      krHash,
+      customerDocType,
+      customerDocNumber,
+      customerLegalName,
+      customerAddress,
+    } = createOrderDto;
+
+    const resolvedDocType = documentType ?? DocType.BOLETA;
+
+    // Validación fiscal obligatoria para Facturas SUNAT
+    if (resolvedDocType === DocType.FACTURA) {
+      if (!customerDocNumber || customerDocNumber.trim().length !== 11) {
+        throw new BadRequestException(
+          'Para emitir Factura es obligatorio ingresar un número de RUC válido de 11 dígitos.',
+        );
+      }
+      if (!customerLegalName || customerLegalName.trim().length === 0) {
+        throw new BadRequestException(
+          'Para emitir Factura es obligatorio ingresar la Razón Social de la empresa.',
+        );
+      }
+    }
 
     // Validar el pago con Izipay si es tarjeta de crédito desde la web
     if (paymentMethod === 'CREDIT_CARD' && source === OrderSource.WEB) {
@@ -83,8 +110,15 @@ export class OrdersService {
           total,
           paymentMethod,
           isPaid: true, // Mark as paid since we simulate a successful payment
-          documentType: documentType ?? 'BOLETA',
+          documentType: resolvedDocType,
           source: source ?? OrderSource.WEB,
+          customerDocType:
+            resolvedDocType === DocType.FACTURA
+              ? '6'
+              : (customerDocType ?? '1'),
+          customerDocNumber: customerDocNumber?.trim() || null,
+          customerLegalName: customerLegalName?.trim() || null,
+          customerAddress: customerAddress?.trim() || null,
           items: {
             create: orderItems,
           },
@@ -98,7 +132,14 @@ export class OrdersService {
             },
           },
           user: {
-            select: { id: true, firstName: true, lastName: true, email: true },
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+              dni: true,
+              phone: true,
+            },
           },
         },
       });
@@ -113,58 +154,65 @@ export class OrdersService {
         ),
       );
 
-      // 3.5. Emitir Comprobante Electrónico (NubeFact)
-      try {
-        const billingResult =
-          await this.nubeFactService.generateDocument(createdOrder);
-
-        if (billingResult) {
-          // Actualizar orden con datos de NubeFact
-          return await tx.order.update({
-            where: { id: createdOrder.id },
-            data: {
-              documentNumber: billingResult.documentNumber,
-              nubeFactId: billingResult.externalId,
-              nubeFactPdfUrl: billingResult.pdfUrl,
-              nubeFactXmlUrl: billingResult.xmlUrl,
-            },
-            include: {
-              items: {
-                include: {
-                  product: {
-                    select: { id: true, name: true, sku: true, price: true },
-                  },
-                },
-              },
-              user: {
-                select: { firstName: true, lastName: true, email: true },
-              },
-            },
-          });
-        }
-      } catch (err) {
-        console.warn(
-          `[NubeFact] No se pudo emitir comprobante electrónico: ${err.message}`,
-        );
-      }
-
       return createdOrder;
     });
 
+    // 4. Emitir Comprobante Electrónico (NubeFact) fuera de la transacción de DB
+    let finalOrder = order;
+    try {
+      const billingResult =
+        await this.nubeFactService.generateDocument(order);
+
+      if (billingResult) {
+        finalOrder = await this.prisma.order.update({
+          where: { id: order.id },
+          data: {
+            documentNumber: billingResult.documentNumber,
+            nubeFactId: billingResult.externalId,
+            nubeFactPdfUrl: billingResult.pdfUrl,
+            nubeFactXmlUrl: billingResult.xmlUrl,
+          },
+          include: {
+            items: {
+              include: {
+                product: {
+                  select: { id: true, name: true, sku: true, price: true },
+                },
+              },
+            },
+            user: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                email: true,
+                dni: true,
+                phone: true,
+              },
+            },
+          },
+        });
+      }
+    } catch (err) {
+      console.warn(
+        `[NubeFact] No se pudo emitir comprobante electrónico: ${err.message}`,
+      );
+    }
+
     // ─── EMAIL INVOICE NOTIFICATION ──────────────────────────────────────────
-    if (order && order.nubeFactPdfUrl) {
+    if (finalOrder && finalOrder.nubeFactPdfUrl) {
       this.emailService
-        .sendOrderInvoice(order, {
-          documentNumber: order.documentNumber,
-          pdfUrl: order.nubeFactPdfUrl,
-          xmlUrl: order.nubeFactXmlUrl,
+        .sendOrderInvoice(finalOrder, {
+          documentNumber: finalOrder.documentNumber,
+          pdfUrl: finalOrder.nubeFactPdfUrl,
+          xmlUrl: finalOrder.nubeFactXmlUrl,
         })
         .catch((err) =>
           console.error('Error sending order invoice email:', err),
         );
     }
 
-    return order;
+    return finalOrder;
   }
 
   async findAll() {
@@ -288,7 +336,13 @@ export class OrdersService {
                 include: { product: true },
               },
               user: {
-                select: { id: true, firstName: true, lastName: true, email: true },
+                select: {
+                  id: true,
+                  firstName: true,
+                  lastName: true,
+                  email: true,
+                  dni: true,
+                },
               },
             },
           });

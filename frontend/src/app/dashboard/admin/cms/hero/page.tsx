@@ -10,24 +10,26 @@ interface Slide {
   subtitle: string
 }
 
+import { DRA_LEYVA_PHOTOS } from '@/data/draleyva-photos'
+
 const DEFAULT_SLIDES: Slide[] = [
   {
     type: 'video',
-    src: 'https://assets.mixkit.co/videos/preview/mixkit-medical-professional-examining-patient-skin-40090-large.mp4',
+    src: 'https://gsyvzfkkqiucaeinyddc.supabase.co/storage/v1/object/public/dermq/clinic_intro.mp4',
     title: 'Dermatología Clínica y Láser',
     subtitle: 'La cúspide de la excelencia dermatológica.',
   },
   {
     type: 'image',
-    src: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&q=80&w=2000',
-    title: 'ARTE Y CIENCIA',
-    subtitle: 'Tecnología vanguardista para el cuidado integral de tu piel.',
+    src: DRA_LEYVA_PHOTOS.directoraWindowLandscape,
+    title: 'Precisión & Criterio Médico',
+    subtitle: '19 años de vocación, rigor formativo y medicina basada en evidencia.',
   },
   {
     type: 'image',
-    src: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&q=80&w=2000',
-    title: 'ESTÉTICA AVANZADA',
-    subtitle: 'Especialistas dedicados a revelar tu luminosidad natural.',
+    src: DRA_LEYVA_PHOTOS.laserQuantaSystem,
+    title: 'Tecnología Láser de Vanguardia',
+    subtitle: 'Aparatología médica de última generación guiada por especialistas.',
   },
 ]
 

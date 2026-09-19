@@ -43,4 +43,20 @@ export class CreateOrderDto {
   @IsString()
   @IsOptional()
   krHash?: string;
+
+  @IsString()
+  @IsOptional()
+  customerDocType?: string; // "6" = RUC, "1" = DNI, "4" = CE, "7" = Pasaporte, "0" = Sin Doc
+
+  @IsString()
+  @IsOptional()
+  customerDocNumber?: string; // RUC de 11 dígitos o DNI
+
+  @IsString()
+  @IsOptional()
+  customerLegalName?: string; // Razón Social o Nombre del Cliente
+
+  @IsString()
+  @IsOptional()
+  customerAddress?: string; // Dirección fiscal
 }

@@ -36,6 +36,9 @@ export default function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('CREDIT_CARD')
   const [docType, setDocType] = useState<DocType>('BOLETA')
   const [ruc, setRuc] = useState('')
+  const [razonSocial, setRazonSocial] = useState('')
+  const [fiscalAddress, setFiscalAddress] = useState('')
+  const [dni, setDni] = useState(user?.dni || '')
   const [processingStep, setProcessingStep] = useState(0)
   const [orderResult, setOrderResult] = useState<any>(null)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
@@ -111,6 +114,13 @@ export default function CheckoutPage() {
             source: 'WEB',
             krAnswer: event.rawClientAnswer,
             krHash: event.hash,
+            customerDocType: docType === 'FACTURA' ? '6' : '1',
+            customerDocNumber: docType === 'FACTURA' ? ruc.trim() : (dni.trim() || user?.dni || undefined),
+            customerLegalName:
+              docType === 'FACTURA'
+                ? razonSocial.trim()
+                : `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || undefined,
+            customerAddress: docType === 'FACTURA' ? (fiscalAddress.trim() || undefined) : undefined,
           };
 
           const result = await createOrder(payload);
@@ -134,6 +144,19 @@ export default function CheckoutPage() {
 
   const handleConfirm = async () => {
     setErrorMsg(null);
+
+    // Validación fiscal previa
+    if (docType === 'FACTURA') {
+      if (!ruc.trim() || ruc.trim().length !== 11 || !/^\d+$/.test(ruc.trim())) {
+        setErrorMsg('Para emitir Factura es obligatorio ingresar un número de RUC válido de 11 dígitos.');
+        return;
+      }
+      if (!razonSocial.trim()) {
+        setErrorMsg('Para emitir Factura es obligatorio ingresar la Razón Social.');
+        return;
+      }
+    }
+
     if (paymentMethod === 'CREDIT_CARD') {
       setLoadingIzipay(true);
       try {
@@ -185,6 +208,13 @@ export default function CheckoutPage() {
         paymentMethod,
         documentType: docType,
         source: 'WEB',
+        customerDocType: docType === 'FACTURA' ? '6' : '1',
+        customerDocNumber: docType === 'FACTURA' ? ruc.trim() : (dni.trim() || user?.dni || undefined),
+        customerLegalName:
+          docType === 'FACTURA'
+            ? razonSocial.trim()
+            : `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || undefined,
+        customerAddress: docType === 'FACTURA' ? (fiscalAddress.trim() || undefined) : undefined,
       }
 
       const result = await createOrder(payload)
@@ -421,15 +451,58 @@ export default function CheckoutPage() {
                 ))}
               </div>
               {docType === 'FACTURA' && (
+                <div className="mt-5 space-y-4">
+                  <div>
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">
+                      RUC (11 dígitos) *
+                    </label>
+                    <input
+                      type="text"
+                      value={ruc}
+                      onChange={e => setRuc(e.target.value.replace(/\D/g, '').slice(0, 11))}
+                      placeholder="20123456789"
+                      maxLength={11}
+                      className="w-full rounded-2xl border-2 border-slate-100 bg-slate-50 px-5 py-3.5 font-medium focus:border-primary focus:bg-white focus:outline-none transition-all text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">
+                      Razón Social *
+                    </label>
+                    <input
+                      type="text"
+                      value={razonSocial}
+                      onChange={e => setRazonSocial(e.target.value)}
+                      placeholder="Empresa o Negocio S.A.C."
+                      className="w-full rounded-2xl border-2 border-slate-100 bg-slate-50 px-5 py-3.5 font-medium focus:border-primary focus:bg-white focus:outline-none transition-all text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">
+                      Dirección Fiscal (Opcional)
+                    </label>
+                    <input
+                      type="text"
+                      value={fiscalAddress}
+                      onChange={e => setFiscalAddress(e.target.value)}
+                      placeholder="Av. Principal 123, Miraflores, Lima"
+                      className="w-full rounded-2xl border-2 border-slate-100 bg-slate-50 px-5 py-3.5 font-medium focus:border-primary focus:bg-white focus:outline-none transition-all text-sm"
+                    />
+                  </div>
+                </div>
+              )}
+              {docType === 'BOLETA' && !user?.dni && (
                 <div className="mt-5">
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">RUC</label>
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">
+                    DNI para Boleta (Opcional)
+                  </label>
                   <input
                     type="text"
-                    value={ruc}
-                    onChange={e => setRuc(e.target.value)}
-                    placeholder="20123456789"
-                    maxLength={11}
-                    className="w-full rounded-2xl border-2 border-slate-100 bg-slate-50 px-5 py-4 font-medium focus:border-primary focus:bg-white focus:outline-none transition-all"
+                    value={dni}
+                    onChange={e => setDni(e.target.value.replace(/\D/g, '').slice(0, 8))}
+                    placeholder="8 dígitos (opcional si es menor a S/ 700)"
+                    maxLength={8}
+                    className="w-full rounded-2xl border-2 border-slate-100 bg-slate-50 px-5 py-3.5 font-medium focus:border-primary focus:bg-white focus:outline-none transition-all text-sm"
                   />
                 </div>
               )}

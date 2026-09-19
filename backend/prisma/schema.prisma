@@ -190,10 +190,16 @@ model Order {
 
   // Integración NubeFact
   documentType   DocType @default(BOLETA)
-  documentNumber String? // ej. B001-000456
+  documentNumber String? // ej. B001-1
   nubeFactId     String? // Enlace con NubeFact
   nubeFactPdfUrl String?
   nubeFactXmlUrl String?
+
+  // Datos Fiscales SUNAT
+  customerDocType   String? @default("1") // "6" = RUC, "1" = DNI, "4" = CE, "7" = Pasaporte, "0" = Sin Doc
+  customerDocNumber String? // RUC de 11 dígitos o DNI
+  customerLegalName String? // Razón Social o Nombre del Cliente
+  customerAddress   String? // Dirección fiscal
 
   items       OrderItem[]
   appointment Appointment? // Relacionado sólo si la orden surge por agendar cita
@@ -267,4 +273,12 @@ model SiteContent {
   data      Json     // Contenido flexible en JSON
   updatedAt DateTime @updatedAt
   updatedBy String?  // ID del admin que editó
+}
+
+// ─── Facturación Electrónica: Correlativos Secuenciales ───────────────────
+model BillingCorrelative {
+  id            String   @id @default(uuid())
+  series        String   @unique // ej: "B001", "F001", "BC01", "FC01"
+  currentNumber Int      @default(0) // Último número emitido
+  updatedAt     DateTime @updatedAt
 }

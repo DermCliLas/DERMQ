@@ -5,6 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { getSiteContent } from '@/lib/api'
 import { motion } from 'framer-motion'
+import { DRA_LEYVA_PHOTOS } from '@/data/draleyva-photos'
 
 const DEFAULTS = {
   title: 'Cuatro razones para confiar tu piel a DERMQ',
@@ -13,32 +14,32 @@ const DEFAULTS = {
 
 const REASONS = [
   {
-    id: 'direccion-especializada',
-    title: 'Dirección Especializada',
-    description: 'Liderados por la Dra. Marcela Leyva, graduada en UNMSM con credenciales avanzadas en Inmunología por Harvard Medical School.',
-    imageUrl: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=800',
+    id: 'conocimiento-medico',
+    title: 'Conocimiento Médico',
+    description: 'Liderados por la Dra. Marcela Leyva, especialista formada en la UNMSM (Hosp. Daniel Alcides Carrión), con credenciales Harvard Medical School HMX y 19 años de ejercicio continuo.',
+    imageUrl: DRA_LEYVA_PHOTOS.directoraDeskWorking,
     link: '/nosotros',
   },
   {
-    id: 'tecnologia-laser',
-    title: 'Tecnología Láser de Punta',
-    description: 'Equipamiento de última generación para tratamientos de rejuvenecimiento, remoción de manchas y regeneración cutánea de alta precisión.',
-    imageUrl: 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&q=80&w=800',
+    id: 'tecnologia-especializada',
+    title: 'Tecnología Especializada',
+    description: 'Equipos láser y tecnología avanzada incorporados desde 2012, guiados en todo momento por criterio clínico, capacitación constante y sentido médico.',
+    imageUrl: DRA_LEYVA_PHOTOS.laserFotona,
     link: '/servicios#laser-avanzado',
   },
   {
-    id: 'enfoque-humano',
-    title: 'Enfoque Humano',
-    description: 'Tratamos personas, no solo pieles. Diseñamos planes terapéuticos personalizados adaptados a tu bienestar integral.',
-    imageUrl: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&q=80&w=800',
+    id: 'seguridad-cientifica',
+    title: 'Seguridad y Respaldo',
+    description: 'Medicina basada en evidencia. Empleamos exclusivamente técnicas, medicamentos y sustancias con eficacia y seguridad clínicamente demostradas.',
+    imageUrl: DRA_LEYVA_PHOTOS.directoraDermatoscope,
     link: '/nosotros#valores',
   },
   {
-    id: 'excelencia-comprobada',
-    title: 'Excelencia y Confianza',
-    description: 'Más de 10,000 pacientes atendidos de manera exitosa con un 98% de satisfacción clínica en nuestras sedes en Lima.',
-    imageUrl: 'https://images.unsplash.com/photo-1512290923902-8a9f81dc236c?auto=format&fit=crop&q=80&w=800',
-    link: '/portafolio',
+    id: 'etica-humana',
+    title: 'Ética y Enfoque Humano',
+    description: 'Detrás de cada consulta hay una persona que deposita su confianza en nosotros. Educamos y protegemos a los pacientes frente a la desinformación digital.',
+    imageUrl: DRA_LEYVA_PHOTOS.directoraConsultation,
+    link: '/nosotros#historia',
   },
 ]
 
@@ -49,8 +50,9 @@ export default function PromiseSection() {
     async function load() {
       try {
         const siteData = await getSiteContent('promise')
-        if (siteData?.data) {
-          setContent({ ...DEFAULTS, ...siteData.data })
+        const loaded = siteData?.data || siteData
+        if (loaded && typeof loaded === 'object') {
+          setContent((prev) => ({ ...prev, ...loaded }))
         }
       } catch { /* fallback */ }
     }

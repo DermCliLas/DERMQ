@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, SyntheticEvent } from 'react'
 import Link from 'next/link'
 import { getSiteContent } from '@/lib/api'
 import { motion, AnimatePresence } from 'framer-motion'
+import { DRA_LEYVA_PHOTOS } from '@/data/draleyva-photos'
 
 const DEFAULT_SLIDES = [
   {
@@ -14,15 +15,15 @@ const DEFAULT_SLIDES = [
   },
   {
     type: 'image',
-    src: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&q=80&w=2000',
-    title: 'Precisión & Arte',
-    subtitle: 'Tecnología vanguardista para el cuidado integral de tu piel.',
+    src: DRA_LEYVA_PHOTOS.directoraWindowLandscape,
+    title: 'Precisión & Criterio Médico',
+    subtitle: '19 años de vocación, rigor formativo y medicina basada en evidencia.',
   },
   {
     type: 'image',
-    src: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&q=80&w=2000',
-    title: 'Estética Avanzada',
-    subtitle: 'Especialistas dedicados a revelar tu luminosidad natural.',
+    src: DRA_LEYVA_PHOTOS.laserQuantaSystem,
+    title: 'Tecnología Láser de Vanguardia',
+    subtitle: 'Aparatología médica de última generación guiada por especialistas.',
   },
 ]
 
@@ -77,8 +78,9 @@ export default function HeroSection() {
     async function load() {
       try {
         const content = await getSiteContent('hero')
-        if (content?.data?.slides && content.data.slides.length > 0) {
-          setSlides(content.data.slides)
+        const loadedSlides = content?.data?.slides || content?.slides
+        if (Array.isArray(loadedSlides) && loadedSlides.length > 0) {
+          setSlides(loadedSlides)
         }
       } catch { /* fallback to defaults */ }
     }

@@ -1,3 +1,5 @@
+import { DRA_LEYVA_PHOTOS } from './draleyva-photos';
+
 export interface ServiceDetail {
   name: string;
   description: string;
@@ -19,10 +21,10 @@ export const SERVICES_DATA: ServiceCategory[] = [
     id: 'dermatologia-clinica',
     name: 'Dermatología Clínica y Quirúrgica',
     description: 'Diagnóstico y tratamiento experto de afecciones de la piel, pelo y uñas, incluyendo procedimientos quirúrgicos ambulatorios de alta precisión bajo el rigor de la Dra. Marcela Leyva.',
-    imageUrl: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=1200',
-    imageUrl2: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&q=80&w=1200',
-    imageUrl3: 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&q=80&w=1200',
-    imageUrl4: 'https://images.unsplash.com/photo-1584515933487-779824d29309?auto=format&fit=crop&q=80&w=1200',
+    imageUrl: DRA_LEYVA_PHOTOS.directoraDermatoscope,
+    imageUrl2: DRA_LEYVA_PHOTOS.directoraDeskWorking,
+    imageUrl3: DRA_LEYVA_PHOTOS.directoraSkinEvaluation,
+    imageUrl4: DRA_LEYVA_PHOTOS.directoraPrescription,
     services: [
       { name: "Consulta médica especializada", description: "Evaluación clínica exhaustiva para el diagnóstico preciso de patologías dermatológicas." },
       { name: "Destrucción de lesiones (Radiofrecuencia)", description: "Eliminación de verrugas y lesiones mediante tecnología de radiofrecuencia y crioterapia." },
@@ -37,10 +39,10 @@ export const SERVICES_DATA: ServiceCategory[] = [
     id: 'laser-avanzado',
     name: 'Láser de Vanguardia',
     description: 'Tecnología lumínica de última generación para la corrección de cicatrices, manchas, enrojecimiento y rejuvenecimiento profundo de la piel.',
-    imageUrl: 'https://images.unsplash.com/photo-1581594693702-fbdc51b2763b?auto=format&fit=crop&q=80&w=1200',
-    imageUrl2: 'https://images.unsplash.com/photo-1628178144541-0739e4bd1f8b?auto=format&fit=crop&q=80&w=1200',
-    imageUrl3: 'https://images.unsplash.com/photo-1550565118-3a14e8d0386f?auto=format&fit=crop&q=80&w=1200',
-    imageUrl4: 'https://images.unsplash.com/photo-1505576399279-565b52d4ac71?auto=format&fit=crop&q=80&w=1200',
+    imageUrl: DRA_LEYVA_PHOTOS.laserQuantaSystem,
+    imageUrl2: DRA_LEYVA_PHOTOS.laserFotona,
+    imageUrl3: DRA_LEYVA_PHOTOS.laserDiodeOperating,
+    imageUrl4: DRA_LEYVA_PHOTOS.laserDiodeSmile,
     services: [
       { name: "Láser para cicatrices", description: "Mejoría notable de cicatrices de acné o quirúrgicas en rostro y cuerpo." },
       { name: "Láser para enrojecimiento facial", description: "Tratamiento de rosácea y telangiectasias (arañitas vasculares) con precisión térmica." },
@@ -56,10 +58,10 @@ export const SERVICES_DATA: ServiceCategory[] = [
     id: 'estetica-inyectables',
     name: 'Estética & Rejuvenecimiento',
     description: 'Tratamientos inyectables y técnicas mínimamente invasivas para restaurar volúmenes, suavizar arrugas y revitalizar la calidad de la piel.',
-    imageUrl: 'https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?auto=format&fit=crop&q=80&w=1200',
-    imageUrl2: 'https://images.unsplash.com/photo-1512290923902-8a9f81dc236c?auto=format&fit=crop&q=80&w=1200',
-    imageUrl3: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&q=80&w=1200',
-    imageUrl4: 'https://images.unsplash.com/photo-1515377905703-c4788e51af15?auto=format&fit=crop&q=80&w=1200',
+    imageUrl: DRA_LEYVA_PHOTOS.iplAestheticMachine,
+    imageUrl2: DRA_LEYVA_PHOTOS.bodyContouringOperating,
+    imageUrl3: DRA_LEYVA_PHOTOS.bodyContouringDevice,
+    imageUrl4: DRA_LEYVA_PHOTOS.directoraWindowCloseUp,
     services: [
       { name: "Toxina Botulínica (Arrugas)", description: "Suavización de líneas de expresión y corrección de asimetrías faciales dinámicas." },
       { name: "Toxina Botulínica (Sudoración)", description: "Bloqueo selectivo para el manejo de la sudoración excesiva (hiperhidrosis)." },

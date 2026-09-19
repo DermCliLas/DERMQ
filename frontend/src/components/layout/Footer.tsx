@@ -31,7 +31,7 @@ interface FooterContent {
 
 const DEFAULTS: FooterContent = {
   brandName: 'DERMQ',
-  brandDescription: 'Líderes en dermatología avanzada. Fusionamos rigor científico con una visión estética premium para el cuidado integral de tu piel.',
+  brandDescription: 'Dermatología Clínica y Láser S.A.C. 19 años de vocación médica, combinando formación rigurosa en UNMSM, tecnología láser de punta y seguridad para tu bienestar.',
   facebookUrl: '#',
   instagramUrl: '#',
   linkedinUrl: '#',

@@ -126,6 +126,10 @@ export interface OrderPayload {
   source?: 'WEB' | 'POS';
   krAnswer?: string;
   krHash?: string;
+  customerDocType?: string;
+  customerDocNumber?: string;
+  customerLegalName?: string;
+  customerAddress?: string;
 }
 
 export async function createOrder(orderData: OrderPayload): Promise<any> {
@@ -277,7 +281,9 @@ export async function uploadFile(file: File): Promise<{ url: string }> {
     throw new Error(errorData.message || `Upload Error: ${response.status}`);
   }
 
-  return response.json();
+  const resJson = await response.json();
+  const url = resJson?.data?.url || resJson?.url || (typeof resJson === 'string' ? resJson : '');
+  return { url };
 }
 
 export async function getPatientProfile(patientId: string): Promise<any> {

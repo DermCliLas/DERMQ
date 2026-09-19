@@ -204,9 +204,15 @@ export default function PosPage() {
 
     setSubmitting(true)
     try {
+      const isFactura = patient?.dni && patient.dni.trim().length === 11;
       const order = await createOrder({
         items: cart.map(i => ({ productId: i.id, quantity: i.qty })),
         paymentMethod: paymentMethod as any,
+        documentType: isFactura ? 'FACTURA' : 'BOLETA',
+        customerDocType: isFactura ? '6' : '1',
+        customerDocNumber: patient?.dni?.trim() || undefined,
+        customerLegalName: `${patient?.firstName || ''} ${patient?.lastName || ''}`.trim() || undefined,
+        customerAddress: 'Lima, Perú',
         source: 'POS'
       })
       

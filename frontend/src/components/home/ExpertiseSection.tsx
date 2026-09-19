@@ -6,17 +6,18 @@ import Link from 'next/link'
 import OrganicDivider from '@/components/ui/OrganicDivider'
 import { getSiteContent } from '@/lib/api'
 import { motion } from 'framer-motion'
+import { DRA_LEYVA_PHOTOS } from '@/data/draleyva-photos'
 
 const DEFAULTS = {
-  doctorImage: '/leyva.png',
-  title1: 'The Expertise',
-  title2: 'Behind the Glow.',
-  paragraph1: 'Founded by world-renowned dermatologists, DERMQ bridges the gap between high-level laboratory research and luxury skincare experiences.',
-  paragraph2: 'Every consultation is a journey through your skin\'s molecular needs, utilizing AI-driven analysis and proprietary laser technology.',
-  stat1Value: '98%', stat1Label: 'Patient Satisfaction',
-  stat2Value: '40k', stat2Label: 'Active Treatments',
-  ctaText: 'Conoce nuestro equipo', ctaHref: '/nosotros',
-  badgeValue: '15+', badgeLine1: 'Years of Clinical', badgeLine2: 'Research',
+  doctorImage: DRA_LEYVA_PHOTOS.directoraPortrait,
+  title1: '19 Años de Vocación',
+  title2: 'y Criterio Médico.',
+  paragraph1: 'Dermatología Clínica y Láser S.A.C. nace de una formación médica rigurosa en la UNMSM y de un compromiso inquebrantable con la salud y bienestar de cada paciente.',
+  paragraph2: 'Entendemos que la tecnología por sí sola no es suficiente. Cada equipo láser y procedimiento de vanguardia está sustentado en diagnóstico responsable, evidencia científica y ética médica.',
+  stat1Value: '19', stat1Label: 'Años de Trayectoria',
+  stat2Value: '2013', stat2Label: 'Fundación Institucional',
+  ctaText: 'Conoce nuestra historia completa', ctaHref: '/nosotros',
+  badgeValue: '19', badgeLine1: 'Años de Ejercicio', badgeLine2: 'Profesional',
 }
 
 export default function ExpertiseSection() {

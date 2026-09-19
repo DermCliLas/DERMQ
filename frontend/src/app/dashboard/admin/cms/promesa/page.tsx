@@ -5,11 +5,11 @@ import { getSiteContent, updateSiteContent } from '@/lib/api'
 import CmsSaveButton from '@/components/ui/CmsSaveButton'
 
 const DEFAULTS = {
-  label: 'Nuestra Promesa',
-  quote: '"Elevamos el estándar de la salud cutánea a través de la empatía y la innovación."',
-  stat1Value: '15+', stat1Label: 'Años',
-  stat2Value: '10k', stat2Label: 'Pacientes',
-  stat3Value: '98%', stat3Label: 'Satisfacción',
+  label: 'Nuestros Pilares',
+  quote: '"Elevamos el estándar de la salud cutánea a través de la ciencia, la tecnología especializada y la empatía médica."',
+  stat1Value: '19', stat1Label: 'Años de Trayectoria',
+  stat2Value: '10k+', stat2Label: 'Pacientes Atendidos',
+  stat3Value: '98%', stat3Label: 'Satisfacción Clínica',
 }
 
 export default function PromesaCmsPage() {

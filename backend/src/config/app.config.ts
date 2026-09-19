@@ -16,8 +16,12 @@ export const appConfig = {
     privateKey: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
   },
   nubeFact: {
-    url: process.env.NUBEFACT_API_URL || process.env.NUBEFACT_URL || 'https://api.nubefact.com/v1/ventas',
+    url: process.env.NUBEFACT_API_URL || process.env.NUBEFACT_URL || 'https://api.nubefact.com/api/v1',
     token: process.env.NUBEFACT_API_TOKEN || process.env.NUBEFACT_TOKEN,
+    seriesBoleta: process.env.NUBEFACT_SERIES_BOLETA || 'B001',
+    seriesFactura: process.env.NUBEFACT_SERIES_FACTURA || 'F001',
+    seriesNcBoleta: process.env.NUBEFACT_SERIES_NC_BOLETA || 'BC01',
+    seriesNcFactura: process.env.NUBEFACT_SERIES_NC_FACTURA || 'FC01',
   },
   resend: {
     apiKey: process.env.RESEND_API_KEY,

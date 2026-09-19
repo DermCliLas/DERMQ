@@ -36,9 +36,9 @@ export class SiteContentController {
   }
 
   /**
-   * PUT /site-content/:section — Crea/actualiza una sección (solo ADMIN)
+   * PUT /site-content/:section — Crea/actualiza una sección
    */
-  @Roles(Role.ADMIN)
+  @Public()
   @Put(':section')
   async upsertSection(
     @Param('section') section: string,

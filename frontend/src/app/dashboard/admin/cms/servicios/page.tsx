@@ -15,13 +15,17 @@ interface ServiceCategory {
   services: { name: string; description: string }[]
 }
 
+import { DRA_LEYVA_PHOTOS } from '@/data/draleyva-photos'
+
 const DEFAULT_DATA: ServiceCategory[] = [
   {
     id: 'dermatologia-clinica',
     name: 'Dermatología Clínica y Quirúrgica',
     description: 'Diagnóstico y tratamiento experto de afecciones de la piel, pelo y uñas.',
-    imageUrl: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=1200',
-    imageUrl2: '', imageUrl3: '', imageUrl4: '',
+    imageUrl: DRA_LEYVA_PHOTOS.directoraDermatoscope,
+    imageUrl2: DRA_LEYVA_PHOTOS.directoraDeskWorking,
+    imageUrl3: DRA_LEYVA_PHOTOS.directoraSkinEvaluation,
+    imageUrl4: DRA_LEYVA_PHOTOS.directoraPrescription,
     services: [
       { name: 'Consulta médica especializada', description: 'Evaluación clínica exhaustiva.' },
     ],

@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
 import { SERVICES_DATA } from '@/data/services'
+import { getSiteContent } from '@/lib/api'
 
 const CATEGORY_STYLES: Record<string, any> = {
   'dermatologia-clinica': { icon: 'clinical_notes', color: 'bg-primary/10 text-primary' },
@@ -13,15 +14,30 @@ const CATEGORY_STYLES: Record<string, any> = {
 }
 
 export default function ServiciosPage() {
+  const [categories, setCategories] = useState(SERVICES_DATA)
   const [activeSlide, setActiveSlide] = useState(0)
+
+  useEffect(() => {
+    async function loadCms() {
+      try {
+        const cms = await getSiteContent('services')
+        const loaded = cms?.data?.categories || cms?.categories
+        if (Array.isArray(loaded) && loaded.length > 0) {
+          setCategories(loaded)
+        }
+      } catch { /* use defaults */ }
+    }
+    loadCms()
+  }, [])
 
   // Carousel Auto-play
   useEffect(() => {
+    if (categories.length === 0) return
     const timer = setInterval(() => {
-      setActiveSlide((prev) => (prev + 1) % SERVICES_DATA.length)
+      setActiveSlide((prev) => (prev + 1) % categories.length)
     }, 6000)
     return () => clearInterval(timer)
-  }, [])
+  }, [categories.length])
 
   return (
     <main className="bg-[#f8fafa]">
@@ -37,8 +53,8 @@ export default function ServiciosPage() {
             className="absolute inset-0"
           >
             <Image 
-              src={SERVICES_DATA[activeSlide].imageUrl} 
-              alt={SERVICES_DATA[activeSlide].name} 
+              src={categories[activeSlide]?.imageUrl || ''} 
+              alt={categories[activeSlide]?.name || ''} 
               fill 
               className="object-cover opacity-70"
             />
@@ -65,7 +81,7 @@ export default function ServiciosPage() {
               </div>
               
               <h1 className="text-3xl sm:text-5xl md:text-7xl lg:text-[5rem] font-headline font-black tracking-tighter text-white mb-6 md:mb-8 leading-[1.05]">
-                {SERVICES_DATA[activeSlide].name.split(' ').map((word, i) => {
+                {categories[activeSlide]?.name.split(' ').map((word, i) => {
                   const isHighlight = word.toLowerCase() === 'láser' || word.toLowerCase() === 'estética' || word.toLowerCase() === 'quirúrgica';
                   return (
                     <span key={i} className={isHighlight ? 'text-tertiary italic' : ''}>
@@ -76,12 +92,12 @@ export default function ServiciosPage() {
               </h1>
               
               <p className="text-xl md:text-2xl text-white/90 font-serif italic leading-relaxed mb-12 border-l-4 border-tertiary/50 pl-6">
-                {SERVICES_DATA[activeSlide].description}
+                {categories[activeSlide]?.description}
               </p>
               
               <div className="flex flex-col sm:flex-row gap-8 sm:items-center">
                 <Link
-                  href={`#${SERVICES_DATA[activeSlide].id}`}
+                  href={`#${categories[activeSlide]?.id}`}
                   className="bg-tertiary text-white px-10 py-5 rounded-full font-bold hover:bg-white hover:text-tertiary transition-all shadow-glow hover:shadow-glow-lg group flex items-center justify-center gap-3 w-fit"
                 >
                   Explorar Tratamientos
@@ -90,7 +106,7 @@ export default function ServiciosPage() {
                 
                 {/* Custom Carousel Indicators */}
                 <div className="flex gap-3 items-center">
-                  {SERVICES_DATA.map((_, i) => (
+                  {categories.map((_, i) => (
                     <button
                       key={i}
                       onClick={() => setActiveSlide(i)}
@@ -108,7 +124,7 @@ export default function ServiciosPage() {
       </section>
 
       {/* Categories Sections with Vertical Collage */}
-      {SERVICES_DATA.map((cat, idx) => {
+      {categories.map((cat, idx) => {
         // Section Styles based on explicit index: 0 = Green, 1 = Light, 2 = Salmon
         const isGreen = idx === 0;
         const isLight = idx === 1;
