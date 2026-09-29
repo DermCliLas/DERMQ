@@ -36,6 +36,11 @@ describe('AppointmentsService & TimeValidator', () => {
 
     mockEmail = {
       sendAppointmentConfirmation: jest.fn().mockResolvedValue(true),
+      sendNewAppointmentAlert: jest.fn().mockResolvedValue(true),
+      sendAppointmentPendingPatient: jest.fn().mockResolvedValue(true),
+      sendAppointmentReminder: jest.fn().mockResolvedValue(true),
+      sendAppointmentCancelled: jest.fn().mockResolvedValue(true),
+      sendAppointmentRescheduled: jest.fn().mockResolvedValue(true),
     };
 
     timeValidator = new AppointmentTimeValidator(mockPrisma);

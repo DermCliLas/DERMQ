@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD, APP_INTERCEPTOR, APP_FILTER, APP_PIPE } from '@nestjs/core';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { ScheduleModule } from '@nestjs/schedule';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { AppointmentsModule } from './modules/appointments/appointments.module';
@@ -35,6 +36,7 @@ import { appConfig } from './config/app.config';
         limit: appConfig.rateLimit.limit,
       },
     ]),
+    ScheduleModule.forRoot(),
     PrismaModule,
     NotificationsModule,
     PaymentsModule,

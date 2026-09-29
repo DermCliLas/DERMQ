@@ -196,7 +196,7 @@ export class AppointmentsService {
       throw lastError;
     }
 
-    // ─── GOOGLE CALENDAR SYNC ON INITIAL CREATION ────────────────────────────
+    // ─── GOOGLE CALENDAR SYNC & EMAIL NOTIFICATIONS ─────────────────────────
     try {
       if (appointment.status === AppointmentStatus.CONFIRMED) {
         const googleEventId = await this.googleCalendar.createEvent(appointment);
@@ -208,16 +208,24 @@ export class AppointmentsService {
           appointment.googleEventId = googleEventId;
         }
         
-        // ─── EMAIL NOTIFICATIONS ──────────────────────────────────────────────
+        // ─── EMAIL NOTIFICATIONS (CONFIRMADA DIRECTAMENTE) ─────────────────────
         this.emailService.sendAppointmentConfirmation(appointment).catch((err) =>
           console.error('Error sending appointment confirmation email:', err),
         );
-        this.emailService.sendNewAppointmentAlert(appointment).catch((err) =>
+        this.emailService.sendNewAppointmentAlert(appointment, false).catch((err) =>
+          console.error('Error sending appointment alert email to doctor:', err),
+        );
+      } else if (appointment.status === AppointmentStatus.PENDING) {
+        // ─── EMAIL NOTIFICATIONS (SOLICITUD WEB PENDIENTE DE REVISIÓN) ─────────
+        this.emailService.sendAppointmentPendingPatient(appointment).catch((err) =>
+          console.error('Error sending appointment pending email to patient:', err),
+        );
+        this.emailService.sendNewAppointmentAlert(appointment, true).catch((err) =>
           console.error('Error sending appointment alert email to doctor:', err),
         );
       }
     } catch (error) {
-      console.error('Error synchronizing with Google Calendar on create:', error);
+      console.error('Error synchronizing notifications on create:', error);
     }
 
     return appointment;
@@ -558,6 +566,31 @@ export class AppointmentsService {
       }
     }
 
+    // ─── EMAIL NOTIFICATIONS ON RESCHEDULE ──────────────────────────────────
+    try {
+      const oldDate = new Date(existingAppointment.date);
+      const oldDateFormatted = oldDate.toLocaleDateString('es-PE', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+      // Reiniciar reminderSent para permitir enviar el recordatorio 24h antes de la nueva fecha
+      await this.prisma.appointment.update({
+        where: { id },
+        data: { reminderSent: false },
+      });
+      this.emailService
+        .sendAppointmentRescheduled(updatedAppointment, oldDateFormatted)
+        .catch((err) =>
+          console.error('Error sending appointment rescheduled email:', err),
+        );
+    } catch (err) {
+      console.error('Error preparing reschedule email notification:', err);
+    }
+
     return updatedAppointment;
   }
 
@@ -659,7 +692,7 @@ export class AppointmentsService {
       },
     });
 
-    // ─── GOOGLE CALENDAR SYNC ───────────────────────────────────────────────
+    // ─── GOOGLE CALENDAR SYNC & EMAIL NOTIFICATIONS ─────────────────────────
     try {
       if (status === AppointmentStatus.CONFIRMED) {
         const googleEventId =
@@ -671,33 +704,38 @@ export class AppointmentsService {
           });
         }
         
-        // ─── EMAIL NOTIFICATIONS ──────────────────────────────────────────────
+        // ─── EMAIL NOTIFICATIONS (CONFIRMED) ──────────────────────────────────
         this.emailService.sendAppointmentConfirmation(updatedAppointment).catch((err) =>
           console.error('Error sending appointment confirmation email:', err),
         );
-        this.emailService.sendNewAppointmentAlert(updatedAppointment).catch((err) =>
+        this.emailService.sendNewAppointmentAlert(updatedAppointment, false).catch((err) =>
           console.error('Error sending appointment alert email to doctor:', err),
         );
-      } else if (
-        status === AppointmentStatus.CANCELLED &&
-        updatedAppointment.googleEventId
-      ) {
-        await this.googleCalendar.deleteEvent(
-          (updatedAppointment.doctor as any).email,
-          updatedAppointment.googleEventId,
+      } else if (status === AppointmentStatus.CANCELLED) {
+        if (updatedAppointment.googleEventId) {
+          await this.googleCalendar.deleteEvent(
+            (updatedAppointment.doctor as any).email,
+            updatedAppointment.googleEventId,
+          );
+          await this.prisma.appointment.update({
+            where: { id },
+            data: { googleEventId: null },
+          });
+        }
+        
+        // ─── EMAIL NOTIFICATIONS (CANCELLED) ──────────────────────────────────
+        this.emailService.sendAppointmentCancelled(updatedAppointment).catch((err) =>
+          console.error('Error sending appointment cancelled email:', err),
         );
-        await this.prisma.appointment.update({
-          where: { id },
-          data: { googleEventId: null },
-        });
       }
     } catch (error) {
-      console.error('Error synchronizing with Google Calendar:', error);
+      console.error('Error synchronizing with Google Calendar / Notifications:', error);
       // No lanzamos error para no bloquear el cambio de estado si Google falla
     }
 
     return updatedAppointment;
   }
+
 
   async remove(id: string, userId: string, userRole: Role) {
     // Verificar que la cita exista

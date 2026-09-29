@@ -146,9 +146,9 @@ export class EmailService {
     return this.sendEmail(patient.email, subject, html);
   }
 
-  // ─── PLANTILLA 2: ALERTA DE NUEVA CITA (DOCTORA) ──────────────────────────
-  async sendNewAppointmentAlert(appointment: any) {
-    const { patient, service, date, notes } = appointment;
+  // ─── PLANTILLA 2: SOLICITUD WEB RECIBIDA (PACIENTE - PENDIENTE) ───────────
+  async sendAppointmentPendingPatient(appointment: any) {
+    const { patient, doctor, service, date } = appointment;
     const appointmentDate = new Date(date);
     const dateFormatted = appointmentDate.toLocaleDateString('es-PE', {
       weekday: 'long',
@@ -162,7 +162,100 @@ export class EmailService {
       hour12: true,
     });
 
-    const subject = `Nueva Cita Programada: ${patient.firstName} ${patient.lastName} - ${service.name}`;
+    const subject = `Solicitud de Cita Recibida: ${service.name} - DERMQ`;
+    const clinicAddress =
+      appointment.branch?.address ||
+      'Av. José Gálvez Barrenechea 127, Of. 604, San Isidro, Lima';
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>${subject}</title>
+      </head>
+      <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Helvetica, Arial, sans-serif; background-color: #f4f7f6; color: #1a1c1e;">
+        <table align="center" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;">
+          <tr>
+            <td align="center" style="padding: 35px 0; background: linear-gradient(135deg, #014d4e 0%, #72c1c1 100%);">
+              <span style="font-size: 26px; font-weight: 800; color: #ffffff; letter-spacing: 2px; text-transform: uppercase;">DERMQ</span>
+              <p style="margin: 5px 0 0 0; font-size: 11px; color: rgba(255,255,255,0.85); font-weight: 600; letter-spacing: 1px;">CLÍNICA & ESTÉTICA DERMATOLÓGICA</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 35px 30px;">
+              <div style="text-align: center; margin-bottom: 25px;">
+                <span style="display: inline-block; background-color: #fef3c7; color: #92400e; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; padding: 6px 16px; rounded-pill: true; border-radius: 50px;">Solicitud en Revisión</span>
+              </div>
+              <h2 style="margin-top: 0; color: #014d4e; font-size: 22px; font-weight: 800; text-align: center;">¡Hemos recibido tu solicitud de cita!</h2>
+              <p style="font-size: 15px; line-height: 1.6; color: #4a5568; text-align: center;">
+                Hola <strong>${patient.firstName}</strong>, tu solicitud para agendar una cita en DERMQ ha sido recibida con éxito. Nuestro equipo de recepción la validará a la brevedad.
+              </p>
+              
+              <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f7fafc; border-radius: 16px; margin: 25px 0; padding: 22px; border: 1px solid #edf2f7;">
+                <tr>
+                  <td style="padding-bottom: 12px;">
+                    <span style="font-size: 11px; color: #718096; font-weight: bold; text-transform: uppercase;">Tratamiento Solicitado</span><br/>
+                    <strong style="font-size: 16px; color: #014d4e;">${service.name}</strong>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding-bottom: 12px;">
+                    <span style="font-size: 11px; color: #718096; font-weight: bold; text-transform: uppercase;">Fecha y Hora Solicitada</span><br/>
+                    <strong style="font-size: 15px; color: #2d3748;">${dateFormatted} a las ${timeFormatted}</strong>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <span style="font-size: 11px; color: #718096; font-weight: bold; text-transform: uppercase;">Sede</span><br/>
+                    <strong style="font-size: 14px; color: #2d3748;">${clinicAddress}</strong>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="font-size: 13px; color: #718096; line-height: 1.5; text-align: center; margin: 0;">
+                Tan pronto como recepción apruebe tu cita, recibirás un correo de confirmación final con todos los detalles.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td align="center" style="padding: 25px; background-color: #f7fafc; border-top: 1px solid #edf2f7; font-size: 12px; color: #a0aec0;">
+              <p style="margin: 0 0 4px 0;">DERMQ Clínica Dermatológica © 2026</p>
+              <p style="margin: 0;">Consultas: +51 996 235 890 • citas@draleyva.com</p>
+            </td>
+          </tr>
+        </table>
+      </body>
+      </html>
+    `;
+
+    return this.sendEmail(patient.email, subject, html);
+  }
+
+  // ─── PLANTILLA 3: ALERTA DE NUEVA CITA O SOLICITUD (DOCTORA) ──────────────
+  async sendNewAppointmentAlert(appointment: any, isPending: boolean = false) {
+    const { patient, doctor, service, date, notes } = appointment;
+    const appointmentDate = new Date(date);
+    const dateFormatted = appointmentDate.toLocaleDateString('es-PE', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+    const timeFormatted = appointmentDate.toLocaleTimeString('es-PE', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    });
+
+    const statusBadge = isPending
+      ? 'SOLICITUD WEB PENDIENTE DE CONFIRMACIÓN'
+      : 'CITA CONFIRMADA EN AGENDA';
+    const badgeBg = isPending ? '#d97706' : '#014d4e';
+
+    const subject = isPending
+      ? `🔔 Nueva Solicitud de Cita Web: ${patient.firstName} ${patient.lastName} - ${service.name}`
+      : `✅ Cita Confirmada: ${patient.firstName} ${patient.lastName} - ${service.name}`;
 
     const html = `
       <!DOCTYPE html>
@@ -174,42 +267,228 @@ export class EmailService {
       <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f7f6; color: #1a1c1e;">
         <table align="center" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;">
           <tr>
-            <td align="center" style="padding: 30px; background-color: #014d4e; color: #ffffff;">
-              <span style="font-size: 20px; font-weight: bold; letter-spacing: 1px;">DERMQ PANEL MÉDICO</span>
+            <td align="center" style="padding: 28px; background-color: ${badgeBg}; color: #ffffff;">
+              <span style="font-size: 18px; font-weight: bold; letter-spacing: 1px;">DERMQ PANEL MÉDICO</span>
+              <p style="margin: 4px 0 0 0; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.9;">${statusBadge}</p>
             </td>
           </tr>
           <tr>
-            <td style="padding: 40px 30px;">
-              <h3 style="margin-top: 0; color: #014d4e; font-size: 20px; font-weight: bold;">Estimada Dra. Marcela Leyva,</h3>
+            <td style="padding: 35px 30px;">
+              <h3 style="margin-top: 0; color: #014d4e; font-size: 20px; font-weight: bold;">
+                Estimada ${doctor ? 'Dra. ' + doctor.firstName + ' ' + doctor.lastName : 'Dra. Marcela Leyva'},
+              </h3>
               <p style="font-size: 15px; color: #4a5568; line-height: 1.6;">
-                Se ha agendado una nueva cita en su agenda clínica a través de la plataforma en línea. A continuación los detalles del paciente:
+                ${
+                  isPending
+                    ? 'Un paciente ha solicitado una nueva cita en la plataforma web que se encuentra en espera de confirmación:'
+                    : 'Se ha agendado y confirmado una cita médica en su agenda clínica:'
+                }
               </p>
               
-              <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f7fafc; border-radius: 12px; margin: 20px 0; padding: 20px; font-size: 14px; color: #2d3748; line-height: 1.6;">
+              <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f7fafc; border-radius: 12px; margin: 20px 0; padding: 20px; font-size: 14px; color: #2d3748; line-height: 1.6; border: 1px solid #edf2f7;">
                 <tr>
-                  <td><strong>Paciente:</strong></td>
-                  <td>${patient.firstName} ${patient.lastName}</td>
+                  <td style="padding: 4px 0;"><strong>Paciente:</strong></td>
+                  <td style="padding: 4px 0;">${patient.firstName} ${patient.lastName}</td>
                 </tr>
                 <tr>
-                  <td><strong>DNI / Contacto:</strong></td>
-                  <td>${patient.dni || 'No provisto'} / ${patient.phone || 'No provisto'}</td>
+                  <td style="padding: 4px 0;"><strong>DNI / Documento:</strong></td>
+                  <td style="padding: 4px 0;">${patient.dni || 'No provisto'}</td>
                 </tr>
                 <tr>
-                  <td><strong>Tratamiento:</strong></td>
-                  <td style="color: #014d4e; font-weight: bold;">${service.name}</td>
+                  <td style="padding: 4px 0;"><strong>Teléfono:</strong></td>
+                  <td style="padding: 4px 0;">${patient.phone || 'No provisto'}</td>
                 </tr>
                 <tr>
-                  <td><strong>Fecha y Hora:</strong></td>
-                  <td>${dateFormatted} a las ${timeFormatted}</td>
+                  <td style="padding: 4px 0;"><strong>Email:</strong></td>
+                  <td style="padding: 4px 0;">${patient.email}</td>
                 </tr>
                 <tr>
-                  <td><strong>Notas del Paciente:</strong></td>
-                  <td><em>${notes || 'Ninguna nota ingresada.'}</em></td>
+                  <td style="padding: 4px 0;"><strong>Tratamiento:</strong></td>
+                  <td style="padding: 4px 0; color: #014d4e; font-weight: bold;">${service.name} (S/ ${Number(service.price).toFixed(2)})</td>
+                </tr>
+                <tr>
+                  <td style="padding: 4px 0;"><strong>Fecha y Hora:</strong></td>
+                  <td style="padding: 4px 0; font-weight: bold;">${dateFormatted} a las ${timeFormatted}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 4px 0;"><strong>Notas del Paciente:</strong></td>
+                  <td style="padding: 4px 0;"><em>${notes || 'Ninguna nota ingresada.'}</em></td>
                 </tr>
               </table>
 
+              <p style="font-size: 13px; color: #718096; line-height: 1.5; text-align: center; margin: 0;">
+                ${
+                  isPending
+                    ? 'Recepción puede aprobar esta cita directamente en el panel administrativo.'
+                    : 'Esta cita se encuentra sincronizada automáticamente en su Google Calendar de DERMQ.'
+                }
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td align="center" style="padding: 20px; background-color: #f7fafc; border-top: 1px solid #edf2f7; font-size: 11px; color: #a0aec0;">
+              DERMQ Sede San Isidro • Sistema de Alertas Automáticas
+            </td>
+          </tr>
+        </table>
+      </body>
+      </html>
+    `;
+
+    // Enviar a la doctora titular (o email del doctor si difiere)
+    const targetEmail = doctor?.email || 'dermatologiaclinicaylasersac@gmail.com';
+    return this.sendEmail(targetEmail, subject, html);
+  }
+
+  // ─── PLANTILLA 4: RECORDATORIO AUTOMÁTICO 24H ANTES (PACIENTE) ────────────
+  async sendAppointmentReminder(appointment: any) {
+    const { patient, doctor, service, date } = appointment;
+    const appointmentDate = new Date(date);
+    const dateFormatted = appointmentDate.toLocaleDateString('es-PE', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+    const timeFormatted = appointmentDate.toLocaleTimeString('es-PE', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    });
+
+    const subject = `⏰ Recordatorio de Cita Mañana: ${service.name} a las ${timeFormatted} - DERMQ`;
+    const clinicAddress =
+      appointment.branch?.address ||
+      'Av. José Gálvez Barrenechea 127, Of. 604, San Isidro, Lima';
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>${subject}</title>
+      </head>
+      <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Helvetica, Arial, sans-serif; background-color: #f4f7f6; color: #1a1c1e;">
+        <table align="center" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;">
+          <tr>
+            <td align="center" style="padding: 35px 0; background: linear-gradient(135deg, #014d4e 0%, #72c1c1 100%);">
+              <span style="font-size: 26px; font-weight: 800; color: #ffffff; letter-spacing: 2px; text-transform: uppercase;">DERMQ</span>
+              <p style="margin: 5px 0 0 0; font-size: 11px; color: rgba(255,255,255,0.85); font-weight: 600; letter-spacing: 1px;">RECORDATORIO DE ATENCIÓN</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 35px 30px;">
+              <h2 style="margin-top: 0; color: #014d4e; font-size: 22px; font-weight: 800; text-align: center;">¡Te esperamos mañana!</h2>
+              <p style="font-size: 15px; line-height: 1.6; color: #4a5568; text-align: center;">
+                Hola <strong>${patient.firstName}</strong>, te recordamos que tienes una cita programada para el día de mañana en nuestra clínica dermatológica.
+              </p>
+              
+              <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f7fafc; border-radius: 16px; margin: 25px 0; padding: 22px; border: 1px solid #edf2f7;">
+                <tr>
+                  <td style="padding-bottom: 12px;">
+                    <span style="font-size: 11px; color: #718096; font-weight: bold; text-transform: uppercase;">Tratamiento</span><br/>
+                    <strong style="font-size: 16px; color: #014d4e;">${service.name}</strong>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding-bottom: 12px;">
+                    <span style="font-size: 11px; color: #718096; font-weight: bold; text-transform: uppercase;">Especialista</span><br/>
+                    <strong style="font-size: 15px; color: #2d3748;">${doctor ? 'Dra. ' + doctor.firstName + ' ' + doctor.lastName : 'Dra. Marcela Leyva'}</strong>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding-bottom: 12px;">
+                    <span style="font-size: 11px; color: #718096; font-weight: bold; text-transform: uppercase;">Hora de tu Cita</span><br/>
+                    <strong style="font-size: 17px; color: #014d4e;">${timeFormatted}</strong> (${dateFormatted})
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <span style="font-size: 11px; color: #718096; font-weight: bold; text-transform: uppercase;">Dirección</span><br/>
+                    <strong style="font-size: 14px; color: #2d3748;">${clinicAddress}</strong>
+                  </td>
+                </tr>
+              </table>
+
+              <div style="background-color: #ecfdf5; border-left: 4px solid #10b981; padding: 14px 18px; border-radius: 8px; margin-bottom: 20px;">
+                <p style="margin: 0; font-size: 13px; color: #065f46; line-height: 1.5;">
+                  <strong>Recomendación:</strong> Te sugerimos llegar con 10 minutos de anticipación y traer tu documento de identidad (DNI o Carnet de Extranjería).
+                </p>
+              </div>
+
+              <p style="font-size: 13px; color: #718096; line-height: 1.5; text-align: center; margin: 0;">
+                Si necesitas reprogramar con urgencia, por favor comunícate a nuestro WhatsApp o teléfono al <strong>+51 996 235 890</strong>.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td align="center" style="padding: 25px; background-color: #f7fafc; border-top: 1px solid #edf2f7; font-size: 12px; color: #a0aec0;">
+              <p style="margin: 0 0 4px 0;">DERMQ Clínica Dermatológica • San Isidro, Lima</p>
+              <p style="margin: 0;">citas@draleyva.com</p>
+            </td>
+          </tr>
+        </table>
+      </body>
+      </html>
+    `;
+
+    return this.sendEmail(patient.email, subject, html);
+  }
+
+  // ─── PLANTILLA 5: AVISO DE CANCELACIÓN (PACIENTE & DOCTORA) ───────────────
+  async sendAppointmentCancelled(appointment: any, reason?: string) {
+    const { patient, doctor, service, date } = appointment;
+    const appointmentDate = new Date(date);
+    const dateFormatted = appointmentDate.toLocaleDateString('es-PE', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+    const timeFormatted = appointmentDate.toLocaleTimeString('es-PE', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    });
+
+    const subject = `Cita Cancelada: ${service.name} - DERMQ`;
+
+    const htmlPatient = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>${subject}</title>
+      </head>
+      <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Helvetica, Arial, sans-serif; background-color: #f4f7f6; color: #1a1c1e;">
+        <table align="center" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;">
+          <tr>
+            <td align="center" style="padding: 30px 0; background-color: #64748b;">
+              <span style="font-size: 24px; font-weight: 800; color: #ffffff; letter-spacing: 2px;">DERMQ</span>
+              <p style="margin: 4px 0 0 0; font-size: 11px; color: rgba(255,255,255,0.85); font-weight: 600;">AVISO DE CANCELACIÓN</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 35px 30px;">
+              <h2 style="margin-top: 0; color: #1e293b; font-size: 20px; font-weight: 800; text-align: center;">Cita Cancelada</h2>
+              <p style="font-size: 15px; line-height: 1.6; color: #4a5568; text-align: center;">
+                Hola <strong>${patient.firstName}</strong>, te informamos que la cita médica programada ha sido cancelada.
+              </p>
+              
+              <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f8fafc; border-radius: 14px; margin: 20px 0; padding: 20px; border: 1px solid #e2e8f0; font-size: 14px; line-height: 1.6;">
+                <tr>
+                  <td><strong>Tratamiento:</strong></td>
+                  <td>${service.name}</td>
+                </tr>
+                <tr>
+                  <td><strong>Fecha original:</strong></td>
+                  <td>${dateFormatted} a las ${timeFormatted}</td>
+                </tr>
+                ${reason ? `<tr><td><strong>Motivo:</strong></td><td>${reason}</td></tr>` : ''}
+              </table>
+
               <p style="font-size: 13px; color: #718096; line-height: 1.5; text-align: center;">
-                Esta cita ya ha sido insertada y sincronizada de manera automática en su Google Calendar de DERMQ.
+                Si deseas volver a agendar en un nuevo horario, puedes hacerlo directamente en nuestro sitio web o contactando a recepción al <strong>+51 996 235 890</strong>.
               </p>
             </td>
           </tr>
@@ -218,13 +497,116 @@ export class EmailService {
       </html>
     `;
 
-    // Enviamos la alerta al correo de la doctora (dermatologiaclinicaylasersac@gmail.com)
+    // Enviar al paciente
+    await this.sendEmail(patient.email, subject, htmlPatient);
+
+    // Enviar alerta a la doctora
+    const htmlDoctor = `
+      <div style="font-family: Arial, sans-serif; padding: 20px; color: #1a1c1e;">
+        <h3 style="color: #b91c1c;">Cita Cancelada en Agenda</h3>
+        <p>Se ha cancelado la siguiente cita en el sistema:</p>
+        <ul>
+          <li><strong>Paciente:</strong> ${patient.firstName} ${patient.lastName} (${patient.email})</li>
+          <li><strong>Tratamiento:</strong> ${service.name}</li>
+          <li><strong>Fecha:</strong> ${dateFormatted} a las ${timeFormatted}</li>
+          ${reason ? `<li><strong>Motivo:</strong> ${reason}</li>` : ''}
+        </ul>
+      </div>
+    `;
+    const doctorEmail = doctor?.email || 'dermatologiaclinicaylasersac@gmail.com';
+    return this.sendEmail(doctorEmail, `[Cancelada] Cita: ${patient.firstName} ${patient.lastName} - ${service.name}`, htmlDoctor);
+  }
+
+  // ─── PLANTILLA 6: AVISO DE REPROGRAMACIÓN (PACIENTE & DOCTORA) ─────────────
+  async sendAppointmentRescheduled(appointment: any, oldDateFormatted: string) {
+    const { patient, doctor, service, date } = appointment;
+    const appointmentDate = new Date(date);
+    const dateFormatted = appointmentDate.toLocaleDateString('es-PE', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+    const timeFormatted = appointmentDate.toLocaleTimeString('es-PE', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    });
+
+    const subject = `🔄 Cita Reprogramada: ${service.name} - DERMQ`;
+    const clinicAddress =
+      appointment.branch?.address ||
+      'Av. José Gálvez Barrenechea 127, Of. 604, San Isidro, Lima';
+
+    const htmlPatient = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>${subject}</title>
+      </head>
+      <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Helvetica, Arial, sans-serif; background-color: #f4f7f6; color: #1a1c1e;">
+        <table align="center" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;">
+          <tr>
+            <td align="center" style="padding: 35px 0; background: linear-gradient(135deg, #0284c7 0%, #014d4e 100%);">
+              <span style="font-size: 26px; font-weight: 800; color: #ffffff; letter-spacing: 2px;">DERMQ</span>
+              <p style="margin: 5px 0 0 0; font-size: 11px; color: rgba(255,255,255,0.85); font-weight: 600;">ACTUALIZACIÓN DE HORARIO</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 35px 30px;">
+              <h2 style="margin-top: 0; color: #014d4e; font-size: 22px; font-weight: 800; text-align: center;">Tu cita ha sido reprogramada</h2>
+              <p style="font-size: 15px; line-height: 1.6; color: #4a5568; text-align: center;">
+                Hola <strong>${patient.firstName}</strong>, confirmamos el cambio de fecha/hora de tu cita médica.
+              </p>
+              
+              <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f0fdf4; border-radius: 16px; margin: 25px 0; padding: 22px; border: 1px solid #bbf7d0;">
+                <tr>
+                  <td style="padding-bottom: 10px;">
+                    <span style="font-size: 11px; color: #15803d; font-weight: bold; text-transform: uppercase;">Nueva Fecha y Hora</span><br/>
+                    <strong style="font-size: 18px; color: #14532d;">${dateFormatted} a las ${timeFormatted}</strong>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding-bottom: 10px;">
+                    <span style="font-size: 11px; color: #64748b; font-weight: bold; text-transform: uppercase;">Horario Anterior</span><br/>
+                    <span style="font-size: 13px; color: #64748b; text-decoration: line-through;">${oldDateFormatted}</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding-bottom: 10px;">
+                    <span style="font-size: 11px; color: #15803d; font-weight: bold; text-transform: uppercase;">Especialista & Tratamiento</span><br/>
+                    <strong style="font-size: 15px; color: #14532d;">${doctor ? 'Dra. ' + doctor.firstName + ' ' + doctor.lastName : 'Dra. Marcela Leyva'} • ${service.name}</strong>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <span style="font-size: 11px; color: #15803d; font-weight: bold; text-transform: uppercase;">Dirección</span><br/>
+                    <strong style="font-size: 14px; color: #14532d;">${clinicAddress}</strong>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="font-size: 13px; color: #718096; line-height: 1.5; text-align: center; margin: 0;">
+                El evento en Google Calendar también se ha actualizado con el nuevo horario.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </body>
+      </html>
+    `;
+
+    await this.sendEmail(patient.email, subject, htmlPatient);
+
+    const doctorEmail = doctor?.email || 'dermatologiaclinicaylasersac@gmail.com';
     return this.sendEmail(
-      'dermatologiaclinicaylasersac@gmail.com',
-      subject,
-      html,
+      doctorEmail,
+      `[Reprogramada] Cita: ${patient.firstName} ${patient.lastName} - ${dateFormatted} a las ${timeFormatted}`,
+      `<p>La cita de <strong>${patient.firstName} ${patient.lastName}</strong> para <strong>${service.name}</strong> se ha reprogramado al <strong>${dateFormatted} a las ${timeFormatted}</strong> (anteriormente: ${oldDateFormatted}).</p>`,
     );
   }
+
 
   // ─── PLANTILLA 3: RECIBO DE PAGO & FACTURA (PACIENTE) ─────────────────────
   async sendOrderInvoice(order: any, billingResult: any) {

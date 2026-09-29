@@ -145,6 +145,8 @@ model Appointment {
   orderId       String?       @unique // Conexión a la transacción de facturación
   order         Order?        @relation(fields: [orderId], references: [id])
   
+  reminderSent  Boolean       @default(false)
+
   medicalRecord MedicalRecord?
 
   createdAt DateTime @default(now())
