@@ -47,11 +47,43 @@ export class MedicalRecordsService {
   }
 
   async findByPatient(patientId: string, userId: string, userRole: Role) {
-    // Si es un paciente, solo puede ver su propia historia
+    // 1. Recepción: Denegado
+    if (userRole === Role.RECEPTION) {
+      throw new ForbiddenException(
+        'El personal de recepción no está autorizado para acceder a historias clínicas confidenciales.',
+      );
+    }
+
+    // 2. Si es un paciente, solo puede ver su propia historia
     if (userRole === Role.PATIENT && userId !== patientId) {
       throw new ForbiddenException(
         'No tienes permiso para ver esta historia clínica',
       );
+    }
+
+    // 3. Si es un médico, verificar que sea médico tratante
+    if (userRole === Role.DOCTOR) {
+      const hasAppointment = await this.prisma.appointment.findFirst({
+        where: {
+          doctorId: userId,
+          patientId,
+        },
+      });
+
+      const hasRecord = !hasAppointment
+        ? await this.prisma.medicalRecord.findFirst({
+            where: {
+              doctorId: userId,
+              patientId,
+            },
+          })
+        : true;
+
+      if (!hasAppointment && !hasRecord) {
+        throw new ForbiddenException(
+          'No estás autorizado para consultar la historia clínica de este paciente (no eres médico tratante).',
+        );
+      }
     }
 
     const records = await this.prisma.medicalRecord.findMany({
@@ -144,10 +176,40 @@ export class MedicalRecordsService {
     }
 
     // Protección de privacidad
+    if (userRole === Role.RECEPTION) {
+      throw new ForbiddenException(
+        'El personal de recepción no está autorizado para acceder a registros clínicos.',
+      );
+    }
+
     if (userRole === Role.PATIENT && record.patientId !== userId) {
       throw new ForbiddenException(
         'No tienes permiso para acceder a este registro',
       );
+    }
+
+    if (userRole === Role.DOCTOR && record.doctorId !== userId) {
+      const hasAppointment = await this.prisma.appointment.findFirst({
+        where: {
+          doctorId: userId,
+          patientId: record.patientId,
+        },
+      });
+
+      const hasOtherRecord = !hasAppointment
+        ? await this.prisma.medicalRecord.findFirst({
+            where: {
+              doctorId: userId,
+              patientId: record.patientId,
+            },
+          })
+        : true;
+
+      if (!hasAppointment && !hasOtherRecord) {
+        throw new ForbiddenException(
+          'No estás autorizado para acceder a este registro clínico (no eres el médico tratante de este paciente).',
+        );
+      }
     }
 
     return record;

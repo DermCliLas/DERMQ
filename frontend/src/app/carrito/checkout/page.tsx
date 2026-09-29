@@ -6,7 +6,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useCart } from '@/context/CartContext'
 import { useAuth } from '@/context/AuthContext'
-import { createOrder, generateIzipayToken, type OrderPayload } from '@/lib/api'
+import { createOrder, generateIzipayToken, confirmIzipayPayment, type OrderPayload } from '@/lib/api'
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 type PaymentMethod = 'CREDIT_CARD' | 'YAPE' | 'PLIN' | 'CASH' | 'TRANSFER'
@@ -45,8 +45,9 @@ export default function CheckoutPage() {
   const [izipayToken, setIzipayToken] = useState<string | null>(null)
   const [loadingIzipay, setLoadingIzipay] = useState(false)
 
-  const tax = totalPrice * 0.18
-  const finalTotal = totalPrice + tax
+  const subtotal = Number((totalPrice / 1.18).toFixed(2))
+  const tax = Number((totalPrice - subtotal).toFixed(2))
+  const finalTotal = totalPrice
 
   // Guard: must be logged in with items
   if (!isAuthenticated) {
@@ -87,10 +88,10 @@ export default function CheckoutPage() {
     }
   }
 
-  const initializeKrypton = (token: string) => {
+  const initializeKrypton = (token: string, targetOrderId: string) => {
     const KR = (window as any).KR;
     if (!KR) {
-      setTimeout(() => initializeKrypton(token), 300);
+      setTimeout(() => initializeKrypton(token, targetOrderId), 300);
       return;
     }
 
@@ -107,28 +108,16 @@ export default function CheckoutPage() {
 
           simulateProcessing();
 
-          const payload: OrderPayload = {
-            items: items.map(item => ({ productId: item.id, quantity: item.quantity })),
-            paymentMethod: 'CREDIT_CARD',
-            documentType: docType,
-            source: 'WEB',
-            krAnswer: event.rawClientAnswer,
-            krHash: event.hash,
-            customerDocType: docType === 'FACTURA' ? '6' : '1',
-            customerDocNumber: docType === 'FACTURA' ? ruc.trim() : (dni.trim() || user?.dni || undefined),
-            customerLegalName:
-              docType === 'FACTURA'
-                ? razonSocial.trim()
-                : `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || undefined,
-            customerAddress: docType === 'FACTURA' ? (fiscalAddress.trim() || undefined) : undefined,
-          };
-
-          const result = await createOrder(payload);
+          const result = await confirmIzipayPayment(
+            targetOrderId,
+            event.rawClientAnswer,
+            event.hash,
+          );
           setOrderResult(result);
           clearCart();
           setStep('success');
         } catch (err: any) {
-          setErrorMsg(err.message || 'Error al registrar tu orden pagada. Contacta a soporte.');
+          setErrorMsg(err.message || 'Error al confirmar tu orden pagada. Contacta a soporte.');
           setStep('error');
         }
         return false;
@@ -160,7 +149,26 @@ export default function CheckoutPage() {
     if (paymentMethod === 'CREDIT_CARD') {
       setLoadingIzipay(true);
       try {
-        const res = await generateIzipayToken(finalTotal, user?.email);
+        // 1. Crear la orden pendiente en el servidor (el servidor valida stock, calcula el total real y crea la orden)
+        const payload: OrderPayload = {
+          items: items.map(item => ({ productId: item.id, quantity: item.quantity })),
+          paymentMethod: 'CREDIT_CARD',
+          documentType: docType,
+          source: 'WEB',
+          customerDocType: docType === 'FACTURA' ? '6' : '1',
+          customerDocNumber: docType === 'FACTURA' ? ruc.trim() : (dni.trim() || user?.dni || undefined),
+          customerLegalName:
+            docType === 'FACTURA'
+              ? razonSocial.trim()
+              : `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || undefined,
+          customerAddress: docType === 'FACTURA' ? (fiscalAddress.trim() || undefined) : undefined,
+        };
+
+        const pendingOrder = await createOrder(payload);
+        const targetOrderId = pendingOrder.id;
+
+        // 2. Solicitar formToken al servidor pasando únicamente el orderId (monto calculado en BD)
+        const res = await generateIzipayToken(targetOrderId);
         const formToken = res.formToken;
         setIzipayToken(formToken);
 
@@ -183,7 +191,7 @@ export default function CheckoutPage() {
           script.async = true;
           
           script.onload = () => {
-            initializeKrypton(formToken);
+            initializeKrypton(formToken, targetOrderId);
           };
           script.onerror = () => {
             setErrorMsg('No se pudo cargar la librería de pagos de Izipay.');
@@ -191,7 +199,7 @@ export default function CheckoutPage() {
           };
           document.head.appendChild(script);
         } else {
-          initializeKrypton(formToken);
+          initializeKrypton(formToken, targetOrderId);
         }
       } catch (err: any) {
         setErrorMsg(err.message || 'Error al iniciar la transacción con Izipay.');
@@ -539,15 +547,15 @@ export default function CheckoutPage() {
 
               <div className="border-t border-slate-100 pt-6 space-y-3 mb-8">
                 <div className="flex justify-between text-sm text-on-surface-variant">
-                  <span>Subtotal</span>
-                  <span>S/ {totalPrice.toFixed(2)}</span>
+                  <span>Subtotal (Base Imponible)</span>
+                  <span>S/ {subtotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm text-on-surface-variant">
                   <span>IGV (18%)</span>
                   <span>S/ {tax.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between items-end pt-2 border-t border-slate-100">
-                  <span className="font-bold text-[#1a1c1e]">Total</span>
+                  <span className="font-bold text-[#1a1c1e]">Total a Pagar</span>
                   <span className="font-headline font-black text-3xl text-primary">
                     S/ {finalTotal.toFixed(2)}
                   </span>

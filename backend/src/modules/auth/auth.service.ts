@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import { Role } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
@@ -36,11 +37,22 @@ export class AuthService {
       throw new UnauthorizedException('Credenciales inválidas');
     }
 
-    const payload = { email: user.email, sub: user.id, role: user.role };
+    const accessPayload = {
+      email: user.email,
+      sub: user.id,
+      role: user.role,
+      type: 'access',
+    };
+    const refreshPayload = {
+      email: user.email,
+      sub: user.id,
+      role: user.role,
+      type: 'refresh',
+    };
 
     return {
-      access_token: this.jwtService.sign(payload, { expiresIn: '1h' }),
-      refresh_token: this.jwtService.sign(payload, { expiresIn: '7d' }),
+      access_token: this.jwtService.sign(accessPayload, { expiresIn: '1h' }),
+      refresh_token: this.jwtService.sign(refreshPayload, { expiresIn: '7d' }),
       user: {
         id: user.id,
         email: user.email,
@@ -74,18 +86,28 @@ export class AuthService {
         lastName: registerDto.lastName,
         dni: registerDto.dni,
         phone: registerDto.phone,
-        role: registerDto.role,
-        specialty: registerDto.specialty,
+        role: Role.PATIENT,
       },
     });
 
     const { password, ...result } = user;
 
-    const payload = { email: user.email, sub: user.id, role: user.role };
+    const accessPayload = {
+      email: user.email,
+      sub: user.id,
+      role: user.role,
+      type: 'access',
+    };
+    const refreshPayload = {
+      email: user.email,
+      sub: user.id,
+      role: user.role,
+      type: 'refresh',
+    };
 
     return {
-      access_token: this.jwtService.sign(payload, { expiresIn: '1h' }),
-      refresh_token: this.jwtService.sign(payload, { expiresIn: '7d' }),
+      access_token: this.jwtService.sign(accessPayload, { expiresIn: '1h' }),
+      refresh_token: this.jwtService.sign(refreshPayload, { expiresIn: '7d' }),
       user: result,
     };
   }
@@ -93,6 +115,12 @@ export class AuthService {
   async refreshToken(refreshToken: string) {
     try {
       const payload = this.jwtService.verify(refreshToken);
+
+      if (payload.type !== 'refresh') {
+        throw new UnauthorizedException(
+          'El token proporcionado no es un token de refresco válido',
+        );
+      }
 
       const user = await this.prisma.user.findUnique({
         where: { id: payload.sub },
@@ -102,12 +130,20 @@ export class AuthService {
         throw new UnauthorizedException('Usuario no encontrado');
       }
 
-      const newPayload = { email: user.email, sub: user.id, role: user.role };
+      const newAccessPayload = {
+        email: user.email,
+        sub: user.id,
+        role: user.role,
+        type: 'access',
+      };
 
       return {
-        access_token: this.jwtService.sign(newPayload, { expiresIn: '1h' }),
+        access_token: this.jwtService.sign(newAccessPayload, { expiresIn: '1h' }),
       };
     } catch (error) {
+      if (error instanceof UnauthorizedException) {
+        throw error;
+      }
       throw new UnauthorizedException('Token de refresco inválido');
     }
   }
@@ -177,11 +213,22 @@ export class AuthService {
     }
 
     // 3. Generar tokens de sesión
-    const payload = { email: user.email, sub: user.id, role: user.role };
+    const accessPayload = {
+      email: user.email,
+      sub: user.id,
+      role: user.role,
+      type: 'access',
+    };
+    const refreshPayload = {
+      email: user.email,
+      sub: user.id,
+      role: user.role,
+      type: 'refresh',
+    };
 
     return {
-      access_token: this.jwtService.sign(payload, { expiresIn: '1h' }),
-      refresh_token: this.jwtService.sign(payload, { expiresIn: '7d' }),
+      access_token: this.jwtService.sign(accessPayload, { expiresIn: '1h' }),
+      refresh_token: this.jwtService.sign(refreshPayload, { expiresIn: '7d' }),
       user: {
         id: user.id,
         email: user.email,

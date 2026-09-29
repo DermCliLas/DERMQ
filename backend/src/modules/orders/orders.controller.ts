@@ -22,10 +22,14 @@ export class OrdersController {
 
   @Post()
   create(@Body() createOrderDto: CreateOrderDto, @Request() req: any) {
-    return this.ordersService.create(createOrderDto, req.user.userId);
+    return this.ordersService.create(createOrderDto, {
+      userId: req.user.userId,
+      role: req.user.role,
+    });
   }
 
   @Get()
+  @Roles(Role.ADMIN, Role.RECEPTION)
   findAll() {
     return this.ordersService.findAll();
   }
@@ -41,8 +45,14 @@ export class OrdersController {
     return this.ordersService.cancel(id, cancelOrderDto.reason);
   }
 
+  @Post(':id/retry-billing')
+  @Roles(Role.ADMIN, Role.RECEPTION)
+  retryBilling(@Param('id') id: string) {
+    return this.ordersService.retryBilling(id);
+  }
+
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.ordersService.findOne(id);
+  async findOne(@Param('id') id: string, @Request() req: any) {
+    return this.ordersService.findOne(id, req.user.userId, req.user.role);
   }
 }

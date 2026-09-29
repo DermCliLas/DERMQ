@@ -140,13 +140,22 @@ export async function createOrder(orderData: OrderPayload): Promise<any> {
 }
 
 export async function generateIzipayToken(
-  amount: number,
-  email?: string,
-  orderId?: string,
-): Promise<{ formToken: string }> {
+  orderId: string,
+): Promise<{ formToken: string; orderId: string; amount: number; currency: string }> {
   return fetchFromApi('/payments/izipay/token', {
     method: 'POST',
-    body: JSON.stringify({ amount, email, orderId }),
+    body: JSON.stringify({ orderId }),
+  });
+}
+
+export async function confirmIzipayPayment(
+  orderId: string,
+  krAnswer: any,
+  krHash: string,
+): Promise<any> {
+  return fetchFromApi('/payments/izipay/confirm', {
+    method: 'POST',
+    body: JSON.stringify({ orderId, krAnswer, krHash }),
   });
 }
 

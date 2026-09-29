@@ -6,6 +6,7 @@ import {
   ValidateNested,
   IsInt,
   Min,
+  ArrayMinSize,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { PaymentMethod, DocType, OrderSource } from '@prisma/client';
@@ -21,9 +22,14 @@ export class CreateOrderItemDto {
 
 export class CreateOrderDto {
   @IsArray()
+  @ArrayMinSize(1, { message: 'La orden debe contener al menos un producto' })
   @ValidateNested({ each: true })
   @Type(() => CreateOrderItemDto)
   items: CreateOrderItemDto[];
+
+  @IsOptional()
+  @IsString()
+  patientId?: string;
 
   @IsEnum(PaymentMethod)
   paymentMethod: PaymentMethod;
@@ -36,13 +42,7 @@ export class CreateOrderDto {
   @IsOptional()
   source?: OrderSource;
 
-  @IsString()
-  @IsOptional()
-  krAnswer?: string;
 
-  @IsString()
-  @IsOptional()
-  krHash?: string;
 
   @IsString()
   @IsOptional()

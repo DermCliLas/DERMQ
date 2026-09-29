@@ -16,6 +16,13 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     ]);
 
     if (isPublic) {
+      // Si la ruta está marcada como pública pero el cliente envió un token de autorización,
+      // ejecutamos la verificación para poblar req.user de manera opcional
+      const request = context.switchToHttp().getRequest();
+      const authHeader = request.headers['authorization'];
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        return super.canActivate(context);
+      }
       return true;
     }
 

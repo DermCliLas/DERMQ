@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { jwtConstants } from '../../../config/jwt.config';
@@ -14,6 +14,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: any) {
+    if (payload.type && payload.type === 'refresh') {
+      throw new UnauthorizedException(
+        'Un token de refresco no puede ser utilizado para autenticar peticiones directas.',
+      );
+    }
     return { userId: payload.sub, email: payload.email, role: payload.role };
   }
 }

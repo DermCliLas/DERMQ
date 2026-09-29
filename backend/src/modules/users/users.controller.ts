@@ -9,6 +9,7 @@ import {
   Query,
   Request,
   UseGuards,
+  ForbiddenException,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -57,13 +58,25 @@ export class UsersController {
 
   @Get(':id')
   @Roles(Role.ADMIN, Role.RECEPTION, Role.DOCTOR)
-  findOne(@Param('id') id: string, @Request() req: any) {
+  async findOne(@Param('id') id: string, @Request() req: any) {
+    const targetUser = await this.usersService.findOne(id);
+
     // Los doctores y recepcionistas solo pueden ver su propio perfil o perfiles de pacientes
     if (req.user.role !== Role.ADMIN && req.user.userId !== id) {
-      // Verificar si es un paciente del doctor o recepcionista
-      // Esta lógica se puede expandir según necesidades
+      if (targetUser.role !== Role.PATIENT) {
+        throw new ForbiddenException(
+          'No tienes autorización para ver perfiles de otros miembros del personal.',
+        );
+      }
     }
-    return this.usersService.findOne(id);
+
+    // Ocultar googleSyncToken para cualquier usuario que no sea ADMIN
+    if (req.user.role !== Role.ADMIN) {
+      const { googleSyncToken, ...safeUser } = targetUser;
+      return safeUser;
+    }
+
+    return targetUser;
   }
 
   @Get('email/:email')

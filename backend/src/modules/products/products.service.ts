@@ -2,10 +2,12 @@ import {
   Injectable,
   NotFoundException,
   ConflictException,
+  BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
+import { UpdateStockDto, StockOperation } from './dto/update-stock.dto';
 
 @Injectable()
 export class ProductsService {
@@ -121,11 +123,9 @@ export class ProductsService {
     return updatedProduct;
   }
 
-  async updateStock(
-    id: string,
-    quantity: number,
-    operation: 'add' | 'subtract',
-  ) {
+  async updateStock(id: string, dto: UpdateStockDto) {
+    const { quantity, operation } = dto;
+
     const product = await this.prisma.product.findUnique({
       where: { id },
     });
@@ -134,23 +134,29 @@ export class ProductsService {
       throw new NotFoundException(`Producto con ID ${id} no encontrado`);
     }
 
-    let newStock = product.stock;
-
-    if (operation === 'add') {
-      newStock += quantity;
-    } else if (operation === 'subtract') {
-      if (product.stock < quantity) {
-        throw new Error('Stock insuficiente');
-      }
-      newStock -= quantity;
+    if (operation === StockOperation.ADD) {
+      return this.prisma.product.update({
+        where: { id },
+        data: { stock: { increment: quantity } },
+      });
     }
 
-    const updatedProduct = await this.prisma.product.update({
-      where: { id },
-      data: { stock: newStock },
-    });
+    if (operation === StockOperation.SUBTRACT) {
+      const updateResult = await this.prisma.product.updateMany({
+        where: { id, stock: { gte: quantity } },
+        data: { stock: { decrement: quantity } },
+      });
 
-    return updatedProduct;
+      if (updateResult.count === 0) {
+        throw new BadRequestException(
+          `Stock insuficiente para sustraer ${quantity} unidades. Stock actual: ${product.stock}.`,
+        );
+      }
+
+      return this.prisma.product.findUnique({ where: { id } });
+    }
+
+    throw new BadRequestException(`Operación "${operation}" no válida.`);
   }
 
   async remove(id: string) {

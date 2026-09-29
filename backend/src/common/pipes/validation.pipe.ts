@@ -28,7 +28,7 @@ export class ValidationPipe implements PipeTransform<any> {
       });
     }
 
-    return value;
+    return object;
   }
 
   private toValidate(metatype: Function): boolean {

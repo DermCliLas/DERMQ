@@ -28,6 +28,10 @@ export default function LoginPage() {
 
     if (token) {
       setLoading(true)
+      // Limpiar inmediatamente la barra de direcciones para prevenir exposición de tokens en historial y referrers
+      if (typeof window !== 'undefined' && window.history?.replaceState) {
+        window.history.replaceState({}, document.title, window.location.pathname)
+      }
       // Guardar token y redirigir
       localStorage.setItem('token', token)
       if (refresh_token) {

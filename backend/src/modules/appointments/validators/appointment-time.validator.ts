@@ -10,6 +10,7 @@ export class AppointmentTimeValidator {
     date: Date,
     durationMinutes: number,
     excludeAppointmentId?: string,
+    txPrisma: any = this.prisma,
   ): Promise<boolean> {
     const startOfDay = new Date(date);
     startOfDay.setHours(0, 0, 0, 0);
@@ -17,7 +18,7 @@ export class AppointmentTimeValidator {
     const endOfDay = new Date(date);
     endOfDay.setHours(23, 59, 59, 999);
 
-    const dayAppointments = await this.prisma.appointment.findMany({
+    const dayAppointments = await txPrisma.appointment.findMany({
       where: {
         doctorId,
         id: excludeAppointmentId ? { not: excludeAppointmentId } : undefined,
@@ -51,20 +52,25 @@ export class AppointmentTimeValidator {
     return true;
   }
 
-  async isWithinBusinessHours(date: Date): Promise<boolean> {
-    const hour = date.getHours();
+  async isWithinBusinessHours(
+    date: Date,
+    durationMinutes = 0,
+  ): Promise<boolean> {
     const day = date.getDay(); // 0 = Domingo, 1 = Lunes, ..., 6 = Sábado
-
-    // Horario de negocio: Lunes a Viernes, 8:00 AM - 8:00 PM
-    // Sábados: 9:00 AM - 2:00 PM
     if (day === 0) return false; // Domingo cerrado
 
+    const startHour = date.getHours();
+    const startMinute = date.getMinutes();
+    const startInMinutes = startHour * 60 + startMinute;
+    const endInMinutes = startInMinutes + durationMinutes;
+
+    // Horario de atención:
+    // Lunes a Viernes: 8:00 AM (480 min) a 8:00 PM (1200 min)
+    // Sábados: 9:00 AM (540 min) a 2:00 PM (840 min)
     if (day >= 1 && day <= 5) {
-      // Lunes a Viernes
-      return hour >= 8 && hour < 20;
+      return startInMinutes >= 8 * 60 && endInMinutes <= 20 * 60;
     } else if (day === 6) {
-      // Sábado
-      return hour >= 9 && hour < 14;
+      return startInMinutes >= 9 * 60 && endInMinutes <= 14 * 60;
     }
 
     return false;
@@ -82,12 +88,15 @@ export class AppointmentTimeValidator {
     date: Date,
     durationMinutes: number,
     excludeAppointmentId?: string,
+    txPrisma?: any,
   ): Promise<{ isValid: boolean; errors: string[] }> {
     const errors: string[] = [];
 
-    // Validar horario de negocio
-    if (!(await this.isWithinBusinessHours(date))) {
-      errors.push('La cita debe estar dentro del horario de atención');
+    // Validar horario de negocio (incluyendo que la hora de término no exceda el cierre)
+    if (!(await this.isWithinBusinessHours(date, durationMinutes))) {
+      errors.push(
+        'La cita y su duración deben estar dentro del horario de atención',
+      );
     }
 
     // Validar que sea en el futuro
@@ -95,13 +104,14 @@ export class AppointmentTimeValidator {
       errors.push('La cita debe ser con al menos 2 horas de anticipación');
     }
 
-    // Validar disponibilidad del doctor
+    // Validar disponibilidad del doctor usando el cliente transaccional si está provisto
     if (
       !(await this.isDoctorAvailable(
         doctorId,
         date,
         durationMinutes,
         excludeAppointmentId,
+        txPrisma,
       ))
     ) {
       errors.push('El doctor no está disponible en ese horario');

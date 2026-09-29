@@ -20,6 +20,8 @@ import { RolesGuard } from './modules/auth/guards/roles.guard';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { ValidationPipe } from './common/pipes/validation.pipe';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
 import { appConfig } from './config/app.config';
 
 @Module({
@@ -47,8 +49,9 @@ import { appConfig } from './config/app.config';
     BranchesModule,
     SiteContentModule,
   ],
-
+  controllers: [AppController],
   providers: [
+    AppService,
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,

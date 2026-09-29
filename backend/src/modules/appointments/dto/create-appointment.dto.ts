@@ -22,5 +22,5 @@ export class CreateAppointmentDto {
 
   @IsOptional()
   @IsEnum(AppointmentStatus)
-  status?: AppointmentStatus = AppointmentStatus.PENDING;
+  status?: AppointmentStatus;
 }

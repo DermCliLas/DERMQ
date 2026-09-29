@@ -36,16 +36,16 @@ export class SiteContentController {
   }
 
   /**
-   * PUT /site-content/:section — Crea/actualiza una sección
+   * PUT /site-content/:section — Crea/actualiza una sección (solo ADMIN)
    */
-  @Public()
+  @Roles(Role.ADMIN)
   @Put(':section')
   async upsertSection(
     @Param('section') section: string,
     @Body() dto: UpdateSiteContentDto,
     @Req() req: any,
   ) {
-    const userId = req.user?.id;
+    const userId = req.user?.userId || req.user?.id;
     return this.siteContentService.upsertSection(section, dto.data, userId);
   }
 

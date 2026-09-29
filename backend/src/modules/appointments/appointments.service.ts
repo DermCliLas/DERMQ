@@ -11,6 +11,7 @@ import { AppointmentTimeValidator } from './validators/appointment-time.validato
 import { GoogleCalendarService } from './google-calendar.service';
 import { EmailService } from '../notifications/email.service';
 import { Role, AppointmentStatus } from '@prisma/client';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AppointmentsService {
@@ -85,44 +86,115 @@ export class AppointmentsService {
       }
     }
 
-    // Crear la cita
-    const appointment = await this.prisma.appointment.create({
-      data: {
-        patientId: createAppointmentDto.patientId,
-        doctorId: createAppointmentDto.doctorId,
-        serviceId: createAppointmentDto.serviceId,
-        date: createAppointmentDto.date,
-        notes: createAppointmentDto.notes,
-        status: createAppointmentDto.status,
-      },
-      include: {
-        patient: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true,
-            phone: true,
+    // Solo personal administrativo puede pre-confirmar citas; pacientes quedan siempre en PENDING
+    const isStaff = userRole === Role.ADMIN || userRole === Role.RECEPTION;
+    const initialStatus = isStaff
+      ? (createAppointmentDto.status || AppointmentStatus.CONFIRMED)
+      : AppointmentStatus.PENDING;
+
+    // Crear la cita de forma transaccional verificando concurrencia con SERIALIZABLE
+    let appointment: any;
+    let lastError: any;
+
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        appointment = await this.prisma.$transaction(
+          async (tx) => {
+            // Re-verificar disponibilidad DENTRO de la transacción pasando el cliente tx
+            const isAvailable = await this.timeValidator.isDoctorAvailable(
+              createAppointmentDto.doctorId,
+              createAppointmentDto.date,
+              service.durationMin,
+              undefined,
+              tx,
+            );
+            if (!isAvailable) {
+              throw new BadRequestException(
+                'El doctor ya no tiene disponibilidad en este horario (reserva concurrente).',
+              );
+            }
+
+            return tx.appointment.create({
+              data: {
+                patientId: createAppointmentDto.patientId,
+                doctorId: createAppointmentDto.doctorId,
+                serviceId: createAppointmentDto.serviceId,
+                date: createAppointmentDto.date,
+                notes: createAppointmentDto.notes,
+                status: initialStatus,
+              },
+              include: {
+                patient: {
+                  select: {
+                    id: true,
+                    firstName: true,
+                    lastName: true,
+                    email: true,
+                    phone: true,
+                  },
+                },
+                doctor: {
+                  select: {
+                    id: true,
+                    firstName: true,
+                    lastName: true,
+                    specialty: true,
+                  },
+                },
+                service: {
+                  select: {
+                    id: true,
+                    name: true,
+                    price: true,
+                    durationMin: true,
+                  },
+                },
+              },
+            });
           },
-        },
-        doctor: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            specialty: true,
+          {
+            isolationLevel: 'Serializable' as any,
+            timeout: 10000,
           },
-        },
-        service: {
-          select: {
-            id: true,
-            name: true,
-            price: true,
-            durationMin: true,
-          },
-        },
-      },
-    });
+        );
+        break; // Éxito
+      } catch (error: any) {
+        lastError = error;
+        const isConflict =
+          error?.code === 'P2034' ||
+          error?.message?.includes('could not serialize access') ||
+          error?.message?.includes('40001') ||
+          error?.message?.includes('TransactionWriteConflict') ||
+          error?.cause?.originalCode === '40001' ||
+          error?.cause?.kind === 'TransactionWriteConflict' ||
+          String(error?.cause?.originalMessage).includes('could not serialize access');
+
+        if (isConflict) {
+          // Jitter aleatorio antes de reintentar para dar tiempo al commit de la transacción en curso
+          await new Promise((resolve) =>
+            setTimeout(resolve, 30 + Math.random() * 60),
+          );
+          continue;
+        }
+        throw error;
+      }
+    }
+
+    if (!appointment && lastError) {
+      if (
+        lastError?.code === 'P2034' ||
+        lastError?.message?.includes('could not serialize access') ||
+        lastError?.message?.includes('40001') ||
+        lastError?.message?.includes('TransactionWriteConflict') ||
+        lastError?.cause?.originalCode === '40001' ||
+        lastError?.cause?.kind === 'TransactionWriteConflict'
+      ) {
+        throw new BadRequestException(
+          'El doctor ya no tiene disponibilidad en este horario (reserva concurrente en conflicto).',
+        );
+      }
+      throw lastError;
+    }
 
     // ─── GOOGLE CALENDAR SYNC ON INITIAL CREATION ────────────────────────────
     try {
@@ -160,6 +232,10 @@ export class AppointmentsService {
     });
 
     if (!patient) {
+      const generatedPassword =
+        'Guest_' + Math.random().toString(36).substring(7);
+      const hashedPassword = await bcrypt.hash(generatedPassword, 10);
+
       patient = await this.prisma.user.create({
         data: {
           email: data.email,
@@ -167,7 +243,7 @@ export class AppointmentsService {
           lastName: data.lastName,
           dni: data.dni || null,
           phone: data.phone || null,
-          password: 'Guest_' + Math.random().toString(36).substring(7),
+          password: hashedPassword,
           role: Role.PATIENT,
         },
       });
@@ -368,6 +444,26 @@ export class AppointmentsService {
       );
     }
 
+    // Validar permisos de rol en cambio de estado
+    if (
+      updateAppointmentDto.status &&
+      updateAppointmentDto.status !== existingAppointment.status
+    ) {
+      if (
+        userRole === Role.PATIENT &&
+        updateAppointmentDto.status !== AppointmentStatus.CANCELLED
+      ) {
+        throw new ForbiddenException(
+          'Los pacientes únicamente tienen permitido cancelar sus citas.',
+        );
+      }
+      if (userRole === Role.DOCTOR && existingAppointment.doctorId !== userId) {
+        throw new ForbiddenException(
+          'Los doctores no pueden confirmar ni modificar citas de otros doctores.',
+        );
+      }
+    }
+
     // Si se está cambiando la fecha o el doctor, validar disponibilidad
     if (updateAppointmentDto.date || updateAppointmentDto.doctorId) {
       const doctorId =
@@ -485,6 +581,23 @@ export class AppointmentsService {
 
     // Verificar permisos de acceso
     this.checkAppointmentAccess(existingAppointment, userId, userRole);
+
+    // Verificar permisos específicos de rol sobre cambio de estado
+    if (userRole === Role.PATIENT) {
+      if (status !== AppointmentStatus.CANCELLED) {
+        throw new ForbiddenException(
+          'Los pacientes únicamente tienen permitido cancelar sus citas.',
+        );
+      }
+    }
+
+    if (userRole === Role.DOCTOR) {
+      if (existingAppointment.doctorId !== userId) {
+        throw new ForbiddenException(
+          'Los doctores no pueden confirmar ni modificar citas asignadas a otros doctores.',
+        );
+      }
+    }
 
     // Validar transiciones de estado
     const validTransitions: Record<AppointmentStatus, AppointmentStatus[]> = {

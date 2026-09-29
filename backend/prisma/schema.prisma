@@ -178,6 +178,12 @@ enum DocType {
   TICKET_INTERNO
 }
 
+enum BillingStatus {
+  PENDING
+  ISSUED
+  FAILED
+}
+
 model Order {
   id     String      @id @default(uuid())
   userId String?     // ID del Paciente. Opcional si es compra rápida POS
@@ -185,15 +191,18 @@ model Order {
   source OrderSource @default(POS)
   total  Float       @default(0.0)
 
-  paymentMethod PaymentMethod?
-  isPaid        Boolean        @default(false)
+  paymentMethod    PaymentMethod?
+  isPaid           Boolean        @default(false)
+  paymentReference String?        @unique // ID de transacción Izipay / pasarela para prevenir ataques de repetición
 
   // Integración NubeFact
-  documentType   DocType @default(BOLETA)
-  documentNumber String? // ej. B001-1
-  nubeFactId     String? // Enlace con NubeFact
+  documentType   DocType        @default(BOLETA)
+  documentNumber String?        // ej. B001-1
+  nubeFactId     String?        // Enlace con NubeFact
   nubeFactPdfUrl String?
   nubeFactXmlUrl String?
+  billingStatus  BillingStatus  @default(PENDING)
+  billingError   String?
 
   // Datos Fiscales SUNAT
   customerDocType   String? @default("1") // "6" = RUC, "1" = DNI, "4" = CE, "7" = Pasaporte, "0" = Sin Doc

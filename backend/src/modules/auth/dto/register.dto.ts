@@ -30,12 +30,4 @@ export class RegisterDto {
   @IsOptional()
   @IsString()
   phone?: string;
-
-  @IsOptional()
-  @IsEnum(Role)
-  role?: Role = Role.PATIENT;
-
-  @IsOptional()
-  @IsString()
-  specialty?: string;
 }

@@ -7,6 +7,16 @@ import { appConfig } from '../../config/app.config';
 import { DocType } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 
+export interface ConsultDocumentResult {
+  status: 'FOUND' | 'NOT_FOUND' | 'NETWORK_ERROR' | 'NOT_CONFIGURED';
+  found: boolean;
+  externalId?: string;
+  pdfUrl?: string;
+  xmlUrl?: string;
+  documentNumber?: string;
+  error?: string;
+}
+
 @Injectable()
 export class NubeFactService {
   private readonly logger = new Logger(NubeFactService.name);
@@ -40,30 +50,43 @@ export class NubeFactService {
   }
 
   /**
-   * Obtiene el siguiente número correlativo secuencial para una serie dada
+   * Obtiene y reserva atómicamente el siguiente correlativo para la serie,
+   * previniendo colisiones de numeración en ventas simultáneas concurrentes.
    */
   async getNextCorrelative(series: string): Promise<number> {
-    const record = await this.prisma.billingCorrelative.findUnique({
+    const record = await this.prisma.billingCorrelative.upsert({
       where: { series },
+      update: { currentNumber: { increment: 1 } },
+      create: { series, currentNumber: 1 },
     });
-    return record ? record.currentNumber + 1 : 1;
+    return record.currentNumber;
   }
 
   /**
-   * Registra el correlativo emitido exitosamente
+   * Registra el correlativo emitido asegurando que el contador refleje el máximo número
    */
   async commitCorrelative(series: string, number: number): Promise<void> {
-    await this.prisma.billingCorrelative.upsert({
+    const current = await this.prisma.billingCorrelative.findUnique({
       where: { series },
-      update: { currentNumber: number },
-      create: { series, currentNumber: number },
     });
+    if (!current || number > current.currentNumber) {
+      await this.prisma.billingCorrelative.upsert({
+        where: { series },
+        update: { currentNumber: number },
+        create: { series, currentNumber: number },
+      });
+    }
   }
 
   /**
    * Emite comprobante de pago electrónico (Boleta o Factura)
+   * Si forcedSeries y forcedNumber son provistos, los utiliza en lugar de reservar uno nuevo.
    */
-  async generateDocument(order: any) {
+  async generateDocument(
+    order: any,
+    forcedSeries?: string,
+    forcedNumber?: number,
+  ) {
     if (!this.isConfigured()) {
       this.logger.warn(
         'NubeFact Token o URL no configurado (o usa placeholder). Omitiendo emisión electrónica.',
@@ -72,11 +95,17 @@ export class NubeFactService {
     }
 
     const isFactura = order.documentType === DocType.FACTURA;
-    const series = isFactura
-      ? appConfig.nubeFact.seriesFactura || 'F001'
-      : appConfig.nubeFact.seriesBoleta || 'B001';
+    const series =
+      forcedSeries ||
+      (isFactura
+        ? appConfig.nubeFact.seriesFactura || 'F001'
+        : appConfig.nubeFact.seriesBoleta || 'B001');
 
-    const nextNumber = await this.getNextCorrelative(series);
+    const nextNumber =
+      forcedNumber !== undefined
+        ? forcedNumber
+        : await this.getNextCorrelative(series);
+
     const payload = this.mapOrderToNubeFact(order, series, nextNumber);
 
     try {
@@ -120,6 +149,83 @@ export class NubeFactService {
     } catch (error) {
       this.logger.error(`Critical Billing Error: ${error.message}`);
       return null;
+    }
+  }
+
+  /**
+   * Consulta si un comprobante ya fue registrado en NubeFact.
+   * Permite la reconciliación segura en reintentos evitando emisión duplicada.
+   * Distingue con precisión entre errores de red (NETWORK_ERROR) y comprobante no emitido (NOT_FOUND).
+   */
+  async consultDocument(
+    tipoDeComprobante: number,
+    series: string,
+    number: number,
+  ): Promise<ConsultDocumentResult> {
+    if (!this.isConfigured()) {
+      return { status: 'NOT_CONFIGURED', found: false };
+    }
+
+    try {
+      const response = await fetch(this.apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Token token="${this.token}"`,
+        },
+        body: JSON.stringify({
+          operacion: 'consultar_comprobante',
+          tipo_de_comprobante: tipoDeComprobante,
+          serie: series,
+          numero: number,
+        }),
+      });
+
+      let data: any = {};
+      try {
+        data = await response.json();
+      } catch (parseErr) {
+        if (!response.ok) {
+          return {
+            status: 'NETWORK_ERROR',
+            found: false,
+            error: `Respuesta de NubeFact no es JSON válido (HTTP ${response.status})`,
+          };
+        }
+      }
+
+      if (response.ok && data && !data.errors && (data.enlace_del_pdf || data.enlace)) {
+        return {
+          status: 'FOUND',
+          found: true,
+          externalId: String(data.invoice_id || number),
+          pdfUrl: data.enlace_del_pdf || data.enlace,
+          xmlUrl: data.enlace_del_xml,
+          documentNumber: `${data.serie || series}-${data.numero || number}`,
+        };
+      }
+
+      if (!response.ok && response.status >= 500) {
+        return {
+          status: 'NETWORK_ERROR',
+          found: false,
+          error: `Error interno de servidor NubeFact (HTTP ${response.status})`,
+        };
+      }
+
+      return {
+        status: 'NOT_FOUND',
+        found: false,
+      };
+    } catch (err: any) {
+      this.logger.warn(
+        `Error al consultar comprobante en NubeFact: ${err.message}`,
+      );
+      return {
+        status: 'NETWORK_ERROR',
+        found: false,
+        error: `Fallo de conexión al consultar NubeFact: ${err.message}`,
+      };
     }
   }
 

@@ -12,6 +12,7 @@ import {
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
+import { UpdateStockDto } from './dto/update-stock.dto';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -78,13 +79,12 @@ export class ProductsController {
   }
 
   @Patch(':id/stock')
-  @Roles(Role.ADMIN, Role.RECEPTION, Role.DOCTOR)
+  @Roles(Role.ADMIN, Role.RECEPTION)
   updateStock(
     @Param('id') id: string,
-    @Body('quantity') quantity: number,
-    @Body('operation') operation: 'add' | 'subtract',
+    @Body() updateStockDto: UpdateStockDto,
   ) {
-    return this.productsService.updateStock(id, quantity, operation);
+    return this.productsService.updateStock(id, updateStockDto);
   }
 
   @Delete(':id')
