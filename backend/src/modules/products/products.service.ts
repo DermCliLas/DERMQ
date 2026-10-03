@@ -30,7 +30,7 @@ export class ProductsService {
         ...createProductDto,
         expirationDate: createProductDto.expirationDate
           ? new Date(createProductDto.expirationDate)
-          : undefined,
+          : null,
       },
     });
 
@@ -114,9 +114,12 @@ export class ProductsService {
       where: { id },
       data: {
         ...updateProductDto,
-        expirationDate: updateProductDto.expirationDate
-          ? new Date(updateProductDto.expirationDate)
-          : undefined,
+        expirationDate:
+          updateProductDto.expirationDate !== undefined
+            ? updateProductDto.expirationDate
+              ? new Date(updateProductDto.expirationDate)
+              : null
+            : undefined,
       },
     });
 

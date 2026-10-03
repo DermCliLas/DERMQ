@@ -5,10 +5,10 @@ import {
   IsOptional,
   IsBoolean,
   Min,
-  IsUrl,
   IsEnum,
   IsDateString,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export class CreateProductDto {
   @IsString()
@@ -30,7 +30,8 @@ export class CreateProductDto {
   stock: number = 0;
 
   @IsOptional()
-  @IsUrl()
+  @Transform(({ value }) => (value === '' ? null : value))
+  @IsString()
   imageUrl?: string;
 
   @IsOptional()
@@ -38,14 +39,18 @@ export class CreateProductDto {
   isActive?: boolean = true;
 
   @IsOptional()
+  @Transform(({ value }) => (value === '' ? null : value))
   @IsEnum(ProductFamily)
   family?: ProductFamily;
 
   @IsOptional()
+  @Transform(({ value }) => (value === '' ? null : value))
   @IsString()
   lotNumber?: string;
 
   @IsOptional()
+  @Transform(({ value }) => (value === '' ? null : value))
   @IsDateString()
   expirationDate?: string;
 }
+

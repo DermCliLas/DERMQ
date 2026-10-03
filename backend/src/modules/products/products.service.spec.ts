@@ -53,6 +53,33 @@ describe('ProductsService - Stock Management', () => {
     expect(result!.stock).toBe(7);
   });
 
+  it('should update a product with relative imageUrl and clear expirationDate', async () => {
+    mockPrisma.product.findUnique.mockResolvedValue({ id: 'p1', sku: 'SKU1' });
+    mockPrisma.product.update.mockResolvedValue({
+      id: 'p1',
+      sku: 'SKU1',
+      name: 'Nuevo Nombre',
+      imageUrl: '/product_tube.png',
+      expirationDate: null,
+    });
+
+    const result = await service.update('p1', {
+      name: 'Nuevo Nombre',
+      imageUrl: '/product_tube.png',
+      expirationDate: undefined,
+    });
+
+    expect(mockPrisma.product.update).toHaveBeenCalledWith({
+      where: { id: 'p1' },
+      data: {
+        name: 'Nuevo Nombre',
+        imageUrl: '/product_tube.png',
+        expirationDate: undefined,
+      },
+    });
+    expect(result.name).toBe('Nuevo Nombre');
+  });
+
   it('should throw BadRequestException if SUBTRACT operation would result in negative stock', async () => {
     mockPrisma.product.findUnique.mockResolvedValue({ id: 'p1', stock: 2 });
     // UpdateMany count is 0 because stock: { gte: 5 } matched nothing

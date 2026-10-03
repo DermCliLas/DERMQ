@@ -24,7 +24,16 @@ export async function fetchFromApi<T>(endpoint: string, options?: RequestInit): 
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.message || `API Error: ${response.status} ${response.statusText}`);
+    let msg = errorData.message || `API Error: ${response.status} ${response.statusText}`;
+    if (errorData.errors && typeof errorData.errors === 'object') {
+      const details = Object.entries(errorData.errors)
+        .map(([field, errs]: [string, any]) => `${field}: ${Array.isArray(errs) ? errs.join(', ') : errs}`)
+        .join(' | ');
+      if (details) {
+        msg = `${msg} (${details})`;
+      }
+    }
+    throw new Error(msg);
   }
 
   const result = await response.json();
