@@ -58,6 +58,11 @@ export class AppService {
         seriesFactura: appConfig.nubeFact.seriesFactura,
         details,
       },
+      resend: {
+        configured: Boolean(appConfig.resend.apiKey),
+        fromEmail: appConfig.resend.fromEmail,
+        status: appConfig.resend.apiKey ? 'ACTIVE' : 'SIMULATION_MODE',
+      },
     };
   }
 }

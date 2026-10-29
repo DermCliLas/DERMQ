@@ -798,12 +798,27 @@ export class OrdersService {
       );
     }
 
-    return this.prisma.order.findUnique({
+    const completedOrder = await this.prisma.order.findUnique({
       where: { id: order.id },
       include: {
         items: { include: { product: true } },
         user: true,
       },
     });
+
+    // ─── EMAIL INVOICE NOTIFICATION VIA RESEND ─────────────────────────────
+    if (completedOrder && completedOrder.nubeFactPdfUrl) {
+      this.emailService
+        .sendOrderInvoice(completedOrder, {
+          documentNumber: completedOrder.documentNumber,
+          pdfUrl: completedOrder.nubeFactPdfUrl,
+          xmlUrl: completedOrder.nubeFactXmlUrl,
+        })
+        .catch((err) =>
+          this.logger.error(`Error sending order invoice email: ${err.message}`),
+        );
+    }
+
+    return completedOrder;
   }
 }
