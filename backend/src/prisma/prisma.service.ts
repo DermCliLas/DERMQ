@@ -11,7 +11,12 @@ export class PrismaService
 {
   constructor(configService: ConfigService) {
     const connectionString = configService.get<string>('DATABASE_URL');
-    const pool = new Pool({ connectionString });
+    const pool = new Pool({
+      connectionString,
+      max: 5, // Límite conservador para no saturar conexiones en Supabase Free Tier
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 10000,
+    });
     const adapter = new PrismaPg(pool);
 
     super({ adapter } as Prisma.PrismaClientOptions);

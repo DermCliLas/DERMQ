@@ -57,7 +57,7 @@ export default function CheckoutPage() {
           <span className="material-symbols-outlined text-5xl text-slate-300 mb-4 block">lock</span>
           <h2 className="font-headline font-bold text-2xl mb-3 text-[#1a1c1e]">Inicia sesión para continuar</h2>
           <p className="text-on-surface-variant mb-8">Necesitas una cuenta para completar tu compra.</p>
-          <Link href="/login" className="luminous-gradient text-white px-8 py-4 rounded-full font-bold glow-on-hover transition-all">
+          <Link href="/login?redirect=/carrito/checkout" className="luminous-gradient text-white px-8 py-4 rounded-full font-bold glow-on-hover transition-all">
             Iniciar Sesión
           </Link>
         </div>

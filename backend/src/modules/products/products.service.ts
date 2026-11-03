@@ -37,17 +37,94 @@ export class ProductsService {
     return product;
   }
 
-  async findAll(isActive?: boolean, page: number = 1, limit: number = 10) {
+  private getCategoryCondition(category?: string): any {
+    if (!category) return undefined;
+    const categoryKeywords: Record<string, string[]> = {
+      'Renovadores Celulares': ['retinoico'],
+      'Anti-Acné': ['benzoilo', 'acné', 'acne'],
+      Despigmentantes: ['hidroquinona', 'despigmentante'],
+      Queratolíticos: ['láctico', 'lactico', 'salicílico', 'salicilico', 'urea'],
+      Corticoides: ['clobetasol', 'triamcinolona'],
+      Astringentes: ['aluminio'],
+      Antibióticos: ['eritromicina'],
+      Antimicóticos: ['econazol'],
+      'Tratamiento Capilar': ['minoxidil'],
+      Anestésicos: ['anestesia', 'lidocaina', 'lidocaína'],
+    };
+
+    const keywords = categoryKeywords[category];
+    if (keywords) {
+      return {
+        OR: keywords.map((kw) => ({
+          name: { contains: kw, mode: 'insensitive' as const },
+        })),
+      };
+    }
+
+    if (category === 'Cuidado Dermatológico') {
+      const allKeywords = Object.values(categoryKeywords).flat();
+      return {
+        NOT: {
+          OR: allKeywords.map((kw) => ({
+            name: { contains: kw, mode: 'insensitive' as const },
+          })),
+        },
+      };
+    }
+
+    return undefined;
+  }
+
+  async findAll(
+    isActive?: boolean,
+    page: number = 1,
+    limit: number = 12,
+    sort?: string,
+    search?: string,
+    category?: string,
+  ) {
     const skip = (page - 1) * limit;
 
-    const where = isActive !== undefined ? { isActive } : {};
+    const andConditions: any[] = [];
+    if (isActive !== undefined) {
+      andConditions.push({ isActive });
+    }
+
+    if (search && search.trim().length > 0) {
+      const q = search.trim();
+      andConditions.push({
+        OR: [
+          { name: { contains: q, mode: 'insensitive' } },
+          { sku: { contains: q, mode: 'insensitive' } },
+          { description: { contains: q, mode: 'insensitive' } },
+        ],
+      });
+    }
+
+    const catCond = this.getCategoryCondition(category);
+    if (catCond) {
+      andConditions.push(catCond);
+    }
+
+    const where = andConditions.length > 0 ? { AND: andConditions } : {};
+
+    let orderBy: any = { name: 'asc' };
+    if (sort === 'price_asc') {
+      orderBy = { price: 'asc' };
+    } else if (sort === 'price_desc') {
+      orderBy = { price: 'desc' };
+    } else if (sort === 'name_desc') {
+      orderBy = { name: 'desc' };
+    } else if (sort === 'stock_asc') {
+      orderBy = { stock: 'asc' };
+    }
 
     const [products, total] = await Promise.all([
       this.prisma.product.findMany({
         where,
         skip,
         take: limit,
-        orderBy: { name: 'asc' },
+        orderBy,
       }),
       this.prisma.product.count({ where }),
     ]);

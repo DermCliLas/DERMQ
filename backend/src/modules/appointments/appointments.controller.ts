@@ -161,14 +161,10 @@ export class AppointmentsController {
     @Query('limit') limit: string = '10',
     @Request() req: any,
   ) {
-    // Doctores solo pueden ver historial de sus pacientes
-    if (req.user.role === Role.DOCTOR) {
-      // Verificar que el paciente haya tenido citas con este doctor
-      // Esta validación se puede implementar según necesidades
-    }
-
+    // Si es DOCTOR, findAll ya filtra automáticamente por doctorId = req.user.userId
     const filters = {
       patientId,
+      ...(req.user.role === Role.DOCTOR ? { doctorId: req.user.userId } : {}),
     };
 
     return this.appointmentsService.findAll(

@@ -33,8 +33,12 @@ export default function DoctorDashboardPage() {
 
   useEffect(() => {
     loadData()
-    // Poll for updates every 30 seconds to show arriving patients
-    const interval = setInterval(loadData, 30000)
+    // Poll for updates only when the tab is visible to save Supabase Free Tier database quota
+    const interval = setInterval(() => {
+      if (typeof document !== 'undefined' && !document.hidden) {
+        loadData()
+      }
+    }, 60000)
     return () => clearInterval(interval)
   }, [user])
 

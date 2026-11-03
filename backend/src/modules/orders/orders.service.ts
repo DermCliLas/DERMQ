@@ -251,14 +251,129 @@ export class OrdersService {
     return finalOrder;
   }
 
+  async getAdminSummary() {
+    const now = new Date();
+    const ninetyDaysLater = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
+
+    const [
+      salesAgg,
+      totalOrdersCount,
+      appointmentsCount,
+      byPaymentMethod,
+      bySource,
+      recentOrders,
+      lowStockProducts,
+      expiredProducts,
+      nearExpirationProducts,
+    ] = await Promise.all([
+      this.prisma.order.aggregate({
+        where: { isCancelled: false },
+        _sum: { total: true },
+      }),
+      this.prisma.order.count(),
+      this.prisma.appointment.count(),
+      this.prisma.order.groupBy({
+        by: ['paymentMethod'],
+        where: { isCancelled: false },
+        _sum: { total: true },
+      }),
+      this.prisma.order.groupBy({
+        by: ['source'],
+        where: { isCancelled: false },
+        _sum: { total: true },
+      }),
+      this.prisma.order.findMany({
+        take: 10,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          items: {
+            include: { product: { select: { id: true, name: true, sku: true } } },
+          },
+          user: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+              dni: true,
+            },
+          },
+        },
+      }),
+      this.prisma.product.findMany({
+        where: { stock: { lte: 3 }, isActive: true },
+        select: { id: true, name: true, sku: true, stock: true },
+        orderBy: { stock: 'asc' },
+        take: 50,
+      }),
+      this.prisma.product.findMany({
+        where: {
+          expirationDate: { lt: now },
+          isActive: true,
+        },
+        select: {
+          id: true,
+          name: true,
+          sku: true,
+          lotNumber: true,
+          expirationDate: true,
+        },
+        orderBy: { expirationDate: 'asc' },
+        take: 50,
+      }),
+      this.prisma.product.findMany({
+        where: {
+          expirationDate: { gte: now, lte: ninetyDaysLater },
+          isActive: true,
+        },
+        select: {
+          id: true,
+          name: true,
+          sku: true,
+          lotNumber: true,
+          expirationDate: true,
+        },
+        orderBy: { expirationDate: 'asc' },
+        take: 50,
+      }),
+    ]);
+
+    const paymentsBreakdown: Record<string, number> = {};
+    for (const row of byPaymentMethod) {
+      const key = row.paymentMethod || 'CASH';
+      paymentsBreakdown[key] =
+        (paymentsBreakdown[key] || 0) + (row._sum.total || 0);
+    }
+
+    const channelsBreakdown: Record<string, number> = {};
+    for (const row of bySource) {
+      const key = row.source || 'POS';
+      channelsBreakdown[key] =
+        (channelsBreakdown[key] || 0) + (row._sum.total || 0);
+    }
+
+    return {
+      totalSales: salesAgg._sum.total || 0,
+      totalOrdersCount,
+      appointmentsCount,
+      paymentsBreakdown,
+      channelsBreakdown,
+      recentOrders,
+      lowStockProducts,
+      expiredProducts,
+      nearExpirationProducts,
+    };
+  }
+
   async findAll() {
     return this.prisma.order.findMany({
+      take: 100,
       include: {
         items: {
           include: { product: { select: { id: true, name: true, sku: true } } },
         },
         user: {
-          select: { id: true, firstName: true, lastName: true, email: true },
+          select: { id: true, firstName: true, lastName: true, email: true, dni: true },
         },
       },
       orderBy: { createdAt: 'desc' },

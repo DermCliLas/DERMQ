@@ -4,7 +4,9 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useAuth } from '@/context/AuthContext'
-import { getProducts, createProduct, updateProduct, deleteProduct, updateProductStock, uploadFile } from '@/lib/api'
+import { getProductsPaginated, createProduct, updateProduct, deleteProduct, updateProductStock, uploadFile } from '@/lib/api'
+
+const ADMIN_PAGE_SIZE = 12
 
 const getFamilyLabel = (fam: string) => {
   const map: Record<string, string> = {
@@ -31,6 +33,12 @@ export default function AdminProductsPage() {
   
   const [products, setProducts] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [totalItems, setTotalItems] = useState(0)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [sortBy, setSortBy] = useState<'name_asc' | 'price_desc' | 'price_asc' | 'stock_asc'>('name_asc')
   
   // Modal de Agregar/Editar
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -66,11 +74,26 @@ export default function AdminProductsPage() {
   }
 
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchTerm)
+      setPage(1)
+    }, 350)
+    return () => clearTimeout(timer)
+  }, [searchTerm])
+
   const loadProducts = async () => {
     setLoading(true)
     try {
-      const p = await getProducts()
-      setProducts(p || [])
+      const res = await getProductsPaginated({
+        page,
+        limit: ADMIN_PAGE_SIZE,
+        sort: sortBy,
+        search: debouncedSearch || undefined,
+      })
+      setProducts(res.data || [])
+      setTotalPages(Math.max(1, res.meta?.totalPages || 1))
+      setTotalItems(res.meta?.total || 0)
     } catch (e) {
       console.error('Error loading products for admin', e)
     } finally {
@@ -80,10 +103,10 @@ export default function AdminProductsPage() {
 
   useEffect(() => {
     loadProducts()
-  }, [])
+  }, [page, sortBy, debouncedSearch])
 
   if (!isAuthenticated) return null
-  if (user?.role !== 'ADMIN') {
+  if (user?.role !== 'ADMIN' && user?.role !== 'RECEPTION') {
     return (
       <main className="pt-40 pb-24 min-h-screen bg-[#F2F4F4] flex flex-col items-center">
         <span className="material-symbols-outlined text-red-500 text-5xl mb-4">gpp_maybe</span>
@@ -216,6 +239,53 @@ export default function AdminProductsPage() {
             <span className="material-symbols-outlined">add</span>
             Agregar Nuevo Producto
           </button>
+        </div>
+
+        {/* Barra de Búsqueda y Ordenamiento */}
+        <div className="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm mb-6 flex flex-col sm:flex-row gap-4 items-center justify-between">
+          <div className="relative w-full sm:flex-1">
+            <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+              search
+            </span>
+            <input
+              type="text"
+              placeholder="Buscar por nombre, SKU o descripción..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-11 pr-9 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-[#1a1c1e] focus:outline-none focus:border-primary"
+            />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              >
+                <span className="material-symbols-outlined text-base">close</span>
+              </button>
+            )}
+          </div>
+
+          <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
+            <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5">
+              <span className="material-symbols-outlined text-primary text-lg">swap_vert</span>
+              <span className="text-[10px] font-black uppercase text-slate-400">Ordenar:</span>
+              <select
+                value={sortBy}
+                onChange={(e) => {
+                  setSortBy(e.target.value as any)
+                  setPage(1)
+                }}
+                className="bg-transparent text-xs font-bold text-[#1a1c1e] focus:outline-none cursor-pointer"
+              >
+                <option value="name_asc">Nombre (A-Z)</option>
+                <option value="price_desc">Precio: Más alto a bajo</option>
+                <option value="price_asc">Precio: Más bajo a alto</option>
+                <option value="stock_asc">Stock: Menor a mayor</option>
+              </select>
+            </div>
+            <span className="text-xs font-bold text-slate-400 shrink-0">
+              Total: {totalItems}
+            </span>
+          </div>
         </div>
 
         {/* Listado */}
@@ -353,13 +423,15 @@ export default function AdminProductsPage() {
                               >
                                 <span className="material-symbols-outlined text-sm">edit</span>
                               </button>
-                              <button 
-                                onClick={() => handleDelete(p.id, p.name)}
-                                className="p-2 rounded-lg bg-red-50 border border-red-100 hover:bg-red-100 text-red-600 transition-colors"
-                                title="Eliminar producto"
-                              >
-                                <span className="material-symbols-outlined text-sm">delete</span>
-                              </button>
+                              {user?.role === 'ADMIN' && (
+                                <button 
+                                  onClick={() => handleDelete(p.id, p.name)}
+                                  className="p-2 rounded-lg bg-red-50 border border-red-100 hover:bg-red-100 text-red-600 transition-colors"
+                                  title="Eliminar producto"
+                                >
+                                  <span className="material-symbols-outlined text-sm">delete</span>
+                                </button>
+                              )}
                             </div>
                           </td>
 
@@ -370,6 +442,33 @@ export default function AdminProductsPage() {
                 </tbody>
               </table>
             </div>
+
+            {/* Paginación de Tabla */}
+            {totalPages > 1 && (
+              <div className="mt-6 pt-6 border-t border-slate-100 flex flex-wrap items-center justify-between gap-4">
+                <span className="text-xs font-bold text-slate-400">
+                  Página {page} de {totalPages} ({totalItems} productos)
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                    disabled={page === 1}
+                    className="px-4 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-[#1a1c1e] hover:bg-slate-100 disabled:opacity-40 disabled:pointer-events-none flex items-center gap-1"
+                  >
+                    <span className="material-symbols-outlined text-sm">chevron_left</span>
+                    Anterior
+                  </button>
+                  <button
+                    onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                    disabled={page === totalPages}
+                    className="px-4 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-[#1a1c1e] hover:bg-slate-100 disabled:opacity-40 disabled:pointer-events-none flex items-center gap-1"
+                  >
+                    Siguiente
+                    <span className="material-symbols-outlined text-sm">chevron_right</span>
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

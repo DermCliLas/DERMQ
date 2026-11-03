@@ -73,13 +73,22 @@ export default function LoginPage() {
     try {
       const response = await loginUser({ email, password })
       const u = response.user
-      const redirectTo = u.role === 'ADMIN'
-        ? '/dashboard/admin'
-        : u.role === 'DOCTOR'
-        ? '/dashboard/doctor'
-        : u.role === 'RECEPTION'
-        ? '/dashboard/recepcion/agenda'
-        : '/dashboard'
+      const params = new URLSearchParams(window.location.search)
+      const customRedirect = params.get('redirect')
+      const safeCustomRedirect =
+        customRedirect && customRedirect.startsWith('/') && !customRedirect.startsWith('//')
+          ? customRedirect
+          : null
+
+      const redirectTo = safeCustomRedirect || (
+        u.role === 'ADMIN'
+          ? '/dashboard/admin'
+          : u.role === 'DOCTOR'
+          ? '/dashboard/doctor'
+          : u.role === 'RECEPTION'
+          ? '/dashboard/recepcion/agenda'
+          : '/dashboard'
+      )
       login(response.access_token, u, redirectTo)
     } catch (err: any) {
       setError(err.message || 'Credenciales incorrectas')

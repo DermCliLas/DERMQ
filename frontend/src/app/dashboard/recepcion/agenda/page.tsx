@@ -139,13 +139,13 @@ export default function MasterAgendaPage() {
     }
   }
 
-  const getAptForSlot = (doctorId: string, hour: Date) => {
-    return appointments.find(apt => {
+  const getAptsForSlot = (doctorId: string, hour: Date) => {
+    return appointments
+      .filter(apt => {
         const aptDate = new Date(apt.date)
-        return apt.doctorId === doctorId && 
-               aptDate.getHours() === hour.getHours() &&
-               aptDate.getMinutes() < 30; // Simplification for 1 hour slots in this view
-    })
+        return apt.doctorId === doctorId && aptDate.getHours() === hour.getHours()
+      })
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
   }
 
   const handleOpenRegisterForm = () => {
@@ -243,13 +243,20 @@ export default function MasterAgendaPage() {
               </h1>
             </div>
             
-            <div className="flex gap-3 mb-1">
+            <div className="flex flex-wrap gap-3 mb-1">
               <Link 
                 href="/dashboard/recepcion/pos"
                 className="bg-white hover:bg-slate-50 text-secondary px-6 py-3 rounded-2xl font-bold border border-slate-200 shadow-sm transition-all flex items-center gap-2 text-sm"
               >
                 <span className="material-symbols-outlined text-lg">shopping_cart</span>
                 Ir al POS (Punto de Venta)
+              </Link>
+              <Link 
+                href="/dashboard/admin/productos"
+                className="bg-white hover:bg-slate-50 text-[#1a1c1e] px-6 py-3 rounded-2xl font-bold border border-slate-200 shadow-sm transition-all flex items-center gap-2 text-sm"
+              >
+                <span className="material-symbols-outlined text-lg">inventory_2</span>
+                Inventario / Stock
               </Link>
               
               <button 
@@ -319,39 +326,43 @@ export default function MasterAgendaPage() {
                         {format(hour, 'HH:mm')}
                       </td>
                       {doctors.map(doc => {
-                        const apt = getAptForSlot(doc.id, hour);
+                        const slotApts = getAptsForSlot(doc.id, hour);
                         return (
-                          <td key={`${doc.id}-${hIdx}`} className="p-3 h-32 border-l border-slate-100 relative">
-                            {apt ? (
-                              <div className={`h-full rounded-2xl p-4 border-l-4 shadow-sm flex flex-col justify-between transition-all hover:scale-[1.02] cursor-pointer ${
-                                apt.status === 'ARRIVED' ? 'bg-emerald-50 border-emerald-500' :
-                                apt.status === 'CONFIRMED' ? 'bg-blue-50 border-blue-500' :
-                                'bg-slate-50 border-slate-300'
-                              }`}>
-                                <div>
-                                  <div className="flex justify-between items-start mb-2">
-                                    <h4 className="font-black text-[#1a1c1e] text-sm leading-tight uppercase">
-                                      {apt.patient.firstName} {apt.patient.lastName}
-                                    </h4>
-                                    <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-tighter ${
-                                      apt.status === 'ARRIVED' ? 'bg-emerald-500 text-white' : 
-                                      apt.status === 'CONFIRMED' ? 'bg-blue-500 text-white' : 'bg-slate-400 text-white'
-                                    }`}>
-                                      {apt.status === 'ARRIVED' ? 'En Sede' : apt.status === 'CONFIRMED' ? 'Confirmada' : 'Pendiente'}
-                                    </span>
+                          <td key={`${doc.id}-${hIdx}`} className="p-3 h-32 border-l border-slate-100 relative align-top">
+                            {slotApts.length > 0 ? (
+                              <div className="flex flex-col gap-2 h-full">
+                                {slotApts.map(apt => (
+                                  <div key={apt.id} className={`flex-1 rounded-2xl p-3.5 border-l-4 shadow-sm flex flex-col justify-between transition-all hover:scale-[1.01] ${
+                                    apt.status === 'ARRIVED' ? 'bg-emerald-50 border-emerald-500' :
+                                    apt.status === 'CONFIRMED' ? 'bg-blue-50 border-blue-500' :
+                                    'bg-slate-50 border-slate-300'
+                                  }`}>
+                                    <div>
+                                      <div className="flex justify-between items-start gap-2 mb-1">
+                                        <h4 className="font-black text-[#1a1c1e] text-xs leading-tight uppercase">
+                                          {apt.patient.firstName} {apt.patient.lastName}
+                                        </h4>
+                                        <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-tighter shrink-0 ${
+                                          apt.status === 'ARRIVED' ? 'bg-emerald-500 text-white' : 
+                                          apt.status === 'CONFIRMED' ? 'bg-blue-500 text-white' : 'bg-slate-400 text-white'
+                                        }`}>
+                                          {format(new Date(apt.date), 'HH:mm')} · {apt.status === 'ARRIVED' ? 'En Sede' : apt.status === 'CONFIRMED' ? 'Confirmada' : 'Pendiente'}
+                                        </span>
+                                      </div>
+                                      <p className="text-[10px] font-bold text-on-surface-variant truncate">{apt.service.name}</p>
+                                    </div>
+                                    
+                                    {apt.status === 'CONFIRMED' && (
+                                      <button 
+                                        onClick={(e) => { e.stopPropagation(); handleCheckIn(apt.id); }}
+                                        className="w-full mt-2 bg-emerald-500 text-white text-[10px] font-black py-1.5 rounded-xl hover:bg-emerald-600 transition-colors flex items-center justify-center gap-1"
+                                      >
+                                        <span className="material-symbols-outlined text-xs">how_to_reg</span>
+                                        Marcar Llegada
+                                      </button>
+                                    )}
                                   </div>
-                                  <p className="text-[10px] font-bold text-on-surface-variant truncate">{apt.service.name}</p>
-                                </div>
-                                
-                                {apt.status === 'CONFIRMED' && (
-                                  <button 
-                                    onClick={(e) => { e.stopPropagation(); handleCheckIn(apt.id); }}
-                                    className="w-full mt-2 bg-emerald-500 text-white text-[10px] font-black py-2 rounded-xl hover:bg-emerald-600 transition-colors flex items-center justify-center gap-1"
-                                  >
-                                    <span className="material-symbols-outlined text-xs">how_to_reg</span>
-                                    Marcar Llegada
-                                  </button>
-                                )}
+                                ))}
                               </div>
                             ) : (
                               <div className="h-full border-2 border-dashed border-slate-100 rounded-2xl" />

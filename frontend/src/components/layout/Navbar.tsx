@@ -151,11 +151,24 @@ export default function Navbar() {
               </div>
             </div>
 
-            {/* Mobile Hamburger */}
-            <div className="md:hidden flex flex-1 justify-end">
+            {/* Mobile Cart & Hamburger */}
+            <div className="md:hidden flex flex-1 items-center justify-end gap-3">
+              <Link
+                href="/carrito"
+                className="relative p-2 text-white hover:text-tertiary transition-colors"
+                aria-label="Carrito"
+              >
+                <span className="material-symbols-outlined text-[26px]">shopping_cart</span>
+                {totalItems > 0 && (
+                  <span className="absolute top-0.5 right-0.5 bg-tertiary text-white text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full">
+                    {totalItems}
+                  </span>
+                )}
+              </Link>
               <button
                 className="p-2 text-white hover:text-tertiary transition-colors"
                 onClick={() => setMobileOpen(!mobileOpen)}
+                aria-label={mobileOpen ? 'Cerrar menú' : 'Abrir menú'}
               >
                 <span className="material-symbols-outlined text-3xl">
                   {mobileOpen ? 'close' : 'menu'}
@@ -171,24 +184,56 @@ export default function Navbar() {
 
       {/* Mobile Menu */}
       {mobileOpen && (
-        <div className="fixed inset-0 z-40 bg-primary-container/98 backdrop-blur-xl flex flex-col pt-32 px-8 pb-12">
-          <nav className="flex flex-col gap-8 items-center flex-1">
+        <div className="fixed inset-0 z-40 bg-[#02696a]/98 backdrop-blur-xl flex flex-col pt-28 px-8 pb-10 overflow-y-auto">
+          <nav className="flex flex-col gap-6 items-center flex-1">
             {[...content.linksLeft, ...content.linksRight].map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className="text-2xl font-semibold text-white hover:text-tertiary transition-colors"
+                className={`text-2xl font-semibold transition-colors ${
+                  pathname === link.href ? 'text-tertiary font-bold' : 'text-white hover:text-tertiary'
+                }`}
               >
                 {link.label}
               </Link>
             ))}
-            <Link
-              href={content.ctaLink}
-              className="mt-8 bg-tertiary text-white px-8 py-4 rounded-full font-bold text-xl flex items-center justify-center gap-2 w-full max-w-xs"
-            >
-              {content.ctaText}
-              <span className="material-symbols-outlined">chevron_right</span>
-            </Link>
+
+            <div className="w-full max-w-xs border-t border-white/15 pt-6 mt-2 flex flex-col gap-3">
+              {isAuthenticated ? (
+                <>
+                  <Link
+                    href="/dashboard"
+                    className="w-full py-3.5 px-6 rounded-full bg-white/10 text-white font-bold text-base flex items-center justify-center gap-2 hover:bg-white/20 transition-all"
+                  >
+                    <span className="material-symbols-outlined text-xl">person</span>
+                    Mi Panel
+                  </Link>
+                  <button
+                    onClick={logout}
+                    className="w-full py-3 px-6 rounded-full text-red-200 font-bold text-sm flex items-center justify-center gap-2 hover:bg-red-500/20 transition-all"
+                  >
+                    <span className="material-symbols-outlined text-lg">logout</span>
+                    Cerrar Sesión
+                  </button>
+                </>
+              ) : (
+                <Link
+                  href="/login"
+                  className="w-full py-3.5 px-6 rounded-full bg-white/10 text-white font-bold text-base flex items-center justify-center gap-2 hover:bg-white/20 transition-all"
+                >
+                  <span className="material-symbols-outlined text-xl">login</span>
+                  Iniciar Sesión
+                </Link>
+              )}
+
+              <Link
+                href={content.ctaLink}
+                className="bg-tertiary text-white px-8 py-4 rounded-full font-bold text-lg flex items-center justify-center gap-2 w-full shadow-lg"
+              >
+                {content.ctaText}
+                <span className="material-symbols-outlined">chevron_right</span>
+              </Link>
+            </div>
           </nav>
         </div>
       )}

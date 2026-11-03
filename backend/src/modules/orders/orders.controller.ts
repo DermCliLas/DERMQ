@@ -28,6 +28,12 @@ export class OrdersController {
     });
   }
 
+  @Get('admin-summary')
+  @Roles(Role.ADMIN, Role.RECEPTION)
+  getAdminSummary() {
+    return this.ordersService.getAdminSummary();
+  }
+
   @Get()
   @Roles(Role.ADMIN, Role.RECEPTION)
   findAll() {

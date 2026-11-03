@@ -35,14 +35,22 @@ export class ProductsController {
   findAll(
     @Query('active') active?: string,
     @Query('page') page: string = '1',
-    @Query('limit') limit: string = '10',
+    @Query('limit') limit: string = '12',
+    @Query('sort') sort?: string,
+    @Query('search') search?: string,
+    @Query('category') category?: string,
   ) {
     const isActive =
       active === 'true' ? true : active === 'false' ? false : undefined;
+    const parsedPage = Math.max(1, parseInt(page, 10) || 1);
+    const parsedLimit = Math.min(250, Math.max(1, parseInt(limit, 10) || 12));
     return this.productsService.findAll(
       isActive,
-      parseInt(page, 10),
-      parseInt(limit, 10),
+      parsedPage,
+      parsedLimit,
+      sort,
+      search,
+      category,
     );
   }
 

@@ -3,8 +3,47 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { getMedicalHistory, createMedicalRecord, searchPatientByDni, uploadFile, getPatientProfile } from '@/lib/api'
+import { getMedicalHistory, createMedicalRecord, uploadClinicalFile, resolveClinicalAttachmentUrl, getPatientProfile } from '@/lib/api'
 import { useAuth } from '@/context/AuthContext'
+
+function ClinicalAttachmentThumb({ pathOrUrl, alt }: { pathOrUrl: string; alt: string }) {
+  const [resolvedUrl, setResolvedUrl] = useState<string>('')
+
+  useEffect(() => {
+    let active = true
+    resolveClinicalAttachmentUrl(pathOrUrl)
+      .then((url) => {
+        if (active) setResolvedUrl(url)
+      })
+      .catch(() => {})
+    return () => {
+      active = false
+    }
+  }, [pathOrUrl])
+
+  if (!resolvedUrl) {
+    return (
+      <div className="w-full h-full flex items-center justify-center bg-slate-100 text-slate-400">
+        <span className="w-5 h-5 border-2 border-slate-300 border-t-primary rounded-full animate-spin" />
+      </div>
+    )
+  }
+
+  return (
+    <a
+      href={resolvedUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="relative aspect-square bg-slate-50 border border-slate-200 rounded-2xl overflow-hidden hover:scale-105 transition-all duration-300 shadow-sm hover:shadow-md block group"
+    >
+      <img src={resolvedUrl} alt={alt} loading="lazy" className="object-cover w-full h-full" />
+      <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity text-xs font-bold" style={{ backgroundColor: 'rgba(0,0,0,0.3)' }}>
+        <span className="material-symbols-outlined text-sm mr-1">open_in_new</span>
+        Ver original
+      </div>
+    </a>
+  )
+}
 
 export default function PatientHistoryPage() {
   const { id } = useParams()
@@ -33,14 +72,14 @@ export default function PatientHistoryPage() {
     if (!files || files.length === 0) return
     setUploadingAttachments(true)
     try {
-      const urls: string[] = []
+      const paths: string[] = []
       for (let i = 0; i < files.length; i++) {
-        const res = await uploadFile(files[i])
-        urls.push(res.url)
+        const res = await uploadClinicalFile(files[i], id as string)
+        paths.push(res.path)
       }
-      setAttachments([...attachments, ...urls])
+      setAttachments([...attachments, ...paths])
     } catch (err: any) {
-      alert('Error al subir los archivos: ' + (err.message || 'Error del servidor'))
+      alert('Error al subir los archivos clínicos: ' + (err.message || 'Error del servidor'))
     } finally {
       setUploadingAttachments(false)
     }
@@ -227,13 +266,13 @@ export default function PatientHistoryPage() {
                 
                 {attachments.length > 0 && (
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
-                    {attachments.map((url, index) => (
+                    {attachments.map((pathOrUrl, index) => (
                       <div key={index} className="relative aspect-square bg-slate-50 border border-slate-200 rounded-2xl overflow-hidden group">
-                        <img src={url} alt={`Adjunto ${index + 1}`} className="object-cover w-full h-full" />
+                        <ClinicalAttachmentThumb pathOrUrl={pathOrUrl} alt={`Adjunto ${index + 1}`} />
                         <button
                           type="button"
                           onClick={() => removeAttachment(index)}
-                          className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center font-bold text-xs shadow-md hover:bg-red-600 transition-colors"
+                          className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center font-bold text-xs shadow-md hover:bg-red-600 transition-colors z-10"
                         >
                           ✕
                         </button>
@@ -343,20 +382,12 @@ export default function PatientHistoryPage() {
                     <div className="mt-6">
                       <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Fotos Clínicas Adjuntas</h4>
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                        {record.attachments.map((url: string, index: number) => (
-                          <a 
-                            key={index} 
-                            href={url} 
-                            target="_blank" 
-                            rel="noopener noreferrer" 
-                            className="relative aspect-square bg-slate-50 border border-slate-200 rounded-2xl overflow-hidden hover:scale-105 transition-all duration-300 shadow-sm hover:shadow-md block group"
-                          >
-                            <img src={url} alt={`Anexo ${index + 1}`} className="object-cover w-full h-full" />
-                            <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity text-xs font-bold" style={{ backgroundColor: 'rgba(0,0,0,0.3)' }}>
-                              <span className="material-symbols-outlined text-sm mr-1">open_in_new</span>
-                              Ver original
-                            </div>
-                          </a>
+                        {record.attachments.map((pathOrUrl: string, index: number) => (
+                          <ClinicalAttachmentThumb
+                            key={index}
+                            pathOrUrl={pathOrUrl}
+                            alt={`Anexo ${index + 1}`}
+                          />
                         ))}
                       </div>
                     </div>

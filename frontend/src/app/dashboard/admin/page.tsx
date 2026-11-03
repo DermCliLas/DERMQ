@@ -3,14 +3,22 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/context/AuthContext'
-import { getProducts, getAllOrders, getAppointments, cancelOrder } from '@/lib/api'
+import { getAdminDashboardSummary, cancelOrder } from '@/lib/api'
 
 export default function AdminDashboardPage() {
   const { user, isAuthenticated } = useAuth()
   
-  const [orders, setOrders] = useState<any[]>([])
-  const [products, setProducts] = useState<any[]>([])
-  const [appointmentsCount, setAppointmentsCount] = useState(0)
+  const [summary, setSummary] = useState<{
+    totalSales: number
+    totalOrdersCount: number
+    appointmentsCount: number
+    paymentsBreakdown: Record<string, number>
+    channelsBreakdown: Record<string, number>
+    recentOrders: any[]
+    lowStockProducts: any[]
+    expiredProducts: any[]
+    nearExpirationProducts: any[]
+  } | null>(null)
   const [activeAlertTab, setActiveAlertTab] = useState<'stock' | 'expiration'>('stock')
   
   const [loading, setLoading] = useState(true)
@@ -24,15 +32,8 @@ export default function AdminDashboardPage() {
 
   async function loadAdminData() {
     try {
-      const [o, p, a] = await Promise.all([
-        getAllOrders(),
-        getProducts(),
-        getAppointments({ limit: 250 })
-      ])
-      
-      setOrders(o || [])
-      setProducts(p || [])
-      setAppointmentsCount(a?.meta?.total || a?.data?.length || 0)
+      const data = await getAdminDashboardSummary()
+      setSummary(data)
     } catch (e) {
       console.error('Error loading admin dashboard data', e)
     } finally {
@@ -84,35 +85,24 @@ export default function AdminDashboardPage() {
     )
   }
 
-  // Cálculos de métricas
-  const totalSales = orders.reduce((acc, o) => acc + (o.total || 0), 0)
-  const totalOrdersCount = orders.length
-  
+  // Métricas agregadas en servidor (sin descargar miles de registros de Supabase)
+  const totalSales = summary?.totalSales || 0
+  const totalOrdersCount = summary?.totalOrdersCount || 0
+  const appointmentsCount = summary?.appointmentsCount || 0
+  const orders = summary?.recentOrders || []
+
   // Alertas de stock bajo (< 3 unidades)
-  const lowStockProducts = products.filter(p => p.stock <= 3)
+  const lowStockProducts = summary?.lowStockProducts || []
   const lowStockCount = lowStockProducts.length
 
   // Alertas de caducidad
-  const todayTime = new Date().getTime()
-  const ninetyDaysLater = todayTime + 90 * 24 * 60 * 60 * 1000
-
-  const expiredProducts = products.filter(p => p.expirationDate && new Date(p.expirationDate).getTime() < todayTime)
-  const nearExpirationProducts = products.filter(p => p.expirationDate && new Date(p.expirationDate).getTime() >= todayTime && new Date(p.expirationDate).getTime() <= ninetyDaysLater)
+  const expiredProducts = summary?.expiredProducts || []
+  const nearExpirationProducts = summary?.nearExpirationProducts || []
   const expirationAlertCount = expiredProducts.length + nearExpirationProducts.length
 
-  // Métodos de pago
-  const paymentsBreakdown = orders.reduce((acc: any, o) => {
-    const method = o.paymentMethod || 'CASH'
-    acc[method] = (acc[method] || 0) + (o.total || 0)
-    return acc
-  }, {})
-
-  // Canales de venta
-  const channelsBreakdown = orders.reduce((acc: any, o) => {
-    const source = o.source || 'POS'
-    acc[source] = (acc[source] || 0) + (o.total || 0)
-    return acc
-  }, {})
+  // Métodos de pago y Canales de venta
+  const paymentsBreakdown: Record<string, number> = summary?.paymentsBreakdown || {}
+  const channelsBreakdown: Record<string, number> = summary?.channelsBreakdown || {}
 
   const stats = [
     { label: 'Ingresos Totales', value: `S/ ${totalSales.toFixed(2)}`, icon: 'payments', color: 'bg-emerald-100 text-emerald-800' },

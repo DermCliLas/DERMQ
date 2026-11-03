@@ -7,10 +7,11 @@ import { useCart } from '@/context/CartContext'
 
 export default function CarritoPage() {
   const { items, totalItems, totalPrice, updateQuantity, removeFromCart } = useCart()
-  const tax = totalPrice * 0.18 // 18% IGV (Perú)
-  const finalTotal = totalPrice + tax
+  const subtotal = Number((totalPrice / 1.18).toFixed(2))
+  const tax = Number((totalPrice - subtotal).toFixed(2)) // IGV 18% incluido en el precio (Perú)
+  const finalTotal = totalPrice
   return (
-    <main className="pt-40 pb-24 min-h-screen bg-surface-container-lowest">
+    <main className="pt-12 pb-24 min-h-screen bg-surface-container-lowest">
       <div className="max-w-5xl mx-auto px-6">
         <h1 className="font-headline font-black text-4xl md:text-5xl tracking-tighter text-[#1a1c1e] mb-12">
           Tu Carrito
@@ -84,16 +85,16 @@ export default function CarritoPage() {
                 
                 <div className="space-y-4 mb-8">
                   <div className="flex justify-between items-center text-on-surface-variant font-medium">
-                    <span>Subtotal ({totalItems} items)</span>
-                    <span>S/ {totalPrice.toFixed(2)}</span>
+                    <span>Op. Gravada ({totalItems} items)</span>
+                    <span>S/ {subtotal.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between items-center text-on-surface-variant font-medium">
-                    <span>Impuestos (IGV 18%)</span>
+                    <span>IGV (18% incluido)</span>
                     <span>S/ {tax.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between items-center text-on-surface-variant font-medium">
-                    <span>Delivery</span>
-                    <span className="text-emerald-600 font-bold">Por calcular</span>
+                    <span>Recojo en clínica / Envío</span>
+                    <span className="text-emerald-600 font-bold">Gratis en clínica</span>
                   </div>
                 </div>
                 
