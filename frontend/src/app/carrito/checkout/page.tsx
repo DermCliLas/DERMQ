@@ -14,10 +14,12 @@ type DocType = 'BOLETA' | 'FACTURA'
 type CheckoutStep = 'form' | 'processing' | 'success' | 'error'
 
 const PAYMENT_METHODS: { id: PaymentMethod; label: string; icon: string; desc: string }[] = [
-  { id: 'CREDIT_CARD', label: 'Tarjeta de Crédito/Débito', icon: 'credit_card', desc: 'Visa, Mastercard, AMEX' },
-  { id: 'YAPE', label: 'Yape', icon: 'phone_iphone', desc: 'Pago desde tu app' },
-  { id: 'PLIN', label: 'Plin', icon: 'phone_iphone', desc: 'Pago desde tu app' },
-  { id: 'TRANSFER', label: 'Transferencia Bancaria', icon: 'account_balance', desc: 'BCP, Interbank, BBVA' },
+  {
+    id: 'CREDIT_CARD',
+    label: 'Pasarela Segura Izipay (Tarjeta de Crédito / Débito)',
+    icon: 'credit_card',
+    desc: 'Visa, Mastercard, AMEX, Diners — Cobro en línea verificado',
+  },
 ]
 
 const PROCESSING_STEPS = [
@@ -152,8 +154,9 @@ export default function CheckoutPage() {
 
   const initializeKrypton = (token: string, targetOrderId: string) => {
     const KR = (window as any).KR;
-    if (!KR) {
-      setTimeout(() => initializeKrypton(token, targetOrderId), 300);
+    const container = document.querySelector('.kr-embedded');
+    if (!KR || !container) {
+      setTimeout(() => initializeKrypton(token, targetOrderId), 200);
       return;
     }
 
@@ -218,75 +221,13 @@ export default function CheckoutPage() {
       }
     }
 
-    if (paymentMethod === 'CREDIT_CARD') {
-      setLoadingIzipay(true);
-      try {
-        // 1. Crear la orden pendiente en el servidor (el servidor valida stock, calcula el total real y crea la orden)
-        const payload: OrderPayload = {
-          items: items.map(item => ({ productId: item.id, quantity: item.quantity })),
-          paymentMethod: 'CREDIT_CARD',
-          documentType: docType,
-          source: 'WEB',
-          customerDocType: docType === 'FACTURA' ? '6' : '1',
-          customerDocNumber: docType === 'FACTURA' ? ruc.trim() : (dni.trim() || user?.dni || undefined),
-          customerLegalName:
-            docType === 'FACTURA'
-              ? razonSocial.trim()
-              : effectiveCustomerName || undefined,
-          customerAddress: docType === 'FACTURA' ? (fiscalAddress.trim() || undefined) : undefined,
-          customerEmail: effectiveEmail,
-        };
-
-        const pendingOrder = await createOrder(payload);
-        const targetOrderId = pendingOrder.id;
-
-        // 2. Solicitar formToken al servidor pasando únicamente el orderId (monto calculado en BD)
-        const res = await generateIzipayToken(targetOrderId);
-        const formToken = res.formToken;
-        setIzipayToken(formToken);
-
-        if (!document.getElementById('izipay-krypton-css')) {
-          const link = document.createElement('link');
-          link.id = 'izipay-krypton-css';
-          link.rel = 'stylesheet';
-          link.href = 'https://static.micuentaweb.pe/static/js/krypton-client/V4.0/stable/kr-payment-form.min.css';
-          document.head.appendChild(link);
-        }
-
-        if (!document.getElementById('izipay-krypton-script')) {
-          const script = document.createElement('script');
-          script.id = 'izipay-krypton-script';
-          script.src = 'https://static.micuentaweb.pe/static/js/krypton-client/V4.0/stable/kr-payment-form.min.js';
-          
-          const publicKey = process.env.NEXT_PUBLIC_IZIPAY_PUBLIC_KEY || '68343271:publickey_aIoNmzVPNrnJ6KDzqZ9TTFL1dtNOJtvGWjg3CfoUJkogu';
-          script.setAttribute('kr-public-key', publicKey);
-          script.setAttribute('kr-post-url-success', window.location.origin + '/dashboard');
-          script.async = true;
-          
-          script.onload = () => {
-            initializeKrypton(formToken, targetOrderId);
-          };
-          script.onerror = () => {
-            setErrorMsg('No se pudo cargar la librería de pagos de Izipay.');
-            setLoadingIzipay(false);
-          };
-          document.head.appendChild(script);
-        } else {
-          initializeKrypton(formToken, targetOrderId);
-        }
-      } catch (err: any) {
-        setErrorMsg(err.message || 'Error al iniciar la transacción con Izipay.');
-        setLoadingIzipay(false);
-      }
-      return;
-    }
-
+    // Todas las compras web pasan obligatoriamente por la pasarela real Izipay
+    setLoadingIzipay(true);
     try {
-      await simulateProcessing()
-
+      // 1. Crear la orden pendiente en el servidor (isPaid = false hasta que Izipay confirme el cobro)
       const payload: OrderPayload = {
         items: items.map(item => ({ productId: item.id, quantity: item.quantity })),
-        paymentMethod,
+        paymentMethod: 'CREDIT_CARD',
         documentType: docType,
         source: 'WEB',
         customerDocType: docType === 'FACTURA' ? '6' : '1',
@@ -297,15 +238,56 @@ export default function CheckoutPage() {
             : effectiveCustomerName || undefined,
         customerAddress: docType === 'FACTURA' ? (fiscalAddress.trim() || undefined) : undefined,
         customerEmail: effectiveEmail,
+      };
+
+      const pendingOrder = await createOrder(payload);
+      const targetOrderId = pendingOrder.id;
+
+      // 2. Solicitar formToken real a Izipay pasando únicamente el orderId (monto calculado en BD)
+      const res = await generateIzipayToken(targetOrderId);
+      const formToken = res.formToken;
+      setIzipayToken(formToken);
+
+      if (!document.getElementById('izipay-krypton-css')) {
+        const link = document.createElement('link');
+        link.id = 'izipay-krypton-css';
+        link.rel = 'stylesheet';
+        link.href = 'https://static.micuentaweb.pe/static/js/krypton-client/V4.0/stable/kr-payment-form.min.css';
+        document.head.appendChild(link);
       }
 
-      const result = await createOrder(payload)
-      setOrderResult(result)
-      clearCart()
-      setStep('success')
+      if (!document.getElementById('izipay-krypton-theme-css')) {
+        const themeLink = document.createElement('link');
+        themeLink.id = 'izipay-krypton-theme-css';
+        themeLink.rel = 'stylesheet';
+        themeLink.href = 'https://static.micuentaweb.pe/static/js/krypton-client/V4.0/ext/neon-reset.min.css';
+        document.head.appendChild(themeLink);
+      }
+
+      if (!document.getElementById('izipay-krypton-script')) {
+        const script = document.createElement('script');
+        script.id = 'izipay-krypton-script';
+        script.src = 'https://static.micuentaweb.pe/static/js/krypton-client/V4.0/stable/kr-payment-form.min.js';
+        
+        const publicKey = process.env.NEXT_PUBLIC_IZIPAY_PUBLIC_KEY || '68343271:publickey_aIoNmzVPNrnJ6KDzqZ9TTFL1dtNOJtvGWjg3CfoUJkogu';
+        script.setAttribute('kr-public-key', publicKey);
+        script.setAttribute('kr-post-url-success', window.location.origin + '/dashboard');
+        script.async = true;
+        
+        script.onload = () => {
+          initializeKrypton(formToken, targetOrderId);
+        };
+        script.onerror = () => {
+          setErrorMsg('No se pudo cargar la librería de pagos de Izipay.');
+          setLoadingIzipay(false);
+        };
+        document.head.appendChild(script);
+      } else {
+        setTimeout(() => initializeKrypton(formToken, targetOrderId), 100);
+      }
     } catch (err: any) {
-      setErrorMsg(err.message || 'Error al procesar el pago. Inténtalo de nuevo.')
-      setStep('error')
+      setErrorMsg(err.message || 'Error al iniciar la transacción con Izipay.');
+      setLoadingIzipay(false);
     }
   }
 

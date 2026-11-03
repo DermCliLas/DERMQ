@@ -263,21 +263,11 @@ export class OrdersService {
       }
     }
 
-    // ─── EMAIL INVOICE NOTIFICATION ──────────────────────────────────────────
-    const shouldSendWebOrderReceipt =
-      effectiveSource === OrderSource.WEB &&
-      paymentMethod !== PaymentMethod.CREDIT_CARD &&
-      Boolean(finalOrder?.customerEmail || finalOrder?.user?.email);
-
-    if (
-      finalOrder &&
-      (finalOrder.nubeFactPdfUrl || shouldSendWebOrderReceipt)
-    ) {
+    // ─── EMAIL INVOICE NOTIFICATION (SOLO ÓRDENES REALMENTE PAGADAS) ─────────
+    if (finalOrder && finalOrder.isPaid && finalOrder.nubeFactPdfUrl) {
       this.emailService
         .sendOrderInvoice(finalOrder, {
-          documentNumber:
-            finalOrder.documentNumber ||
-            `ORD-${finalOrder.id.slice(0, 8).toUpperCase()}`,
+          documentNumber: finalOrder.documentNumber,
           pdfUrl: finalOrder.nubeFactPdfUrl,
           xmlUrl: finalOrder.nubeFactXmlUrl,
         })
@@ -305,22 +295,25 @@ export class OrdersService {
       nearExpirationProducts,
     ] = await Promise.all([
       this.prisma.order.aggregate({
-        where: { isCancelled: false },
+        where: { isCancelled: false, isPaid: true },
         _sum: { total: true },
       }),
-      this.prisma.order.count(),
+      this.prisma.order.count({
+        where: { isCancelled: false, isPaid: true },
+      }),
       this.prisma.appointment.count(),
       this.prisma.order.groupBy({
         by: ['paymentMethod'],
-        where: { isCancelled: false },
+        where: { isCancelled: false, isPaid: true },
         _sum: { total: true },
       }),
       this.prisma.order.groupBy({
         by: ['source'],
-        where: { isCancelled: false },
+        where: { isCancelled: false, isPaid: true },
         _sum: { total: true },
       }),
       this.prisma.order.findMany({
+        where: { isPaid: true },
         take: 10,
         orderBy: { createdAt: 'desc' },
         include: {
@@ -420,7 +413,7 @@ export class OrdersService {
 
   async findByUser(userId: string) {
     return this.prisma.order.findMany({
-      where: { userId },
+      where: { userId, isPaid: true },
       include: {
         items: {
           include: {
