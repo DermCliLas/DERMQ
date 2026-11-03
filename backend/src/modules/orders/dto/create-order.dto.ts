@@ -7,6 +7,7 @@ import {
   IsInt,
   Min,
   ArrayMinSize,
+  IsEmail,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { PaymentMethod, DocType, OrderSource } from '@prisma/client';
@@ -42,8 +43,6 @@ export class CreateOrderDto {
   @IsOptional()
   source?: OrderSource;
 
-
-
   @IsString()
   @IsOptional()
   customerDocType?: string; // "6" = RUC, "1" = DNI, "4" = CE, "7" = Pasaporte, "0" = Sin Doc
@@ -59,4 +58,14 @@ export class CreateOrderDto {
   @IsString()
   @IsOptional()
   customerAddress?: string; // Dirección fiscal
+
+  @IsEmail(
+    {},
+    {
+      message:
+        'Debe ingresar un correo electrónico válido para enviar el comprobante de pago.',
+    },
+  )
+  @IsOptional()
+  customerEmail?: string; // Correo electrónico para envío de comprobante (obligatorio en compra como invitado)
 }

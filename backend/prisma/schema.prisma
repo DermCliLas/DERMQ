@@ -211,6 +211,7 @@ model Order {
   customerDocNumber String? // RUC de 11 dígitos o DNI
   customerLegalName String? // Razón Social o Nombre del Cliente
   customerAddress   String? // Dirección fiscal
+  customerEmail     String? // Correo para envío de comprobante (invitado o alternativo)
 
   items       OrderItem[]
   appointment Appointment? // Relacionado sólo si la orden surge por agendar cita

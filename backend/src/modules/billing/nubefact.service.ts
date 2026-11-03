@@ -330,7 +330,7 @@ export class NubeFactService {
       cliente_numero_de_documento: clienteNumeroDoc,
       cliente_denominacion: clienteDenominacion,
       cliente_direccion: order.customerAddress || 'Lima, Perú',
-      cliente_email: order.user?.email || '',
+      cliente_email: order.customerEmail || order.user?.email || '',
       fecha_de_emision: this.formatSunatDate(),
       moneda: 1,
       porcentaje_de_igv: 18.0,
@@ -398,7 +398,7 @@ export class NubeFactService {
     let clienteNumeroDoc = '00000000';
     let clienteDenominacion = 'Clientes Varios';
     const clienteDireccion = order.customerAddress || 'Lima, Perú';
-    const clienteEmail = order.user?.email || '';
+    const clienteEmail = order.customerEmail || order.user?.email || '';
 
     if (isFactura) {
       clienteTipoDoc = 6; // RUC

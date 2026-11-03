@@ -534,4 +534,62 @@ describe('OrdersService', () => {
       );
     });
   });
+
+  describe('Guest Checkout (Compra como invitado)', () => {
+    it('should reject guest order if customerEmail is missing or invalid', async () => {
+      const orderDto: any = {
+        items: [{ productId: 'p1', quantity: 1 }],
+        paymentMethod: PaymentMethod.CREDIT_CARD,
+        source: OrderSource.WEB,
+      };
+
+      await expect(service.create(orderDto, null)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.create(orderDto, null)).rejects.toThrow(
+        'correo electrónico válido',
+      );
+    });
+
+    it('should reject guest order if source is POS', async () => {
+      const orderDto: any = {
+        items: [{ productId: 'p1', quantity: 1 }],
+        paymentMethod: PaymentMethod.CASH,
+        source: OrderSource.POS,
+        customerEmail: 'invitado@ejemplo.com',
+      };
+
+      await expect(service.create(orderDto, null)).rejects.toThrow(
+        ForbiddenException,
+      );
+    });
+
+    it('should create a guest WEB order with userId = null and customerEmail stored', async () => {
+      mockPrisma.product.findMany.mockResolvedValue([
+        { id: 'p1', name: 'Gel Limpiador', price: 80.0, stock: 5, isActive: true },
+      ]);
+      mockPrisma.product.updateMany.mockResolvedValue({ count: 1 });
+      mockPrisma.order.create.mockImplementation(({ data }: any) => ({
+        id: 'ord-guest-1',
+        ...data,
+        items: [],
+        user: null,
+      }));
+
+      const orderDto: any = {
+        items: [{ productId: 'p1', quantity: 1 }],
+        paymentMethod: PaymentMethod.CREDIT_CARD,
+        source: OrderSource.WEB,
+        customerEmail: 'invitado@ejemplo.com',
+        customerLegalName: 'Invitado Test',
+      };
+
+      const result = await service.create(orderDto, null);
+
+      expect(result.userId).toBeNull();
+      expect(result.customerEmail).toBe('invitado@ejemplo.com');
+      expect(result.source).toBe(OrderSource.WEB);
+      expect(result.isPaid).toBe(false);
+    });
+  });
 });

@@ -13,6 +13,7 @@ import { CancelOrderDto } from './dto/cancel-order.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { Public } from '../../common/decorators/public.decorator';
 import { Role } from '@prisma/client';
 
 @Controller('orders')
@@ -20,12 +21,24 @@ import { Role } from '@prisma/client';
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
+  @Public()
   @Post()
   create(@Body() createOrderDto: CreateOrderDto, @Request() req: any) {
-    return this.ordersService.create(createOrderDto, {
-      userId: req.user.userId,
-      role: req.user.role,
-    });
+    return this.ordersService.create(
+      createOrderDto,
+      req.user
+        ? {
+            userId: req.user.userId,
+            role: req.user.role,
+          }
+        : null,
+    );
+  }
+
+  @Public()
+  @Post('guest')
+  createGuest(@Body() createOrderDto: CreateOrderDto) {
+    return this.ordersService.create(createOrderDto, null);
   }
 
   @Get('admin-summary')

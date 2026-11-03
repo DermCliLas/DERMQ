@@ -33,6 +33,9 @@ export default function CheckoutPage() {
   const { user, isAuthenticated } = useAuth()
 
   const [step, setStep] = useState<CheckoutStep>('form')
+  const [isGuestCheckout, setIsGuestCheckout] = useState(false)
+  const [guestEmail, setGuestEmail] = useState('')
+  const [guestName, setGuestName] = useState('')
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('CREDIT_CARD')
   const [docType, setDocType] = useState<DocType>('BOLETA')
   const [ruc, setRuc] = useState('')
@@ -49,22 +52,6 @@ export default function CheckoutPage() {
   const tax = Number((totalPrice - subtotal).toFixed(2))
   const finalTotal = totalPrice
 
-  // Guard: must be logged in with items
-  if (!isAuthenticated) {
-    return (
-      <main className="pt-40 pb-24 min-h-screen bg-[#F2F4F4] flex flex-col items-center justify-center">
-        <div className="text-center">
-          <span className="material-symbols-outlined text-5xl text-slate-300 mb-4 block">lock</span>
-          <h2 className="font-headline font-bold text-2xl mb-3 text-[#1a1c1e]">Inicia sesión para continuar</h2>
-          <p className="text-on-surface-variant mb-8">Necesitas una cuenta para completar tu compra.</p>
-          <Link href="/login?redirect=/carrito/checkout" className="luminous-gradient text-white px-8 py-4 rounded-full font-bold glow-on-hover transition-all">
-            Iniciar Sesión
-          </Link>
-        </div>
-      </main>
-    )
-  }
-
   if (items.length === 0 && step === 'form') {
     return (
       <main className="pt-40 pb-24 min-h-screen bg-[#F2F4F4] flex flex-col items-center justify-center">
@@ -74,6 +61,81 @@ export default function CheckoutPage() {
           <Link href="/productos" className="luminous-gradient text-white px-8 py-4 rounded-full font-bold glow-on-hover transition-all">
             Ver Productos
           </Link>
+        </div>
+      </main>
+    )
+  }
+
+  // Selector de modalidad cuando no ha iniciado sesión ni elegido comprar como invitado
+  if (!isAuthenticated && !isGuestCheckout) {
+    return (
+      <main className="pt-32 pb-24 min-h-screen bg-[#F2F4F4] flex flex-col items-center justify-center px-4">
+        <div className="bg-white rounded-4xl p-8 md:p-12 shadow-xl border border-slate-100 max-w-2xl w-full">
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+              <span className="material-symbols-outlined text-3xl text-primary">shopping_cart_checkout</span>
+            </div>
+            <h2 className="font-headline font-black text-2xl md:text-3xl mb-2 text-[#1a1c1e]">
+              ¿Cómo deseas continuar tu compra?
+            </h2>
+            <p className="text-on-surface-variant text-sm">
+              Puedes iniciar sesión con tu cuenta o realizar una compra rápida como invitado.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Opción 1: Iniciar Sesión */}
+            <div className="rounded-3xl border-2 border-slate-100 bg-slate-50/70 p-6 flex flex-col justify-between hover:border-primary/40 transition-all">
+              <div>
+                <div className="w-11 h-11 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-4">
+                  <span className="material-symbols-outlined">person</span>
+                </div>
+                <h3 className="font-headline font-bold text-lg text-[#1a1c1e] mb-2">
+                  Con mi cuenta DERMQ
+                </h3>
+                <p className="text-xs text-on-surface-variant leading-relaxed mb-6">
+                  Autocompleta tus datos y guarda el historial de tus pedidos y comprobantes en tu panel personal.
+                </p>
+              </div>
+              <Link
+                href="/login?redirect=/carrito/checkout"
+                className="w-full luminous-gradient text-white py-3.5 px-6 rounded-2xl font-bold text-sm text-center glow-on-hover transition-all flex items-center justify-center gap-2"
+              >
+                <span className="material-symbols-outlined text-base">login</span>
+                Iniciar Sesión
+              </Link>
+            </div>
+
+            {/* Opción 2: Comprar como Invitado */}
+            <div className="rounded-3xl border-2 border-primary/20 bg-primary/5 p-6 flex flex-col justify-between hover:border-primary transition-all">
+              <div>
+                <div className="w-11 h-11 rounded-2xl bg-white text-primary flex items-center justify-center mb-4 shadow-sm">
+                  <span className="material-symbols-outlined">bolt</span>
+                </div>
+                <h3 className="font-headline font-bold text-lg text-[#1a1c1e] mb-2">
+                  Comprar como invitado
+                </h3>
+                <p className="text-xs text-on-surface-variant leading-relaxed mb-6">
+                  Compra sin registrarte ni crear contraseña. Solo te solicitaremos un correo electrónico para enviarte tu comprobante de pago.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsGuestCheckout(true)}
+                className="w-full bg-white border-2 border-primary text-primary hover:bg-primary hover:text-white py-3.5 px-6 rounded-2xl font-bold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-base">mail</span>
+                Continuar como invitado
+              </button>
+            </div>
+          </div>
+
+          <div className="mt-8 text-center">
+            <Link href="/carrito" className="text-xs font-bold text-slate-400 hover:text-primary transition-colors inline-flex items-center gap-1">
+              <span className="material-symbols-outlined text-sm">arrow_back</span>
+              Volver al carrito
+            </Link>
+          </div>
         </div>
       </main>
     )
@@ -134,6 +196,16 @@ export default function CheckoutPage() {
   const handleConfirm = async () => {
     setErrorMsg(null);
 
+    const effectiveEmail = isAuthenticated ? (user?.email || '').trim() : guestEmail.trim();
+    if (!effectiveEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(effectiveEmail)) {
+      setErrorMsg('Por favor ingresa un correo electrónico válido al cual enviaremos tu comprobante de pago.');
+      return;
+    }
+
+    const effectiveCustomerName = isAuthenticated
+      ? `${user?.firstName || ''} ${user?.lastName || ''}`.trim()
+      : guestName.trim();
+
     // Validación fiscal previa
     if (docType === 'FACTURA') {
       if (!ruc.trim() || ruc.trim().length !== 11 || !/^\d+$/.test(ruc.trim())) {
@@ -160,8 +232,9 @@ export default function CheckoutPage() {
           customerLegalName:
             docType === 'FACTURA'
               ? razonSocial.trim()
-              : `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || undefined,
+              : effectiveCustomerName || undefined,
           customerAddress: docType === 'FACTURA' ? (fiscalAddress.trim() || undefined) : undefined,
+          customerEmail: effectiveEmail,
         };
 
         const pendingOrder = await createOrder(payload);
@@ -221,8 +294,9 @@ export default function CheckoutPage() {
         customerLegalName:
           docType === 'FACTURA'
             ? razonSocial.trim()
-            : `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || undefined,
+            : effectiveCustomerName || undefined,
         customerAddress: docType === 'FACTURA' ? (fiscalAddress.trim() || undefined) : undefined,
+        customerEmail: effectiveEmail,
       }
 
       const result = await createOrder(payload)
@@ -291,32 +365,53 @@ export default function CheckoutPage() {
 
   // ─── Success Screen ──────────────────────────────────────────────────────
   if (step === 'success') {
+    const sentToEmail = isAuthenticated ? user?.email : guestEmail.trim()
     return (
       <main className="pt-28 pb-24 min-h-screen bg-[#F2F4F4] flex flex-col items-center justify-center">
-        <div className="bg-white rounded-4xl p-16 shadow-xl border border-slate-100 max-w-lg w-full text-center mx-4">
+        <div className="bg-white rounded-4xl p-10 md:p-16 shadow-xl border border-slate-100 max-w-lg w-full text-center mx-4">
           <div className="w-24 h-24 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-8 animate-bounce-once">
             <span className="material-symbols-outlined text-emerald-600 text-5xl">check_circle</span>
           </div>
           <h2 className="font-headline font-black text-3xl text-[#1a1c1e] mb-3">¡Compra exitosa!</h2>
           <p className="text-on-surface-variant mb-2">Tu orden ha sido procesada correctamente.</p>
+          {sentToEmail && (
+            <p className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-2xl px-4 py-2.5 mb-4 inline-flex items-center gap-1.5 font-medium">
+              <span className="material-symbols-outlined text-sm">mark_email_read</span>
+              Comprobante enviado a: <strong>{sentToEmail}</strong>
+            </p>
+          )}
           {orderResult?.id && (
-            <p className="text-xs text-slate-400 font-mono mb-8">Order #{orderResult.id.slice(0, 8).toUpperCase()}</p>
+            <p className="text-xs text-slate-400 font-mono mb-6 block">
+              Orden #{orderResult.documentNumber || orderResult.id.slice(0, 8).toUpperCase()}
+            </p>
           )}
 
-          <div className="bg-slate-50 rounded-3xl p-6 text-left mb-8 space-y-3">
+          <div className="bg-slate-50 rounded-3xl p-6 text-left mb-6 space-y-3">
             <div className="flex justify-between text-sm">
               <span className="text-on-surface-variant">Método de pago</span>
               <span className="font-semibold text-[#1a1c1e]">{PAYMENT_METHODS.find(p => p.id === paymentMethod)?.label}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-on-surface-variant">Comprobante</span>
-              <span className="font-semibold text-[#1a1c1e]">{docType}</span>
+              <span className="font-semibold text-[#1a1c1e]">{orderResult?.documentNumber ? `${docType} (${orderResult.documentNumber})` : docType}</span>
             </div>
             <div className="flex justify-between text-sm border-t border-slate-200 pt-3 mt-1">
               <span className="font-bold text-[#1a1c1e]">Total pagado</span>
-              <span className="font-headline font-black text-xl text-primary">S/ {finalTotal.toFixed(2)}</span>
+              <span className="font-headline font-black text-xl text-primary">S/ {(orderResult?.total ?? finalTotal).toFixed(2)}</span>
             </div>
           </div>
+
+          {orderResult?.nubeFactPdfUrl && (
+            <a
+              href={orderResult.nubeFactPdfUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full mb-4 py-3.5 rounded-2xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-sm flex items-center justify-center gap-2 transition-all border border-emerald-200"
+            >
+              <span className="material-symbols-outlined text-base">picture_as_pdf</span>
+              Descargar Comprobante Electrónico (PDF)
+            </a>
+          )}
 
           <div className="flex flex-col sm:flex-row gap-4">
             <Link
@@ -325,12 +420,21 @@ export default function CheckoutPage() {
             >
               Seguir comprando
             </Link>
-            <Link
-              href="/dashboard"
-              className="flex-1 luminous-gradient text-white py-4 rounded-2xl font-bold text-center glow-on-hover hover:scale-[1.02] transition-all"
-            >
-              Ver mis pedidos
-            </Link>
+            {isAuthenticated ? (
+              <Link
+                href="/dashboard"
+                className="flex-1 luminous-gradient text-white py-4 rounded-2xl font-bold text-center glow-on-hover hover:scale-[1.02] transition-all"
+              >
+                Ver mis pedidos
+              </Link>
+            ) : (
+              <Link
+                href="/"
+                className="flex-1 luminous-gradient text-white py-4 rounded-2xl font-bold text-center glow-on-hover hover:scale-[1.02] transition-all"
+              >
+                Volver al inicio
+              </Link>
+            )}
           </div>
         </div>
       </main>
@@ -379,26 +483,76 @@ export default function CheckoutPage() {
           {/* Left: Forms */}
           <div className="lg:col-span-7 space-y-8">
 
-            {/* Customer Info (readonly from profile) */}
+            {/* Customer Info (readonly from profile or editable for guest) */}
             <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm">
-              <h2 className="font-headline font-bold text-xl text-[#1a1c1e] mb-6 flex items-center gap-2">
-                <span className="material-symbols-outlined text-primary">person</span>
-                Datos del Comprador
-              </h2>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Nombre</label>
-                  <div className="bg-slate-50 rounded-2xl px-5 py-4 font-semibold text-[#1a1c1e] border-2 border-slate-100">
-                    {user?.firstName} {user?.lastName}
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-6">
+                <h2 className="font-headline font-bold text-xl text-[#1a1c1e] flex items-center gap-2">
+                  <span className="material-symbols-outlined text-primary">person</span>
+                  Datos del Comprador
+                </h2>
+                {!isAuthenticated && (
+                  <div className="flex items-center gap-3">
+                    <span className="px-3 py-1 rounded-full bg-primary/10 text-primary text-[11px] font-bold">
+                      Modo Invitado
+                    </span>
+                    <Link
+                      href="/login?redirect=/carrito/checkout"
+                      className="text-xs font-bold text-primary hover:underline"
+                    >
+                      ¿Tienes cuenta? Inicia sesión
+                    </Link>
                   </div>
-                </div>
-                <div>
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Email</label>
-                  <div className="bg-slate-50 rounded-2xl px-5 py-4 font-semibold text-[#1a1c1e] border-2 border-slate-100 truncate">
-                    {user?.email}
-                  </div>
-                </div>
+                )}
               </div>
+
+              {isAuthenticated ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Nombre</label>
+                    <div className="bg-slate-50 rounded-2xl px-5 py-4 font-semibold text-[#1a1c1e] border-2 border-slate-100">
+                      {user?.firstName} {user?.lastName}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Email para Comprobante</label>
+                    <div className="bg-slate-50 rounded-2xl px-5 py-4 font-semibold text-[#1a1c1e] border-2 border-slate-100 truncate">
+                      {user?.email}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">
+                      Correo electrónico para envío del comprobante *
+                    </label>
+                    <input
+                      type="email"
+                      required
+                      value={guestEmail}
+                      onChange={e => setGuestEmail(e.target.value)}
+                      placeholder="tucorreo@ejemplo.com"
+                      className="w-full rounded-2xl border-2 border-slate-200 bg-slate-50 px-5 py-3.5 font-medium focus:border-primary focus:bg-white focus:outline-none transition-all text-sm"
+                    />
+                    <p className="text-[11px] text-slate-400 mt-1.5 flex items-center gap-1">
+                      <span className="material-symbols-outlined text-xs text-primary">mail</span>
+                      Enviaremos tu Boleta o Factura electrónica (PDF y XML) directamente a este correo.
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">
+                      Nombre Completo (Opcional)
+                    </label>
+                    <input
+                      type="text"
+                      value={guestName}
+                      onChange={e => setGuestName(e.target.value)}
+                      placeholder="Ej. María Pérez"
+                      className="w-full rounded-2xl border-2 border-slate-100 bg-slate-50 px-5 py-3.5 font-medium focus:border-primary focus:bg-white focus:outline-none transition-all text-sm"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Payment Method */}
@@ -561,6 +715,13 @@ export default function CheckoutPage() {
                   </span>
                 </div>
               </div>
+
+              {errorMsg && (
+                <div className="mb-4 p-3.5 rounded-2xl bg-red-50 border border-red-100 text-red-600 text-xs font-medium flex items-start gap-2">
+                  <span className="material-symbols-outlined text-base shrink-0">error</span>
+                  <span>{errorMsg}</span>
+                </div>
+              )}
 
               <button
                 id="btn-confirm-checkout"

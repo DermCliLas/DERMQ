@@ -608,12 +608,22 @@ export class EmailService {
   }
 
 
-  // ─── PLANTILLA 3: RECIBO DE PAGO & FACTURA (PACIENTE) ─────────────────────
+  // ─── PLANTILLA 3: RECIBO DE PAGO & FACTURA (PACIENTE / INVITADO) ──────────
   async sendOrderInvoice(order: any, billingResult: any) {
     const { user, items, total } = order;
-    const subject = `Comprobante de Pago Electrónico: ${billingResult.documentNumber} - DERMQ`;
+    const customerName =
+      user?.firstName || order.customerLegalName || 'Cliente';
+    const recipientEmail =
+      order.customerEmail ||
+      user?.email ||
+      'dermatologiaclinicaylasersac@gmail.com';
+    const docNum =
+      billingResult?.documentNumber ||
+      order.documentNumber ||
+      `ORD-${String(order.id || '').slice(0, 8).toUpperCase()}`;
+    const subject = `Comprobante de Pago Electrónico: ${docNum} - DERMQ`;
 
-    const itemsRows = items
+    const itemsRows = (items || [])
       .map(
         (item: any) => `
       <tr>
@@ -624,12 +634,28 @@ export class EmailService {
           ${item.quantity}
         </td>
         <td align="right" style="padding: 12px; border-bottom: 1px solid #edf2f7; font-size: 14px; font-weight: bold; color: #2d3748;">
-          S/ ${item.unitPrice.toFixed(2)}
+          S/ ${Number(item.unitPrice).toFixed(2)}
         </td>
       </tr>
     `,
       )
       .join('');
+
+    const downloadLinksBlock = billingResult?.pdfUrl
+      ? `
+                    <div style="margin-top: 15px;">
+                      <a href="${billingResult.pdfUrl}" target="_blank" style="display: inline-block; padding: 10px 20px; background-color: #014d4e; color: #ffffff; text-decoration: none; border-radius: 12px; font-size: 13px; font-weight: bold; margin-right: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.15);">
+                        Descargar PDF
+                      </a>
+                      ${
+                        billingResult?.xmlUrl
+                          ? `<a href="${billingResult.xmlUrl}" target="_blank" style="display: inline-block; padding: 10px 20px; background-color: #f7fafc; color: #014d4e; text-decoration: none; border-radius: 12px; font-size: 13px; font-weight: bold; border: 1px solid #cbd5e0;">
+                        Descargar XML
+                      </a>`
+                          : ''
+                      }
+                    </div>`
+      : `<p style="margin: 10px 0 0 0; font-size: 12px; color: #014d4e;">Tu orden ha sido registrada correctamente.</p>`;
 
     const html = `
       <!DOCTYPE html>
@@ -653,7 +679,7 @@ export class EmailService {
             <td style="padding: 40px 30px 20px 30px; text-align: center;">
               <h2 style="margin-top: 0; color: #014d4e; font-size: 22px; font-weight: 800;">¡Gracias por tu compra!</h2>
               <p style="font-size: 15px; color: #4a5568; line-height: 1.6;">
-                Hola <strong>${user?.firstName || 'Paciente'}</strong>, confirmamos el pago de tu transacción. Hemos emitido de manera electrónica tu comprobante de pago SUNAT.
+                Hola <strong>${customerName}</strong>, confirmamos el registro de tu compra en DERMQ. A continuación encontrarás el detalle de tu comprobante de pago.
               </p>
             </td>
           </tr>
@@ -664,17 +690,9 @@ export class EmailService {
               <table border="0" cellpadding="0" cellspacing="0" style="background-color: #e6f7f7; border-radius: 16px; width: 100%; padding: 20px; border: 1px solid #72c1c1;">
                 <tr>
                   <td align="center">
-                    <span style="font-size: 12px; color: #014d4e; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">Comprobante Emitido</span><br/>
-                    <strong style="font-size: 20px; color: #014d4e; display: block; margin-top: 5px;">${billingResult.documentNumber}</strong>
-                    
-                    <div style="margin-top: 15px;">
-                      <a href="${billingResult.pdfUrl}" target="_blank" style="display: inline-block; padding: 10px 20px; background-color: #014d4e; color: #ffffff; text-decoration: none; border-radius: 12px; font-size: 13px; font-weight: bold; margin-right: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.15);">
-                        Descargar PDF
-                      </a>
-                      <a href="${billingResult.xmlUrl}" target="_blank" style="display: inline-block; padding: 10px 20px; background-color: #f7fafc; color: #014d4e; text-decoration: none; border-radius: 12px; font-size: 13px; font-weight: bold; border: 1px solid #cbd5e0;">
-                        Descargar XML
-                      </a>
-                    </div>
+                    <span style="font-size: 12px; color: #014d4e; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">Comprobante / Orden</span><br/>
+                    <strong style="font-size: 20px; color: #014d4e; display: block; margin-top: 5px;">${docNum}</strong>
+                    ${downloadLinksBlock}
                   </td>
                 </tr>
               </table>
@@ -697,7 +715,7 @@ export class EmailService {
                   ${itemsRows}
                   <tr>
                     <td colspan="2" align="right" style="padding: 15px 12px 0 12px; font-weight: bold; font-size: 16px; color: #4a5568;">Total Pagado:</td>
-                    <td align="right" style="padding: 15px 12px 0 12px; font-weight: 900; font-size: 20px; color: #014d4e;">S/ ${total.toFixed(2)}</td>
+                    <td align="right" style="padding: 15px 12px 0 12px; font-weight: 900; font-size: 20px; color: #014d4e;">S/ ${Number(total).toFixed(2)}</td>
                   </tr>
                 </tbody>
               </table>
@@ -707,8 +725,8 @@ export class EmailService {
           <!-- Footer -->
           <tr>
             <td align="center" style="padding: 30px; background-color: #f7fafc; border-top: 1px solid #edf2f7; font-size: 12px; color: #a0aec0;">
-              <p style="margin: 0 0 5px 0;">DERMQ S.A.C. • Av. Javier Prado Este 1234, San Isidro, Lima</p>
-              <p style="margin: 0;">Ante cualquier duda o consulta sobre tu comprobante electrónico, escríbenos a citas@dermq.com</p>
+              <p style="margin: 0 0 5px 0;">DERMQ S.A.C. • Av. José Gálvez Barrenechea 127, Of. 604, San Isidro, Lima</p>
+              <p style="margin: 0;">Ante cualquier duda o consulta sobre tu comprobante electrónico, escríbenos a citas@draleyva.com</p>
             </td>
           </tr>
         </table>
@@ -716,6 +734,6 @@ export class EmailService {
       </html>
     `;
 
-    return this.sendEmail(user?.email || 'dermatologiaclinicaylasersac@gmail.com', subject, html);
+    return this.sendEmail(recipientEmail, subject, html);
   }
 }

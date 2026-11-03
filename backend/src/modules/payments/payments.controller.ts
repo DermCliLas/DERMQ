@@ -103,7 +103,8 @@ export class PaymentsController {
       throw new BadRequestException('El monto total de la orden debe ser superior a cero.');
     }
 
-    const email = order.user?.email || 'paciente@dermq.com';
+    const email =
+      (order as any).customerEmail || order.user?.email || 'paciente@dermq.com';
 
     const formToken = await this.izipayService.generateFormToken(
       amount,

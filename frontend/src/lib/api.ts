@@ -188,6 +188,7 @@ export interface OrderPayload {
   customerDocNumber?: string;
   customerLegalName?: string;
   customerAddress?: string;
+  customerEmail?: string;
 }
 
 export async function createOrder(orderData: OrderPayload): Promise<any> {

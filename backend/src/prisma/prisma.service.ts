@@ -23,6 +23,10 @@ export class PrismaService
   }
   async onModuleInit() {
     await this.$connect();
+    // Asegurar columna customerEmail para compras como invitado sin requerir migración manual
+    await this.$executeRawUnsafe(
+      'ALTER TABLE "Order" ADD COLUMN IF NOT EXISTS "customerEmail" TEXT;',
+    ).catch(() => {});
   }
 
   async onModuleDestroy() {

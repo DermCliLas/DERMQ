@@ -25,12 +25,12 @@ export class OrdersService {
 
   async create(
     createOrderDto: CreateOrderDto,
-    currentUser: { userId: string; role: Role } | string,
+    currentUser?: { userId?: string | null; role?: Role } | string | null,
   ) {
     const user =
       typeof currentUser === 'string'
         ? { userId: currentUser, role: Role.PATIENT }
-        : currentUser;
+        : currentUser || null;
     const {
       items,
       paymentMethod,
@@ -40,10 +40,36 @@ export class OrdersService {
       customerDocNumber,
       customerLegalName,
       customerAddress,
+      customerEmail,
     } = createOrderDto;
 
-    // Validación de autorización según rol
-    if (user.role === Role.PATIENT) {
+    const isGuest = !user || !user.userId;
+
+    // Validación para compras como invitado (sin cuenta)
+    if (isGuest) {
+      if (source === OrderSource.POS) {
+        throw new ForbiddenException(
+          'Los invitados únicamente pueden generar compras a través del canal WEB.',
+        );
+      }
+      if (createOrderDto.patientId) {
+        throw new ForbiddenException(
+          'Los invitados no pueden registrar compras a nombre de usuarios registrados.',
+        );
+      }
+      const trimmedGuestEmail = customerEmail?.trim() || '';
+      if (
+        !trimmedGuestEmail ||
+        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedGuestEmail)
+      ) {
+        throw new BadRequestException(
+          'Para comprar como invitado es obligatorio ingresar un correo electrónico válido para enviar el comprobante de pago.',
+        );
+      }
+    }
+
+    // Validación de autorización según rol (usuarios autenticados)
+    if (user?.role === Role.PATIENT) {
       if (source === OrderSource.POS) {
         throw new ForbiddenException(
           'Los pacientes únicamente pueden generar compras a través del canal WEB.',
@@ -56,7 +82,7 @@ export class OrdersService {
       }
     }
 
-    if (user.role === Role.DOCTOR) {
+    if (user?.role === Role.DOCTOR) {
       if (source === OrderSource.POS) {
         throw new ForbiddenException(
           'Los doctores no tienen autorización para emitir órdenes por canal POS.',
@@ -65,11 +91,12 @@ export class OrdersService {
     }
 
     const isStaff =
-      user.role === Role.ADMIN || user.role === Role.RECEPTION;
-    const effectiveUserId =
-      isStaff && createOrderDto.patientId
+      user?.role === Role.ADMIN || user?.role === Role.RECEPTION;
+    const effectiveUserId = isGuest
+      ? null
+      : isStaff && createOrderDto.patientId
         ? createOrderDto.patientId
-        : user.userId;
+        : (user?.userId ?? null);
     const effectiveSource = isStaff
       ? (source ?? OrderSource.POS)
       : OrderSource.WEB;
@@ -163,6 +190,7 @@ export class OrdersService {
             customerDocNumber: customerDocNumber?.trim() || null,
             customerLegalName: customerLegalName?.trim() || null,
             customerAddress: customerAddress?.trim() || null,
+            customerEmail: customerEmail?.trim() || null,
             items: {
               create: orderItems,
             },
@@ -236,10 +264,20 @@ export class OrdersService {
     }
 
     // ─── EMAIL INVOICE NOTIFICATION ──────────────────────────────────────────
-    if (finalOrder && finalOrder.nubeFactPdfUrl) {
+    const shouldSendWebOrderReceipt =
+      effectiveSource === OrderSource.WEB &&
+      paymentMethod !== PaymentMethod.CREDIT_CARD &&
+      Boolean(finalOrder?.customerEmail || finalOrder?.user?.email);
+
+    if (
+      finalOrder &&
+      (finalOrder.nubeFactPdfUrl || shouldSendWebOrderReceipt)
+    ) {
       this.emailService
         .sendOrderInvoice(finalOrder, {
-          documentNumber: finalOrder.documentNumber,
+          documentNumber:
+            finalOrder.documentNumber ||
+            `ORD-${finalOrder.id.slice(0, 8).toUpperCase()}`,
           pdfUrl: finalOrder.nubeFactPdfUrl,
           xmlUrl: finalOrder.nubeFactXmlUrl,
         })
@@ -922,10 +960,17 @@ export class OrdersService {
     });
 
     // ─── EMAIL INVOICE NOTIFICATION VIA RESEND ─────────────────────────────
-    if (completedOrder && completedOrder.nubeFactPdfUrl) {
+    if (
+      completedOrder &&
+      (completedOrder.nubeFactPdfUrl ||
+        completedOrder.customerEmail ||
+        completedOrder.user?.email)
+    ) {
       this.emailService
         .sendOrderInvoice(completedOrder, {
-          documentNumber: completedOrder.documentNumber,
+          documentNumber:
+            completedOrder.documentNumber ||
+            `ORD-${completedOrder.id.slice(0, 8).toUpperCase()}`,
           pdfUrl: completedOrder.nubeFactPdfUrl,
           xmlUrl: completedOrder.nubeFactXmlUrl,
         })

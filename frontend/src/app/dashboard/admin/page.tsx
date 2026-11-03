@@ -420,8 +420,18 @@ export default function AdminDashboardPage() {
                             </div>
                           </td>
                           <td className="py-4 text-xs">
-                            <p className="font-bold text-[#1a1c1e]">{order.user?.firstName} {order.user?.lastName}</p>
-                            <p className="text-[10px] text-slate-400 font-mono">DNI: {order.user?.dni || 'N/A'}</p>
+                            <p className="font-bold text-[#1a1c1e]">
+                              {order.user
+                                ? `${order.user.firstName} ${order.user.lastName}`
+                                : order.customerLegalName || 'Invitado / Público General'}
+                            </p>
+                            <p className="text-[10px] text-slate-400 font-mono">
+                              {order.customerDocNumber
+                                ? `${order.documentType === 'FACTURA' ? 'RUC' : 'DNI'}: ${order.customerDocNumber}`
+                                : order.user?.dni
+                                  ? `DNI: ${order.user.dni}`
+                                  : order.customerEmail || 'Sin doc.'}
+                            </p>
                           </td>
                           <td className="py-4 text-xs font-medium text-slate-600">
                             {getMethodLabel(order.paymentMethod)}
