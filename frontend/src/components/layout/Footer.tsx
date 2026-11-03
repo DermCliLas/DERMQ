@@ -41,6 +41,7 @@ const DEFAULTS: FooterContent = {
     { label: 'Cuerpo Médico', href: '/nosotros#equipo' },
     { label: 'Instalaciones', href: '/servicios#tecnologia' },
     { label: 'Sedes', href: '/contacto' },
+    { label: 'Términos y Condiciones', href: '/terminos-y-condiciones' },
   ],
   serviceLinks: [
     { label: 'Dermatología Clínica', href: '/servicios' },
@@ -54,9 +55,9 @@ const DEFAULTS: FooterContent = {
   ctaText: 'Escríbenos',
   ctaLink: '/contacto',
   privacyText: 'Aviso de Privacidad',
-  privacyLink: '#',
+  privacyLink: '/terminos-y-condiciones#privacidad',
   termsText: 'Términos y Condiciones',
-  termsLink: '#',
+  termsLink: '/terminos-y-condiciones',
 }
 
 export default function Footer() {
@@ -170,18 +171,18 @@ export default function Footer() {
               © {new Date().getFullYear()} {content.brandName} Clínica Dermatológica.
             </p>
             <div className="flex gap-6">
-              <a
-                href={content.privacyLink}
+              <Link
+                href={(!content.privacyLink || content.privacyLink === '#') ? '/terminos-y-condiciones#privacidad' : content.privacyLink}
                 className="text-[10px] uppercase font-bold text-white/40 tracking-[0.15em] hover:text-tertiary transition-colors"
               >
                 {content.privacyText}
-              </a>
-              <a
-                href={content.termsLink}
+              </Link>
+              <Link
+                href={(!content.termsLink || content.termsLink === '#') ? '/terminos-y-condiciones' : content.termsLink}
                 className="text-[10px] uppercase font-bold text-white/40 tracking-[0.15em] hover:text-tertiary transition-colors"
               >
                 {content.termsText}
-              </a>
+              </Link>
             </div>
           </div>
         </div>

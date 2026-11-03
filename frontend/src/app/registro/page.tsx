@@ -160,6 +160,18 @@ export default function RegisterPage() {
               </div>
             )}
 
+            <p className="text-xs text-slate-500 leading-relaxed pt-1">
+              Al registrarte, aceptas nuestros{' '}
+              <Link href="/terminos-y-condiciones" target="_blank" className="text-primary font-bold hover:underline">
+                Términos y Condiciones
+              </Link>{' '}
+              y nuestra{' '}
+              <Link href="/terminos-y-condiciones#privacidad" target="_blank" className="text-primary font-bold hover:underline">
+                Política de Privacidad y Protección de Datos Personales
+              </Link>
+              .
+            </p>
+
             <button
               type="submit"
               disabled={loading}

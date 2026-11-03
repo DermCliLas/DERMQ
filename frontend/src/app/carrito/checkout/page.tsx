@@ -49,6 +49,7 @@ export default function CheckoutPage() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [izipayToken, setIzipayToken] = useState<string | null>(null)
   const [loadingIzipay, setLoadingIzipay] = useState(false)
+  const [acceptedTerms, setAcceptedTerms] = useState(false)
 
   const subtotal = Number((totalPrice / 1.18).toFixed(2))
   const tax = Number((totalPrice - subtotal).toFixed(2))
@@ -219,6 +220,11 @@ export default function CheckoutPage() {
         setErrorMsg('Para emitir Factura es obligatorio ingresar la Razón Social.');
         return;
       }
+    }
+
+    if (!acceptedTerms) {
+      setErrorMsg('Debes leer y aceptar los Términos y Condiciones antes de continuar con el pago.');
+      return;
     }
 
     // Todas las compras web pasan obligatoriamente por la pasarela real Izipay
@@ -697,6 +703,36 @@ export default function CheckoutPage() {
                   </span>
                 </div>
               </div>
+
+              <label className="flex items-start gap-3 mb-5 p-3.5 rounded-2xl bg-slate-50 border border-slate-100 cursor-pointer select-none hover:border-primary/30 transition-colors">
+                <input
+                  type="checkbox"
+                  checked={acceptedTerms}
+                  onChange={e => setAcceptedTerms(e.target.checked)}
+                  className="mt-0.5 w-4 h-4 rounded accent-[#02696a] cursor-pointer shrink-0"
+                />
+                <span className="text-xs text-slate-600 leading-relaxed">
+                  He leído y acepto los{' '}
+                  <Link
+                    href="/terminos-y-condiciones"
+                    target="_blank"
+                    className="text-primary font-bold hover:underline"
+                    onClick={e => e.stopPropagation()}
+                  >
+                    Términos y Condiciones
+                  </Link>{' '}
+                  y la{' '}
+                  <Link
+                    href="/terminos-y-condiciones#privacidad"
+                    target="_blank"
+                    className="text-primary font-bold hover:underline"
+                    onClick={e => e.stopPropagation()}
+                  >
+                    Política de Privacidad
+                  </Link>
+                  .
+                </span>
+              </label>
 
               {errorMsg && (
                 <div className="mb-4 p-3.5 rounded-2xl bg-red-50 border border-red-100 text-red-600 text-xs font-medium flex items-start gap-2">

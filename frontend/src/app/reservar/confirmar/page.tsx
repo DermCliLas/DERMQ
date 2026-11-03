@@ -1,6 +1,7 @@
 'use client'
 
 import Image from 'next/image'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import BookingStepper from '@/components/booking/BookingStepper'
@@ -258,13 +259,13 @@ export default function ReservarPaso4() {
             {/* Extra Info */}
             <p className="text-sm text-on-surface-variant leading-relaxed px-2">
               Al confirmar aceptas nuestros{' '}
-              <a href="#" className="text-primary font-semibold hover:underline">
-                Términos de Servicio
-              </a>{' '}
+              <Link href="/terminos-y-condiciones" target="_blank" className="text-primary font-semibold hover:underline">
+                Términos y Condiciones
+              </Link>{' '}
               y{' '}
-              <a href="#" className="text-primary font-semibold hover:underline">
+              <Link href="/terminos-y-condiciones#privacidad" target="_blank" className="text-primary font-semibold hover:underline">
                 Política de Privacidad
-              </a>
+              </Link>
               . No realizaremos ningún cobro en este momento.
             </p>
 
