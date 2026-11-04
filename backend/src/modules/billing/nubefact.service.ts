@@ -41,11 +41,26 @@ export class NubeFactService {
 
   /**
    * Formato de fecha estricto exigido por SUNAT / NubeFact: DD-MM-AAAA
+   * Usa siempre la zona horaria oficial de Perú (America/Lima, UTC-5) cuando no se pasa una fecha explícita,
+   * evitando que servidores en UTC envíen la fecha del día siguiente después de las 19:00 hora Perú.
    */
-  private formatSunatDate(date: Date = new Date()): string {
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
+  private formatSunatDate(date?: Date): string {
+    if (date) {
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const year = date.getFullYear();
+      return `${day}-${month}-${year}`;
+    }
+
+    const parts = new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'America/Lima',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    }).formatToParts(new Date());
+    const day = parts.find((p) => p.type === 'day')?.value || '01';
+    const month = parts.find((p) => p.type === 'month')?.value || '01';
+    const year = parts.find((p) => p.type === 'year')?.value || '2026';
     return `${day}-${month}-${year}`;
   }
 
@@ -95,21 +110,21 @@ export class NubeFactService {
     }
 
     const isFactura = order.documentType === DocType.FACTURA;
-    const series =
+    let series =
       forcedSeries ||
       (isFactura
-        ? appConfig.nubeFact.seriesFactura || 'F001'
-        : appConfig.nubeFact.seriesBoleta || 'B001');
+        ? appConfig.nubeFact.seriesFactura || 'FFF1'
+        : appConfig.nubeFact.seriesBoleta || 'BBB1');
 
-    const nextNumber =
+    let nextNumber =
       forcedNumber !== undefined
         ? forcedNumber
         : await this.getNextCorrelative(series);
 
-    const payload = this.mapOrderToNubeFact(order, series, nextNumber);
+    let payload = this.mapOrderToNubeFact(order, series, nextNumber);
 
     try {
-      const response = await fetch(this.apiUrl, {
+      let response = await fetch(this.apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -119,7 +134,7 @@ export class NubeFactService {
       });
 
       let data: any = {};
-      const responseText = await response.text();
+      let responseText = await response.text();
       try {
         data = JSON.parse(responseText);
       } catch (parseError) {
@@ -129,9 +144,48 @@ export class NubeFactService {
         return null;
       }
 
+      // Auto-fallback de serie: si el servidor tiene configurado B001/F001 pero en NubeFact están activas BBB1/FFF1 (o viceversa)
+      if (
+        (!response.ok || data.errors) &&
+        typeof data.errors === 'string' &&
+        data.errors.includes('No puedes emitir comprobantes con esta serie')
+      ) {
+        const fallbackSeries = isFactura
+          ? series === 'FFF1'
+            ? 'F001'
+            : 'FFF1'
+          : series === 'BBB1'
+            ? 'B001'
+            : 'BBB1';
+
+        this.logger.warn(
+          `[NubeFact] Serie "${series}" no habilitada en el panel NubeFact. Reintentando automáticamente con serie "${fallbackSeries}"...`,
+        );
+
+        series = fallbackSeries;
+        nextNumber = await this.getNextCorrelative(series);
+        payload = this.mapOrderToNubeFact(order, series, nextNumber);
+
+        response = await fetch(this.apiUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Token token="${this.token}"`,
+          },
+          body: JSON.stringify(payload),
+        });
+
+        responseText = await response.text();
+        try {
+          data = JSON.parse(responseText);
+        } catch {
+          return null;
+        }
+      }
+
       if (!response.ok || data.errors) {
         this.logger.error(
-          `NubeFact Error: ${JSON.stringify(data.errors || data)}`,
+          `NubeFact Error (${series}-${nextNumber}): ${JSON.stringify(data.errors || data)}`,
         );
         return null;
       }
@@ -245,15 +299,15 @@ export class NubeFactService {
     const originalSeries =
       parts[0] ||
       (isFactura
-        ? appConfig.nubeFact.seriesFactura || 'F001'
-        : appConfig.nubeFact.seriesBoleta || 'B001');
+        ? appConfig.nubeFact.seriesFactura || 'FFF1'
+        : appConfig.nubeFact.seriesBoleta || 'BBB1');
     const originalNumber = parseInt(parts[1], 10) || 1;
 
-    const ncSeries = isFactura
-      ? appConfig.nubeFact.seriesNcFactura || 'FC01'
-      : appConfig.nubeFact.seriesNcBoleta || 'BC01';
+    let ncSeries = isFactura
+      ? appConfig.nubeFact.seriesNcFactura || 'FFF1'
+      : appConfig.nubeFact.seriesNcBoleta || 'BBB1';
 
-    const nextNcNumber = await this.getNextCorrelative(ncSeries);
+    let nextNcNumber = await this.getNextCorrelative(ncSeries);
 
     const items = (order.items || []).map((item: any) => {
       const unitPrice = Number(item.unitPrice);
@@ -352,7 +406,7 @@ export class NubeFactService {
     };
 
     try {
-      const response = await fetch(this.apiUrl, {
+      let response = await fetch(this.apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -361,7 +415,31 @@ export class NubeFactService {
         body: JSON.stringify(payload),
       });
 
-      const data = await response.json();
+      let data = await response.json();
+
+      if (
+        (!response.ok || data.errors) &&
+        typeof data.errors === 'string' &&
+        data.errors.includes('No puedes emitir comprobantes con esta serie')
+      ) {
+        const fallbackNcSeries = isFactura ? 'FFF1' : 'BBB1';
+        if (ncSeries !== fallbackNcSeries) {
+          ncSeries = fallbackNcSeries;
+          nextNcNumber = await this.getNextCorrelative(ncSeries);
+          payload.serie = ncSeries;
+          payload.numero = nextNcNumber;
+
+          response = await fetch(this.apiUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Token token="${this.token}"`,
+            },
+            body: JSON.stringify(payload),
+          });
+          data = await response.json();
+        }
+      }
 
       if (!response.ok || data.errors) {
         this.logger.error(
@@ -409,13 +487,15 @@ export class NubeFactService {
         'Empresa Cliente';
     } else {
       // BOLETA
-      if (order.customerDocNumber) {
-        clienteNumeroDoc = order.customerDocNumber;
-        clienteTipoDoc =
-          order.customerDocType ? Number(order.customerDocType) : (clienteNumeroDoc.length === 8 ? 1 : 6);
-      } else if (order.user?.dni) {
-        clienteNumeroDoc = order.user.dni;
-        clienteTipoDoc = 1;
+      const rawDocNum = String(
+        order.customerDocNumber || order.user?.dni || '',
+      ).trim();
+      if (/^\d{8}$/.test(rawDocNum)) {
+        clienteNumeroDoc = rawDocNum;
+        clienteTipoDoc = 1; // DNI (8 dígitos)
+      } else if (/^\d{11}$/.test(rawDocNum)) {
+        clienteNumeroDoc = rawDocNum;
+        clienteTipoDoc = 6; // RUC (11 dígitos)
       } else {
         clienteTipoDoc = '-';
         clienteNumeroDoc = '00000000';
@@ -436,10 +516,15 @@ export class NubeFactService {
       const subtotal = Number((valorUnitario * quantity).toFixed(2));
       const total = Number((unitPrice * quantity).toFixed(2));
       const igv = Number((total - subtotal).toFixed(2));
+      const cleanCode =
+        item.product?.sku ||
+        (item.productId
+          ? String(item.productId).replace(/-/g, '').slice(0, 16).toUpperCase()
+          : 'SERV');
 
       return {
         unidad_de_medida: 'NIU',
-        codigo: item.productId || 'SERV',
+        codigo: cleanCode,
         descripcion:
           item.product?.name || item.serviceName || 'Producto Dermatológico',
         cantidad: quantity,

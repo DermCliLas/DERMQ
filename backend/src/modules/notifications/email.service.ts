@@ -20,7 +20,12 @@ export class EmailService {
     }
   }
 
-  async sendEmail(to: string, subject: string, html: string) {
+  async sendEmail(
+    to: string,
+    subject: string,
+    html: string,
+    attachments?: Array<{ filename: string; content: Buffer }>,
+  ) {
     if (!this.resend) {
       this.logger.warn(
         `[SIMULACIÓN DE CORREO] Enviando a: ${to} | Asunto: "${subject}" | Llave API no configurada.`,
@@ -34,6 +39,7 @@ export class EmailService {
         to: [to],
         subject: subject,
         html: html,
+        ...(attachments && attachments.length > 0 ? { attachments } : {}),
       });
 
       if (response.error) {
@@ -612,7 +618,9 @@ export class EmailService {
   async sendOrderInvoice(order: any, billingResult: any) {
     const { user, items, total } = order;
     const customerName =
-      user?.firstName || order.customerLegalName || 'Cliente';
+      order.customerLegalName ||
+      `${user?.firstName || ''} ${user?.lastName || ''}`.trim() ||
+      'Público General';
     const recipientEmail =
       order.customerEmail ||
       user?.email ||
@@ -621,41 +629,106 @@ export class EmailService {
       billingResult?.documentNumber ||
       order.documentNumber ||
       `ORD-${String(order.id || '').slice(0, 8).toUpperCase()}`;
-    const subject = `Comprobante de Pago Electrónico: ${docNum} - DERMQ`;
+    const isFactura = order.documentType === 'FACTURA';
+    const docTypeLabel = isFactura
+      ? 'FACTURA ELECTRÓNICA'
+      : 'BOLETA DE VENTA ELECTRÓNICA';
+    const customerDocLabel = isFactura ? 'RUC' : 'DNI / Doc.';
+    const customerDocValue =
+      order.customerDocNumber || user?.dni || '00000000 (Clientes Varios)';
+
+    const totalNum = Number(total || 0);
+    const gravadaNum = Number((totalNum / 1.18).toFixed(2));
+    const igvNum = Number((totalNum - gravadaNum).toFixed(2));
+    const emissionDate = new Date().toLocaleDateString('es-PE', {
+      timeZone: 'America/Lima',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
+
+    const subject = `${docTypeLabel} ${docNum} - DERMATOLOGÍA CLÍNICA Y LÁSER S.A.C. (DERMQ)`;
+
+    // Descargar y adjuntar el PDF y XML oficiales emitidos por NubeFact/SUNAT
+    const attachments: Array<{ filename: string; content: Buffer }> = [];
+    const pdfUrl = billingResult?.pdfUrl || order.nubeFactPdfUrl;
+    const xmlUrl = billingResult?.xmlUrl || order.nubeFactXmlUrl;
+
+    if (pdfUrl && typeof pdfUrl === 'string' && pdfUrl.startsWith('http')) {
+      try {
+        const pdfRes = await fetch(pdfUrl);
+        if (pdfRes.ok) {
+          const arrayBuffer = await pdfRes.arrayBuffer();
+          attachments.push({
+            filename: `Comprobante-${docNum}.pdf`,
+            content: Buffer.from(arrayBuffer),
+          });
+        }
+      } catch (err: any) {
+        this.logger.warn(
+          `No se pudo descargar el PDF de NubeFact para adjuntar (${pdfUrl}): ${err.message}`,
+        );
+      }
+    }
+
+    if (xmlUrl && typeof xmlUrl === 'string' && xmlUrl.startsWith('http')) {
+      try {
+        const xmlRes = await fetch(xmlUrl);
+        if (xmlRes.ok) {
+          const arrayBuffer = await xmlRes.arrayBuffer();
+          attachments.push({
+            filename: `Comprobante-${docNum}.xml`,
+            content: Buffer.from(arrayBuffer),
+          });
+        }
+      } catch (err: any) {
+        this.logger.warn(
+          `No se pudo descargar el XML de NubeFact para adjuntar (${xmlUrl}): ${err.message}`,
+        );
+      }
+    }
 
     const itemsRows = (items || [])
       .map(
         (item: any) => `
       <tr>
-        <td style="padding: 12px; border-bottom: 1px solid #edf2f7; font-size: 14px;">
-          ${item.product?.name || item.serviceName || 'Servicio DERMQ'}
+        <td style="padding: 12px; border-bottom: 1px solid #edf2f7; font-size: 13px;">
+          ${item.product?.name || item.serviceName || 'Producto Dermatológico'}
         </td>
-        <td align="center" style="padding: 12px; border-bottom: 1px solid #edf2f7; font-size: 14px;">
+        <td align="center" style="padding: 12px; border-bottom: 1px solid #edf2f7; font-size: 13px;">
           ${item.quantity}
         </td>
-        <td align="right" style="padding: 12px; border-bottom: 1px solid #edf2f7; font-size: 14px; font-weight: bold; color: #2d3748;">
+        <td align="right" style="padding: 12px; border-bottom: 1px solid #edf2f7; font-size: 13px;">
           S/ ${Number(item.unitPrice).toFixed(2)}
+        </td>
+        <td align="right" style="padding: 12px; border-bottom: 1px solid #edf2f7; font-size: 13px; font-weight: bold; color: #2d3748;">
+          S/ ${(Number(item.unitPrice) * Number(item.quantity)).toFixed(2)}
         </td>
       </tr>
     `,
       )
       .join('');
 
-    const downloadLinksBlock = billingResult?.pdfUrl
+    const downloadLinksBlock = pdfUrl
       ? `
-                    <div style="margin-top: 15px;">
-                      <a href="${billingResult.pdfUrl}" target="_blank" style="display: inline-block; padding: 10px 20px; background-color: #014d4e; color: #ffffff; text-decoration: none; border-radius: 12px; font-size: 13px; font-weight: bold; margin-right: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.15);">
-                        Descargar PDF
+                    <div style="margin-top: 16px;">
+                      <a href="${pdfUrl}" target="_blank" style="display: inline-block; padding: 12px 22px; background-color: #014d4e; color: #ffffff; text-decoration: none; border-radius: 12px; font-size: 13px; font-weight: bold; margin: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.15);">
+                        📄 Descargar Comprobante PDF Oficial (NubeFact / SUNAT)
                       </a>
                       ${
-                        billingResult?.xmlUrl
-                          ? `<a href="${billingResult.xmlUrl}" target="_blank" style="display: inline-block; padding: 10px 20px; background-color: #f7fafc; color: #014d4e; text-decoration: none; border-radius: 12px; font-size: 13px; font-weight: bold; border: 1px solid #cbd5e0;">
-                        Descargar XML
+                        xmlUrl
+                          ? `<a href="${xmlUrl}" target="_blank" style="display: inline-block; padding: 12px 22px; background-color: #ffffff; color: #014d4e; text-decoration: none; border-radius: 12px; font-size: 13px; font-weight: bold; margin: 4px; border: 1px solid #014d4e;">
+                        🧾 Descargar XML UBL 2.1
                       </a>`
                           : ''
                       }
-                    </div>`
-      : `<p style="margin: 10px 0 0 0; font-size: 12px; color: #014d4e;">Tu orden ha sido registrada correctamente.</p>`;
+                    </div>
+                    ${
+                      attachments.length > 0
+                        ? `<p style="margin: 12px 0 0 0; font-size: 11px; color: #065f46; font-weight: 600;">✓ El archivo PDF oficial también ha sido adjuntado directamente a este correo.</p>`
+                        : ''
+                    }`
+      : `<p style="margin: 10px 0 0 0; font-size: 12px; color: #014d4e;">Comprobante electrónico en proceso de emisión.</p>`;
 
     const html = `
       <!DOCTYPE html>
@@ -665,33 +738,24 @@ export class EmailService {
         <title>${subject}</title>
       </head>
       <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f7f6; color: #1a1c1e;">
-        <table align="center" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;">
-          <!-- Encabezado -->
+        <table align="center" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 620px; margin: 40px auto; background-color: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;">
+          <!-- Encabezado Emisor Fiscal -->
           <tr>
-            <td align="center" style="padding: 40px 30px; background: linear-gradient(135deg, #014d4e 0%, #72c1c1 100%); color: #ffffff;">
+            <td align="center" style="padding: 35px 30px; background: linear-gradient(135deg, #014d4e 0%, #02696a 100%); color: #ffffff;">
               <span style="font-size: 26px; font-weight: 800; letter-spacing: 2px;">DERMQ</span>
-              <p style="margin: 5px 0 0 0; font-size: 13px; opacity: 0.9;">COMPROBANTE ELECTRÓNICO DE PAGO</p>
-            </td>
-          </tr>
-          
-          <!-- Mensaje de Agradecimiento -->
-          <tr>
-            <td style="padding: 40px 30px 20px 30px; text-align: center;">
-              <h2 style="margin-top: 0; color: #014d4e; font-size: 22px; font-weight: 800;">¡Gracias por tu compra!</h2>
-              <p style="font-size: 15px; color: #4a5568; line-height: 1.6;">
-                Hola <strong>${customerName}</strong>, confirmamos el registro de tu compra en DERMQ. A continuación encontrarás el detalle de tu comprobante de pago.
-              </p>
+              <p style="margin: 6px 0 2px 0; font-size: 13px; font-weight: 700;">DERMATOLOGÍA CLÍNICA Y LÁSER S.A.C.</p>
+              <p style="margin: 0; font-size: 12px; opacity: 0.9;">RUC: 20553756074 • Av. José Gálvez Barrenechea 127, Of. 604, San Isidro, Lima</p>
             </td>
           </tr>
 
-          <!-- Documentos Adjuntos de NubeFact -->
+          <!-- Recuadro de Comprobante Electrónico -->
           <tr>
-            <td align="center" style="padding: 0 30px 20px 30px;">
-              <table border="0" cellpadding="0" cellspacing="0" style="background-color: #e6f7f7; border-radius: 16px; width: 100%; padding: 20px; border: 1px solid #72c1c1;">
+            <td align="center" style="padding: 30px 30px 15px 30px;">
+              <table border="0" cellpadding="0" cellspacing="0" style="background-color: #e6f7f7; border-radius: 16px; width: 100%; padding: 22px; border: 2px solid #02696a;">
                 <tr>
                   <td align="center">
-                    <span style="font-size: 12px; color: #014d4e; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">Comprobante / Orden</span><br/>
-                    <strong style="font-size: 20px; color: #014d4e; display: block; margin-top: 5px;">${docNum}</strong>
+                    <span style="font-size: 12px; color: #014d4e; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px;">${docTypeLabel}</span><br/>
+                    <strong style="font-size: 24px; color: #014d4e; display: block; margin-top: 6px; letter-spacing: 1px;">${docNum}</strong>
                     ${downloadLinksBlock}
                   </td>
                 </tr>
@@ -699,23 +763,56 @@ export class EmailService {
             </td>
           </tr>
 
-          <!-- Detalle de Compra -->
+          <!-- Datos del Adquirente / Cliente -->
           <tr>
-            <td style="padding: 0 30px 40px 30px;">
-              <h4 style="margin: 20px 0 10px 0; color: #2d3748; font-size: 16px; border-bottom: 2px solid #edf2f7; padding-bottom: 8px;">Detalle del Pedido</h4>
+            <td style="padding: 10px 30px;">
+              <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f8fafc; border-radius: 12px; padding: 16px; border: 1px solid #e2e8f0; font-size: 13px; color: #334155;">
+                <tr>
+                  <td style="padding: 4px 0;"><strong>Cliente / Razón Social:</strong></td>
+                  <td align="right" style="padding: 4px 0;">${customerName}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 4px 0;"><strong>${customerDocLabel}:</strong></td>
+                  <td align="right" style="padding: 4px 0;">${customerDocValue}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 4px 0;"><strong>Fecha de Emisión:</strong></td>
+                  <td align="right" style="padding: 4px 0;">${emissionDate}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 4px 0;"><strong>Moneda:</strong></td>
+                  <td align="right" style="padding: 4px 0;">SOLES (PEN)</td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Detalle de Compra e Impuestos -->
+          <tr>
+            <td style="padding: 10px 30px 35px 30px;">
+              <h4 style="margin: 15px 0 10px 0; color: #2d3748; font-size: 15px; border-bottom: 2px solid #edf2f7; padding-bottom: 8px;">Detalle de Ítems</h4>
               <table border="0" cellpadding="0" cellspacing="0" width="100%" style="border-collapse: collapse;">
                 <thead>
                   <tr style="background-color: #f7fafc;">
-                    <th align="left" style="padding: 10px; font-size: 12px; color: #718096; text-transform: uppercase;">Descripción</th>
-                    <th align="center" style="padding: 10px; font-size: 12px; color: #718096; text-transform: uppercase;">Cant.</th>
-                    <th align="right" style="padding: 10px; font-size: 12px; color: #718096; text-transform: uppercase;">Precio</th>
+                    <th align="left" style="padding: 10px; font-size: 11px; color: #718096; text-transform: uppercase;">Descripción</th>
+                    <th align="center" style="padding: 10px; font-size: 11px; color: #718096; text-transform: uppercase;">Cant.</th>
+                    <th align="right" style="padding: 10px; font-size: 11px; color: #718096; text-transform: uppercase;">P. Unit.</th>
+                    <th align="right" style="padding: 10px; font-size: 11px; color: #718096; text-transform: uppercase;">Subtotal</th>
                   </tr>
                 </thead>
                 <tbody>
                   ${itemsRows}
                   <tr>
-                    <td colspan="2" align="right" style="padding: 15px 12px 0 12px; font-weight: bold; font-size: 16px; color: #4a5568;">Total Pagado:</td>
-                    <td align="right" style="padding: 15px 12px 0 12px; font-weight: 900; font-size: 20px; color: #014d4e;">S/ ${Number(total).toFixed(2)}</td>
+                    <td colspan="3" align="right" style="padding: 12px 12px 4px 12px; font-size: 13px; color: #64748b;">Op. Gravada (Base Imponible):</td>
+                    <td align="right" style="padding: 12px 12px 4px 12px; font-size: 13px; font-weight: 600; color: #334155;">S/ ${gravadaNum.toFixed(2)}</td>
+                  </tr>
+                  <tr>
+                    <td colspan="3" align="right" style="padding: 4px 12px; font-size: 13px; color: #64748b;">I.G.V. (18%):</td>
+                    <td align="right" style="padding: 4px 12px; font-size: 13px; font-weight: 600; color: #334155;">S/ ${igvNum.toFixed(2)}</td>
+                  </tr>
+                  <tr>
+                    <td colspan="3" align="right" style="padding: 10px 12px 0 12px; font-weight: bold; font-size: 16px; color: #1e293b;">Importe Total Pagado:</td>
+                    <td align="right" style="padding: 10px 12px 0 12px; font-weight: 900; font-size: 20px; color: #014d4e;">S/ ${totalNum.toFixed(2)}</td>
                   </tr>
                 </tbody>
               </table>
@@ -724,9 +821,9 @@ export class EmailService {
           
           <!-- Footer -->
           <tr>
-            <td align="center" style="padding: 30px; background-color: #f7fafc; border-top: 1px solid #edf2f7; font-size: 12px; color: #a0aec0;">
-              <p style="margin: 0 0 5px 0;">DERMQ S.A.C. • Av. José Gálvez Barrenechea 127, Of. 604, San Isidro, Lima</p>
-              <p style="margin: 0;">Ante cualquier duda o consulta sobre tu comprobante electrónico, escríbenos a citas@draleyva.com</p>
+            <td align="center" style="padding: 25px 30px; background-color: #f7fafc; border-top: 1px solid #edf2f7; font-size: 11px; color: #64748b; line-height: 1.5;">
+              <p style="margin: 0 0 4px 0;"><strong>Representación impresa de la ${docTypeLabel}</strong> emitida a través del Proveedor de Servicios Electrónicos <strong>NubeFact</strong> (Autorizado por SUNAT).</p>
+              <p style="margin: 0;">DERMATOLOGÍA CLÍNICA Y LÁSER S.A.C. (RUC 20553756074) • Consultas: citas@draleyva.com</p>
             </td>
           </tr>
         </table>
@@ -734,6 +831,6 @@ export class EmailService {
       </html>
     `;
 
-    return this.sendEmail(recipientEmail, subject, html);
+    return this.sendEmail(recipientEmail, subject, html, attachments);
   }
 }

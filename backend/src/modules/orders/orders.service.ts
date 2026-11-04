@@ -632,8 +632,8 @@ export class OrdersService {
       if (!docNum) {
         const isFactura = orderRow.documentType === DocType.FACTURA;
         const series = isFactura
-          ? process.env.NUBEFACT_SERIES_FACTURA || 'F001'
-          : process.env.NUBEFACT_SERIES_BOLETA || 'B001';
+          ? process.env.NUBEFACT_SERIES_FACTURA || 'FFF1'
+          : process.env.NUBEFACT_SERIES_BOLETA || 'BBB1';
 
         const correlativeRecord = await tx.billingCorrelative.upsert({
           where: { series },
@@ -952,18 +952,11 @@ export class OrdersService {
       },
     });
 
-    // ─── EMAIL INVOICE NOTIFICATION VIA RESEND ─────────────────────────────
-    if (
-      completedOrder &&
-      (completedOrder.nubeFactPdfUrl ||
-        completedOrder.customerEmail ||
-        completedOrder.user?.email)
-    ) {
+    // ─── EMAIL INVOICE NOTIFICATION VIA RESEND (SOLO CON COMPROBANTE REAL EMITIDO) ──
+    if (completedOrder && completedOrder.isPaid && completedOrder.nubeFactPdfUrl) {
       this.emailService
         .sendOrderInvoice(completedOrder, {
-          documentNumber:
-            completedOrder.documentNumber ||
-            `ORD-${completedOrder.id.slice(0, 8).toUpperCase()}`,
+          documentNumber: completedOrder.documentNumber,
           pdfUrl: completedOrder.nubeFactPdfUrl,
           xmlUrl: completedOrder.nubeFactXmlUrl,
         })

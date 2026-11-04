@@ -21,10 +21,10 @@ export const appConfig = {
   nubeFact: {
     url: process.env.NUBEFACT_API_URL || process.env.NUBEFACT_URL || 'https://api.nubefact.com/api/v1',
     token: process.env.NUBEFACT_API_TOKEN || process.env.NUBEFACT_TOKEN,
-    seriesBoleta: process.env.NUBEFACT_SERIES_BOLETA || 'B001',
-    seriesFactura: process.env.NUBEFACT_SERIES_FACTURA || 'F001',
-    seriesNcBoleta: process.env.NUBEFACT_SERIES_NC_BOLETA || 'BC01',
-    seriesNcFactura: process.env.NUBEFACT_SERIES_NC_FACTURA || 'FC01',
+    seriesBoleta: process.env.NUBEFACT_SERIES_BOLETA || 'BBB1',
+    seriesFactura: process.env.NUBEFACT_SERIES_FACTURA || 'FFF1',
+    seriesNcBoleta: process.env.NUBEFACT_SERIES_NC_BOLETA || 'BBB1',
+    seriesNcFactura: process.env.NUBEFACT_SERIES_NC_FACTURA || 'FFF1',
   },
   resend: {
     apiKey: process.env.RESEND_API_KEY,
