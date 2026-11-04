@@ -1,6 +1,7 @@
 import HeroSection from '@/components/home/HeroSection'
 import ServicesGrid from '@/components/home/ServicesGrid'
 import PromiseSection from '@/components/home/PromiseSection'
+import ClinicalBeforeAfterInteractive from '@/components/home/ClinicalBeforeAfterInteractive'
 import ShopBento from '@/components/home/ShopBento'
 import IntegrationsBar from '@/components/home/IntegrationsBar'
 import BookingFab from '@/components/ui/BookingFab'
@@ -36,7 +37,11 @@ export default function HomePage() {
         <PromiseSection />
       </SectionWrapper>
 
-      <ElegantDivider fromBg="#fafafa" toBg="#faf8f5" />
+      <SectionWrapper sectionId="clinical-evidence" bgTone="#013536" accent1="#72c1c1" accent2="#F0A17E">
+        <ClinicalBeforeAfterInteractive />
+      </SectionWrapper>
+
+      <ElegantDivider fromBg="#013536" toBg="#faf8f5" />
 
       <SectionWrapper sectionId="shop" bgTone="#f8fafa" accent1="#72c1c1" accent2="#02696a">
         <ShopBento />

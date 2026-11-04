@@ -5,6 +5,8 @@ import Link from 'next/link'
 import { getSiteContent } from '@/lib/api'
 import { motion, AnimatePresence } from 'framer-motion'
 import { DRA_LEYVA_PHOTOS } from '@/data/draleyva-photos'
+import CellularRadianceCanvas from '@/components/ui/CellularRadianceCanvas'
+import MagneticButton from '@/components/ui/MagneticButton'
 
 const DEFAULT_SLIDES = [
   {
@@ -138,6 +140,9 @@ export default function HeroSection() {
       })}
 
       {/* Content Container (Left-aligned, mimicking Catedral de Lima layout) */}
+      {/* Interactive 3D Cellular Radiance & Ambient Energy Layer */}
+      <CellularRadianceCanvas className="z-15 opacity-80" />
+
       <div className="relative z-20 max-w-7xl mx-auto px-6 lg:px-12 w-full flex items-center justify-start h-full pt-16 md:pt-20">
         <AnimatePresence mode="wait">
           <motion.div
@@ -148,11 +153,18 @@ export default function HeroSection() {
             transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] as any }}
             className="max-w-2xl text-left"
           >
-            <span className="text-white font-headline text-lg md:text-2xl block mb-2 font-medium">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 mb-3 shadow-lg">
+              <span className="w-2 h-2 rounded-full bg-tertiary animate-ping" />
+              <span className="text-white/90 font-headline text-xs tracking-widest uppercase font-semibold">
+                Excelencia Médica · 19 Años
+              </span>
+            </div>
+
+            <span className="text-white/90 font-headline text-lg md:text-2xl block mb-2 font-medium">
               Bienvenidos a la
             </span>
 
-            <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-headline font-black leading-tight tracking-tight mb-4 text-white">
+            <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-headline font-black leading-tight tracking-tight mb-4 text-white drop-shadow-md">
               {slides[currentSlide]?.title}
             </h1>
 
@@ -160,13 +172,22 @@ export default function HeroSection() {
               {slides[currentSlide]?.subtitle}
             </p>
 
-            <div className="flex">
+            <div className="flex flex-wrap items-center gap-4">
+              <MagneticButton>
+                <Link
+                  href="/reservar"
+                  className="bg-tertiary text-primary-container px-8 py-4 rounded-full font-headline font-bold text-xs tracking-wider uppercase hover:bg-white hover:text-primary-container transition-all duration-300 shadow-xl shadow-tertiary/25 inline-flex items-center gap-2"
+                >
+                  Reservar Cita
+                  <span className="material-symbols-outlined text-xs">arrow_forward</span>
+                </Link>
+              </MagneticButton>
+
               <Link
-                href="/reservar"
-                className="bg-tertiary text-primary-container px-8 py-3.5 rounded-full font-headline font-bold text-xs tracking-wider uppercase hover:bg-white hover:text-primary-container transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-lg shadow-tertiary/20 inline-flex items-center gap-2"
+                href="/servicios"
+                className="px-6 py-3.5 rounded-full bg-white/10 hover:bg-white/20 text-white font-headline font-bold text-xs tracking-wider uppercase transition-all backdrop-blur-sm border border-white/20 inline-flex items-center gap-2"
               >
-                Reservar Cita
-                <span className="material-symbols-outlined text-xs">arrow_forward</span>
+                Ver Especialidades
               </Link>
             </div>
           </motion.div>

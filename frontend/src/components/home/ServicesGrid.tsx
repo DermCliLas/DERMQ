@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { getSiteContent } from '@/lib/api'
 import { SERVICES_DATA as DEFAULT_SERVICES } from '@/data/services'
 import { motion } from 'framer-motion'
+import TiltCard3D from '@/components/ui/TiltCard3D'
 
 export default function ServicesGrid() {
   const [services, setServices] = useState(DEFAULT_SERVICES)
@@ -116,47 +117,58 @@ export default function ServicesGrid() {
             <motion.div
               key={service.id}
               variants={cardVariants}
-              className="group"
+              className="group h-full"
             >
-              <Link
-                href={`/servicios#${service.id}`}
-                className={`relative h-[420px] md:h-[650px] rounded-3xl overflow-hidden block border border-white/10 ${getBorderColor(service.id)} transition-all duration-700 ${getGlowColor(service.id)} transform hover:-translate-y-2 shadow-2xl`}
+              <TiltCard3D
+                maxTilt={6}
+                spotlightColor={
+                  service.id === 'laser-avanzado'
+                    ? 'rgba(240, 161, 126, 0.35)'
+                    : service.id === 'estetica-inyectables'
+                    ? 'rgba(183, 176, 211, 0.35)'
+                    : 'rgba(114, 193, 193, 0.35)'
+                }
               >
-                <Image
-                  src={service.imageUrl}
-                  alt={service.name}
-                  fill
-                  className="object-cover transition-transform duration-[1200ms] group-hover:scale-105 opacity-75 group-hover:opacity-90"
-                />
-                
-                {/* Overlays */}
-                <div className="absolute inset-0 bg-gradient-to-b from-[#014d4e]/40 via-transparent to-black/90 opacity-90 transition-opacity duration-700 group-hover:opacity-100" />
-                <div className="absolute inset-0 border-[1px] border-white/10 m-5 rounded-2xl transition-all duration-700 group-hover:border-white/20 pointer-events-none" />
-                
-                {/* Content */}
-                <div className="absolute inset-0 p-6 md:p-10 flex flex-col justify-end text-center z-10">
-                  <div className="mb-6 transform transition-transform duration-700 group-hover:-translate-y-3">
-                    <span className={`inline-block px-3 py-1 text-[10px] uppercase font-bold tracking-widest rounded-full border mb-4 ${getBadgeColor(service.id)}`}>
-                      {service.id.replace('-', ' ')}
-                    </span>
-                    <h3 className="text-3xl lg:text-4xl font-headline font-bold text-white mb-4 tracking-wide leading-tight">
-                      {service.name}
-                    </h3>
-                    <div className="w-12 h-[1px] bg-tertiary mx-auto mb-4 transition-all duration-700 group-hover:w-20" />
-                  </div>
+                <Link
+                  href={`/servicios#${service.id}`}
+                  className={`relative h-[440px] md:h-[650px] rounded-3xl overflow-hidden block border border-white/10 ${getBorderColor(service.id)} transition-all duration-700 ${getGlowColor(service.id)} shadow-2xl`}
+                >
+                  <Image
+                    src={service.imageUrl}
+                    alt={service.name}
+                    fill
+                    className="object-cover transition-transform duration-[1200ms] group-hover:scale-105 opacity-75 group-hover:opacity-90"
+                  />
                   
-                  <div className="overflow-hidden max-h-0 group-hover:max-h-36 transition-all duration-700 ease-in-out">
-                    <p className="text-sm md:text-base text-white/85 font-serif italic leading-relaxed mb-6 px-2">
-                      {service.description}
-                    </p>
-                    <div className="text-tertiary">
-                      <span className="font-headline font-bold text-xs uppercase tracking-[0.3em] border-b border-tertiary/50 pb-1.5 hover:border-tertiary transition-colors">
-                        Explorar Tratamientos
+                  {/* Overlays */}
+                  <div className="absolute inset-0 bg-gradient-to-b from-[#014d4e]/40 via-transparent to-black/90 opacity-90 transition-opacity duration-700 group-hover:opacity-100" />
+                  <div className="absolute inset-0 border-[1px] border-white/10 m-5 rounded-2xl transition-all duration-700 group-hover:border-white/20 pointer-events-none" />
+                  
+                  {/* Content with 3D Depth separation */}
+                  <div className="absolute inset-0 p-6 md:p-10 flex flex-col justify-end text-center z-10" style={{ transform: 'translateZ(30px)' }}>
+                    <div className="mb-6 transform transition-transform duration-700 group-hover:-translate-y-3">
+                      <span className={`inline-block px-3 py-1 text-[10px] uppercase font-bold tracking-widest rounded-full border mb-4 ${getBadgeColor(service.id)} shadow-lg`}>
+                        {service.id.replace('-', ' ')}
                       </span>
+                      <h3 className="text-3xl lg:text-4xl font-headline font-bold text-white mb-4 tracking-wide leading-tight">
+                        {service.name}
+                      </h3>
+                      <div className="w-12 h-[1px] bg-tertiary mx-auto mb-4 transition-all duration-700 group-hover:w-20" />
+                    </div>
+                    
+                    <div className="overflow-hidden max-h-0 group-hover:max-h-36 transition-all duration-700 ease-in-out">
+                      <p className="text-sm md:text-base text-white/85 font-serif italic leading-relaxed mb-6 px-2">
+                        {service.description}
+                      </p>
+                      <div className="text-tertiary">
+                        <span className="font-headline font-bold text-xs uppercase tracking-[0.3em] border-b border-tertiary/50 pb-1.5 hover:border-tertiary transition-colors">
+                          Explorar Tratamientos
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </Link>
+                </Link>
+              </TiltCard3D>
             </motion.div>
           ))}
         </motion.div>
