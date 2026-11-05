@@ -18,38 +18,41 @@ export const metadata: Metadata = {
 }
 
 import LocationSection from '@/components/home/LocationSection'
+import SmoothScrollProvider from '@/components/ui/SmoothScrollProvider'
 
 export default function HomePage() {
   return (
-    <main className="relative min-h-screen">
-      <IntroLoader />
-      <DynamicAtmosphere />
-      
-      <SectionWrapper sectionId="hero" bgTone="#02696a" accent1="#F0A17E" accent2="#ffffff">
-        <HeroSection />
-      </SectionWrapper>
+    <SmoothScrollProvider>
+      <main className="relative min-h-screen">
+        <IntroLoader />
+        <DynamicAtmosphere />
+        
+        <SectionWrapper sectionId="hero" bgTone="#02696a" accent1="#F0A17E" accent2="#ffffff">
+          <HeroSection />
+        </SectionWrapper>
 
-      <SectionWrapper sectionId="services" bgTone="#02696a" accent1="#F0A17E" accent2="#72c1c1">
-        <ServicesGrid />
-      </SectionWrapper>
+        <SectionWrapper sectionId="services" bgTone="#02696a" accent1="#F0A17E" accent2="#72c1c1">
+          <ServicesGrid />
+        </SectionWrapper>
 
-      <SectionWrapper sectionId="promise" bgTone="#72C1C1" accent1="#02696a" accent2="#ffffff">
-        <PromiseSection />
-      </SectionWrapper>
+        <SectionWrapper sectionId="promise" bgTone="#72C1C1" accent1="#02696a" accent2="#ffffff">
+          <PromiseSection />
+        </SectionWrapper>
 
-      <SectionWrapper sectionId="clinical-evidence" bgTone="#013536" accent1="#72c1c1" accent2="#F0A17E">
-        <ClinicalBeforeAfterInteractive />
-      </SectionWrapper>
+        <SectionWrapper sectionId="clinical-evidence" bgTone="#013536" accent1="#72c1c1" accent2="#F0A17E">
+          <ClinicalBeforeAfterInteractive />
+        </SectionWrapper>
 
-      <ElegantDivider fromBg="#013536" toBg="#faf8f5" />
+        <ElegantDivider fromBg="#013536" toBg="#faf8f5" />
 
-      <SectionWrapper sectionId="shop" bgTone="#f8fafa" accent1="#72c1c1" accent2="#02696a">
-        <ShopBento />
-      </SectionWrapper>
+        <SectionWrapper sectionId="shop" bgTone="#f8fafa" accent1="#72c1c1" accent2="#02696a">
+          <ShopBento />
+        </SectionWrapper>
 
-      <IntegrationsBar />
-      <LocationSection />
-      <BookingFab />
-    </main>
+        <IntegrationsBar />
+        <LocationSection />
+        <BookingFab />
+      </main>
+    </SmoothScrollProvider>
   )
 }

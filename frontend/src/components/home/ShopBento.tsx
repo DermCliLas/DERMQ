@@ -3,9 +3,22 @@
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 import { getFeaturedProducts } from '@/data/products'
 import { getSiteContent } from '@/lib/api'
 import { motion } from 'framer-motion'
+
+const SerumBottleCanvas = dynamic(
+  () => import('@/components/3d/SerumBottleCanvas'),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="w-full h-72 flex items-center justify-center">
+        <span className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+      </div>
+    ),
+  },
+)
 
 const DEFAULTS = {
   title: 'Boutique.',
@@ -121,17 +134,9 @@ export default function ShopBento() {
                 </p>
               </div>
 
-              {/* Luxury Elliptical Pedestal */}
-              <div className="relative flex justify-center mt-12 mb-8 select-none">
-                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-3/5 h-8 bg-tertiary/10 rounded-full blur-md opacity-70 group-hover:bg-tertiary/20 group-hover:scale-110 transition-all duration-700 pointer-events-none" />
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-1/2 h-4 border border-tertiary/20 rounded-full transform rotate-x-60 opacity-60 group-hover:scale-105 transition-all duration-700 pointer-events-none" />
-                <Image
-                  src={mainProduct.imageUrl || 'https://images.unsplash.com/photo-1629198688000-71f23e745b6e?auto=format&fit=crop&q=80&w=800'}
-                  alt={mainProduct.name}
-                  width={240}
-                  height={288}
-                  className="h-64 md:h-72 w-auto object-cover rounded-2xl relative z-10 group-hover:scale-110 group-hover:-translate-y-6 group-hover:rotate-3 transition-all duration-700 ease-out filter drop-shadow-[0_20px_40px_rgba(0,0,0,0.15)]"
-                />
+              {/* Luxury 3D Interactive WebGL Bottle Viewport */}
+              <div className="relative w-full h-80 sm:h-96 my-2 select-none">
+                <SerumBottleCanvas />
               </div>
             </motion.div>
           )}
