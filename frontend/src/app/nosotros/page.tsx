@@ -620,7 +620,7 @@ export default function NosotrosPage() {
               Línea de Tiempo Oficial
             </span>
             <h2 className="text-4xl sm:text-6xl font-headline font-black tracking-tighter text-white mb-4">
-              Nuestra <em style={{ color: '#F0A17E' }}>Trayectoria Real.</em>
+              Nuestra <em style={{ color: '#F0A17E' }}>Trayectoria.</em>
             </h2>
             <p className="text-xl font-medium" style={{ color: 'rgba(255,255,255,0.75)' }}>
               19 años construyendo salud cutánea sobre bases científicas comprobadas.
