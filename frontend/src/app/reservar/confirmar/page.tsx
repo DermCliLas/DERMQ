@@ -17,6 +17,7 @@ export default function ReservarPaso4() {
   const { user } = useAuth()
   
   const [submitted, setSubmitted] = useState(false)
+  const [confirmed, setConfirmed] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -58,8 +59,9 @@ export default function ReservarPaso4() {
         throw new Error('El horario ya no coincide con la fecha seleccionada. Vuelve al paso anterior y elige un horario de nuevo.')
       }
 
+      let result
       if (user) {
-        await createAppointment({
+        result = await createAppointment({
           patientId: user.id,
           doctorId: booking.selectedDoctor.id,
           serviceId: booking.selectedService.id,
@@ -67,7 +69,7 @@ export default function ReservarPaso4() {
           notes: booking.patientNotes || '',
         })
       } else {
-        await createGuestAppointment({
+        result = await createGuestAppointment({
           doctorId: booking.selectedDoctor.id,
           serviceId: booking.selectedService.id,
           date: combinedDateStr,
@@ -76,6 +78,7 @@ export default function ReservarPaso4() {
         })
       }
       
+      setConfirmed(result?.status === 'CONFIRMED')
       setSubmitted(true)
       // resetBooking() - keeping context until fully redirect
     } catch (err: any) {
@@ -95,10 +98,10 @@ export default function ReservarPaso4() {
             <span className="material-symbols-filled text-white text-5xl">check_circle</span>
           </div>
           <h1 className="font-headline font-black text-5xl tracking-tighter text-[#1a1c1e] mb-4">
-            ¡Reserva Confirmada!
+            {confirmed ? '¡Reserva confirmada!' : '¡Solicitud recibida!'}
           </h1>
           <p className="text-on-surface-variant text-lg mb-10 leading-relaxed">
-            Recibirás un correo de confirmación. Recuerda llegar 10 minutos antes de tu cita.
+            {confirmed ? 'Tu cita está confirmada. Recuerda llegar 10 minutos antes.' : 'La clínica revisará tu solicitud y te informará cuando tu cita esté confirmada.'}
           </p>
           <button
             onClick={() => router.push('/')}
@@ -333,8 +336,8 @@ export default function ReservarPaso4() {
                   ¿Qué pasa después?
                 </h4>
                 {[
-                  { step: '01', text: 'Recibirás un email de confirmación inmediatamente.' },
-                  { step: '02', text: 'El evento se agendará en tu Google Calendar automáticamente.' },
+                  { step: '01', text: 'Recibirás un correo con el estado de tu solicitud.' },
+                  { step: '02', text: 'La clínica revisará tu solicitud y confirmará la cita.' },
                   { step: '03', text: 'Te enviaremos un recordatorio 24h antes de tu cita.' },
                 ].map(item => (
                   <div key={item.step} className="flex gap-4">

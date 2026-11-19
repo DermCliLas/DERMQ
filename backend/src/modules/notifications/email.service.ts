@@ -1,4 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
+import { ContactMessageDto } from './dto/contact-message.dto';
 import { Resend } from 'resend';
 import { appConfig } from '../../config/app.config';
 
@@ -57,6 +58,32 @@ export class EmailService {
         error.stack,
       );
       return null;
+    }
+  }
+
+  async sendContactMessage(data: ContactMessageDto): Promise<void> {
+    if (!this.resend) {
+      throw new ServiceUnavailableException('No se pudo enviar el mensaje. Inténtalo de nuevo o contáctanos por teléfono.');
+    }
+    const labels = { consulta: 'Consulta general', cita: 'Agendar cita', productos: 'Información de productos', precios: 'Precios y tratamientos', otro: 'Otro' };
+    const escape = (value: string) => value.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
+    const html = `<p><strong>Nombre:</strong> ${escape(data.firstName)} ${escape(data.lastName)}</p>` +
+      `<p><strong>Correo:</strong> ${escape(data.email)}</p>` +
+      `<p><strong>Teléfono:</strong> ${escape(data.phone || 'No indicado')}</p>` +
+      `<p><strong>Asunto:</strong> ${escape(labels[data.subject])}</p>` +
+      `<p><strong>Mensaje:</strong><br>${escape(data.message).replace(/\n/g, '<br>')}</p>`;
+    try {
+      const result = await this.resend.emails.send({
+        from: this.fromEmail,
+        to: [process.env.CONTACT_EMAIL || 'dclaserconsultorio@gmail.com'],
+        replyTo: data.email,
+        subject: `[DERMQ] ${labels[data.subject]}`,
+        html,
+      });
+      if (result.error || !result.data?.id) throw new Error('Provider did not accept the message');
+    } catch (error) {
+      this.logger.error('No se pudo enviar el mensaje de contacto.');
+      throw new ServiceUnavailableException('No se pudo enviar el mensaje. Inténtalo de nuevo o contáctanos por teléfono.');
     }
   }
 

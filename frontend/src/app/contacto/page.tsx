@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { fetchFromApi } from '@/lib/api'
 
 const CONTACT_INFO = [
   { icon: 'location_on', title: 'Sede Principal', value: 'Av. José Gálvez Barrenechea 127, Oficina 604, San Isidro, Lima.', color: 'bg-primary/10 text-primary', href: 'https://www.google.com/maps/search/?api=1&query=Av.+Jos%C3%A9+G%C3%A1lvez+Barrenechea+127%2C+San+Isidro' },
@@ -31,6 +32,7 @@ export default function ContactoPage() {
   })
   const [submitted, setSubmitted] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [sendError, setSendError] = useState('')
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))
@@ -38,11 +40,17 @@ export default function ContactoPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (loading) return
     setLoading(true)
-    // Simulate sending — replace with real email/API integration in the future
-    await new Promise(resolve => setTimeout(resolve, 1500))
-    setLoading(false)
-    setSubmitted(true)
+    setSendError('')
+    try {
+      await fetchFromApi('/contact', { method: 'POST', body: JSON.stringify(form) })
+      setSubmitted(true)
+    } catch {
+      setSendError('No se pudo enviar el mensaje. Inténtalo de nuevo o contáctanos por teléfono.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -118,7 +126,7 @@ export default function ContactoPage() {
                   </div>
                   <h2 className="font-headline font-black text-3xl text-[#1a1c1e] mb-3">¡Mensaje enviado!</h2>
                   <p className="text-on-surface-variant mb-8 max-w-xs">
-                    Hemos recibido tu consulta. Nuestro equipo te responderá dentro de las próximas 24 horas.
+                    Tu consulta fue enviada a nuestro equipo. Gracias por escribirnos.
                   </p>
                   <button
                     onClick={() => setSubmitted(false)}
@@ -214,6 +222,7 @@ export default function ContactoPage() {
                       />
                     </div>
 
+                    {sendError && <p role="alert" className="text-sm font-medium text-red-700">{sendError}</p>}
                     <button
                       type="submit"
                       disabled={loading}
