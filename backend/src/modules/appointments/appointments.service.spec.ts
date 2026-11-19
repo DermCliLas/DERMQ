@@ -17,6 +17,7 @@ describe('AppointmentsService & TimeValidator', () => {
         findUnique: jest.fn(),
         findFirst: jest.fn(),
         create: jest.fn(),
+        deleteMany: jest.fn().mockResolvedValue({ count: 1 }),
       },
       service: {
         findUnique: jest.fn(),
@@ -55,19 +56,19 @@ describe('AppointmentsService & TimeValidator', () => {
   describe('AppointmentTimeValidator Business Rules', () => {
     it('should reject Sunday appointments (Clinic closed)', async () => {
       // Find a Sunday date
-      const sunday = new Date('2026-10-04T10:00:00'); // Sunday Oct 4, 2026
+      const sunday = new Date('2026-10-04T10:00:00-05:00'); // Sunday Oct 4, 2026
       const isAvailable = await timeValidator.isWithinBusinessHours(sunday);
       expect(isAvailable).toBe(false);
     });
 
     it('should reject appointments outside operating hours (e.g. 5:00 AM)', async () => {
-      const earlyMorning = new Date('2026-10-05T05:00:00'); // Monday Oct 5, 2026 5 AM
+      const earlyMorning = new Date('2026-10-05T05:00:00-05:00'); // Monday Oct 5, 2026 5 AM
       const isAvailable = await timeValidator.isWithinBusinessHours(earlyMorning);
       expect(isAvailable).toBe(false);
     });
 
     it('should accept valid weekday appointment at 11:00 AM', async () => {
-      const validTime = new Date('2026-10-05T11:00:00'); // Monday Oct 5, 2026 11 AM
+      const validTime = new Date('2026-10-05T11:00:00-05:00'); // Monday Oct 5, 2026 11 AM
       const isAvailable = await timeValidator.isWithinBusinessHours(validTime);
       expect(isAvailable).toBe(true);
     });
@@ -94,6 +95,48 @@ describe('AppointmentsService & TimeValidator', () => {
       );
 
       expect(isAvailable).toBe(false);
+    });
+  });
+
+  describe('Reservation regression checks', () => {
+    it('includes arrived appointments when checking for overlaps', async () => {
+      mockPrisma.appointment.findMany.mockResolvedValue([{
+        id: 'arrived', date: new Date('2027-01-11T16:00:00Z'),
+        service: { durationMin: 30 },
+      }]);
+      expect(await timeValidator.isDoctorAvailable('doc', new Date('2027-01-11T16:00:00Z'), 30)).toBe(false);
+      expect(mockPrisma.appointment.findMany).toHaveBeenCalledWith(expect.objectContaining({
+        where: expect.objectContaining({ status: { in: ['PENDING', 'CONFIRMED', 'ARRIVED'] } }),
+      }));
+    });
+
+    it('calculates Lima business hours independently of server timezone', async () => {
+      expect(await timeValidator.isWithinBusinessHours(new Date('2027-01-11T13:00:00Z'), 30)).toBe(true);
+      expect(await timeValidator.isWithinBusinessHours(new Date('2027-01-11T12:30:00Z'), 30)).toBe(false);
+      expect(await timeValidator.isWithinBusinessHours(new Date('2027-01-11T23:30:00Z'), 30)).toBe(true);
+    });
+
+    it('does not let a guest reuse any existing user by email or DNI', async () => {
+      mockPrisma.user.findFirst.mockResolvedValue({ id: 'existing' });
+      await expect(service.createGuest({ email: 'Existing@Example.com', firstName: 'A', lastName: 'B', dni: '11111111', doctorId: 'doc', serviceId: 'svc', date: '2027-01-11T16:00:00Z' })).rejects.toThrow('Inicia sesión o contacta');
+      expect(mockPrisma.user.create).not.toHaveBeenCalled();
+      expect(mockPrisma.user.findFirst).toHaveBeenCalledWith(expect.objectContaining({ where: { OR: [ { email: { equals: 'existing@example.com', mode: 'insensitive' } }, { dni: '11111111' } ] } }));
+    });
+
+    it('returns only minimal appointment details to a new guest', async () => {
+      mockPrisma.user.findFirst.mockResolvedValue(null);
+      mockPrisma.user.create.mockResolvedValue({ id: 'new-patient' });
+      jest.spyOn(service, 'create').mockResolvedValue({ id: 'appointment', date: new Date('2027-01-11T16:00:00Z'), status: AppointmentStatus.PENDING, patient: { phone: 'private' }, doctor: { email: 'private' } });
+      const result = await service.createGuest({ email: 'new@example.com', firstName: 'A', lastName: 'B', doctorId: 'doc', serviceId: 'svc', date: '2027-01-11T16:00:00Z' });
+      expect(result).toEqual({ id: 'appointment', date: new Date('2027-01-11T16:00:00Z'), status: AppointmentStatus.PENDING });
+    });
+
+    it('cleans up a newly created guest account if booking fails', async () => {
+      mockPrisma.user.findFirst.mockResolvedValue(null);
+      mockPrisma.user.create.mockResolvedValue({ id: 'new-patient' });
+      jest.spyOn(service, 'create').mockRejectedValue(new BadRequestException('Horario ocupado'));
+      await expect(service.createGuest({ email: 'new@example.com', firstName: 'A', lastName: 'B', doctorId: 'doc', serviceId: 'svc', date: '2027-01-11T16:00:00Z' })).rejects.toThrow('Horario ocupado');
+      expect(mockPrisma.user.deleteMany).toHaveBeenCalled();
     });
   });
 
@@ -197,7 +240,7 @@ describe('AppointmentsService & TimeValidator', () => {
 
     it('should reject appointment if duration pushes end-time beyond business hours', async () => {
       // Monday at 19:30 with 60 minute duration ends at 20:30 (exceeds 20:00 closing)
-      const lateDate = new Date('2026-10-05T19:30:00');
+      const lateDate = new Date('2026-10-05T19:30:00-05:00');
       const isAvailable = await timeValidator.isWithinBusinessHours(lateDate, 60);
       expect(isAvailable).toBe(false);
     });

@@ -9,9 +9,11 @@ import {
   Query,
   Request,
   UseGuards,
+  BadRequestException,
 } from '@nestjs/common';
 import { AppointmentsService } from './appointments.service';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
+import { CreateGuestAppointmentDto } from './dto/create-guest-appointment.dto';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -44,7 +46,7 @@ export class AppointmentsController {
 
   @Public()
   @Post('guest')
-  async createGuest(@Body() body: any) {
+  async createGuest(@Body() body: CreateGuestAppointmentDto) {
     return this.appointmentsService.createGuest(body);
   }
 
@@ -82,7 +84,16 @@ export class AppointmentsController {
     @Param('doctorId') doctorId: string,
     @Query('date') dateString: string,
   ) {
-    const date = dateString ? new Date(dateString) : new Date();
+    let date = new Date();
+    if (dateString) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+        throw new BadRequestException('La fecha debe tener el formato AAAA-MM-DD');
+      }
+      date = new Date(`${dateString}T12:00:00-05:00`);
+      if (Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== dateString) {
+        throw new BadRequestException('La fecha indicada no es válida');
+      }
+    }
     return this.appointmentsService.getAvailableSlots(doctorId, date);
   }
 

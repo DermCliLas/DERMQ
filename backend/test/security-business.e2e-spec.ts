@@ -8,6 +8,7 @@ import { Role, OrderSource, DocType, PaymentMethod, AppointmentStatus, BillingSt
 import { IzipayService } from '../src/modules/payments/izipay.service';
 import { NubeFactService } from '../src/modules/billing/nubefact.service';
 import * as crypto from 'crypto';
+import { assertLocalTestDatabase } from './assert-test-database';
 
 describe('DERMQ Production Security & Business E2E Suite', () => {
   jest.setTimeout(30000);
@@ -30,6 +31,7 @@ describe('DERMQ Production Security & Business E2E Suite', () => {
   let testProductId: string;
 
   beforeAll(async () => {
+    assertLocalTestDatabase();
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
@@ -314,8 +316,8 @@ describe('DERMQ Production Security & Business E2E Suite', () => {
   it('8. Dos citas simultáneas no generan solapamiento', async () => {
     // Schedule on next Monday at 11:00 AM local business hours
     const appointmentDate = new Date();
-    appointmentDate.setDate(appointmentDate.getDate() + ((1 + 7 - appointmentDate.getDay()) % 7 || 7));
-    appointmentDate.setHours(11, 0, 0, 0);
+    appointmentDate.setUTCDate(appointmentDate.getUTCDate() + ((1 + 7 - appointmentDate.getUTCDay()) % 7 || 7));
+    appointmentDate.setUTCHours(16, 0, 0, 0); // 11:00 in Lima regardless of server timezone
 
     const appointmentPayload = {
       doctorId: testDoctorId,

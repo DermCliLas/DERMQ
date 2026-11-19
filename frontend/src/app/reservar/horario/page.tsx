@@ -7,28 +7,7 @@ import BookingSummary from '@/components/booking/BookingSummary'
 import { useBooking } from '@/context/BookingContext'
 import type { TimeSlot } from '@/lib/types'
 import { getAvailableSlots } from '@/lib/api'
-
-// ─── Mock calendar data ───────────────────────────────────────────────────────
-
-function getNextDays(count: number): { date: string; label: string; dayName: string }[] {
-  const result = []
-  const now = new Date()
-  const days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
-  const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
-  for (let i = 1; i <= count; i++) {
-    const d = new Date(now)
-    d.setDate(now.getDate() + i)
-    if (d.getDay() !== 0) {
-      // Skip Sundays
-      result.push({
-        date: d.toISOString().split('T')[0],
-        label: `${d.getDate()} ${months[d.getMonth()]}`,
-        dayName: days[d.getDay()],
-      })
-    }
-  }
-  return result.slice(0, 9) // Show 9 days
-}
+import { getNextBookingDays } from '@/lib/booking-date'
 
 export default function ReservarPaso3() {
   const router = useRouter()
@@ -38,9 +17,10 @@ export default function ReservarPaso3() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const days = getNextDays(14)
+  const days = getNextBookingDays(14)
 
   useEffect(() => {
+    let cancelled = false
     async function fetchSlots() {
       if (!localDate || !booking.selectedDoctor) return
       
@@ -52,7 +32,7 @@ export default function ReservarPaso3() {
         
         const mappedSlots = rawSlots.map((s: any, idx: number) => {
           const dateObj = new Date(s.time)
-          const timeString = dateObj.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
+          const timeString = dateObj.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'America/Lima' })
           // Check if selected service is among available services for this slot
           const serviceId = booking.selectedService?.id
           const isServiceAvailable = s.availableServices.some((availSvc: any) => availSvc.serviceId === serviceId)
@@ -65,17 +45,20 @@ export default function ReservarPaso3() {
           }
         })
 
-        setTimeSlots(mappedSlots)
+        if (!cancelled) setTimeSlots(mappedSlots)
       } catch (err: any) {
-        setError(err.message || 'Error al cargar horarios')
-        setTimeSlots([])
+        if (!cancelled) {
+          setError(err.message || 'Error al cargar horarios')
+          setTimeSlots([])
+        }
       } finally {
-        setLoading(false)
+        if (!cancelled) setLoading(false)
       }
     }
 
     fetchSlots()
-  }, [localDate, booking.selectedDoctor])
+    return () => { cancelled = true }
+  }, [localDate, booking.selectedDoctor, booking.selectedService])
 
   const handleDateSelect = (date: string) => {
     setLocalDate(date)

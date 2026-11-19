@@ -614,7 +614,7 @@ export default function MasterAgendaPage() {
                           : 'Seleccione Doctor y Fecha primero'}
                       </option>
                       {availableSlots.map((s, idx) => {
-                        const timeStr = new Date(s.time).toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', hour12: true })
+                        const timeStr = new Date(s.time).toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'America/Lima' })
                         return (
                           <option key={idx} value={s.time}>{timeStr}</option>
                         )

@@ -65,12 +65,14 @@ export class EmailService {
     const { patient, doctor, service, date } = appointment;
     const appointmentDate = new Date(date);
     const dateFormatted = appointmentDate.toLocaleDateString('es-PE', {
+      timeZone: 'America/Lima',
       weekday: 'long',
       year: 'numeric',
       month: 'long',
       day: 'numeric',
     });
     const timeFormatted = appointmentDate.toLocaleTimeString('es-PE', {
+      timeZone: 'America/Lima',
       hour: '2-digit',
       minute: '2-digit',
       hour12: true,
@@ -157,12 +159,14 @@ export class EmailService {
     const { patient, doctor, service, date } = appointment;
     const appointmentDate = new Date(date);
     const dateFormatted = appointmentDate.toLocaleDateString('es-PE', {
+      timeZone: 'America/Lima',
       weekday: 'long',
       year: 'numeric',
       month: 'long',
       day: 'numeric',
     });
     const timeFormatted = appointmentDate.toLocaleTimeString('es-PE', {
+      timeZone: 'America/Lima',
       hour: '2-digit',
       minute: '2-digit',
       hour12: true,
@@ -243,12 +247,14 @@ export class EmailService {
     const { patient, doctor, service, date, notes } = appointment;
     const appointmentDate = new Date(date);
     const dateFormatted = appointmentDate.toLocaleDateString('es-PE', {
+      timeZone: 'America/Lima',
       weekday: 'long',
       year: 'numeric',
       month: 'long',
       day: 'numeric',
     });
     const timeFormatted = appointmentDate.toLocaleTimeString('es-PE', {
+      timeZone: 'America/Lima',
       hour: '2-digit',
       minute: '2-digit',
       hour12: true,
@@ -351,12 +357,14 @@ export class EmailService {
     const { patient, doctor, service, date } = appointment;
     const appointmentDate = new Date(date);
     const dateFormatted = appointmentDate.toLocaleDateString('es-PE', {
+      timeZone: 'America/Lima',
       weekday: 'long',
       year: 'numeric',
       month: 'long',
       day: 'numeric',
     });
     const timeFormatted = appointmentDate.toLocaleTimeString('es-PE', {
+      timeZone: 'America/Lima',
       hour: '2-digit',
       minute: '2-digit',
       hour12: true,
@@ -446,12 +454,14 @@ export class EmailService {
     const { patient, doctor, service, date } = appointment;
     const appointmentDate = new Date(date);
     const dateFormatted = appointmentDate.toLocaleDateString('es-PE', {
+      timeZone: 'America/Lima',
       weekday: 'long',
       year: 'numeric',
       month: 'long',
       day: 'numeric',
     });
     const timeFormatted = appointmentDate.toLocaleTimeString('es-PE', {
+      timeZone: 'America/Lima',
       hour: '2-digit',
       minute: '2-digit',
       hour12: true,
@@ -528,12 +538,14 @@ export class EmailService {
     const { patient, doctor, service, date } = appointment;
     const appointmentDate = new Date(date);
     const dateFormatted = appointmentDate.toLocaleDateString('es-PE', {
+      timeZone: 'America/Lima',
       weekday: 'long',
       year: 'numeric',
       month: 'long',
       day: 'numeric',
     });
     const timeFormatted = appointmentDate.toLocaleTimeString('es-PE', {
+      timeZone: 'America/Lima',
       hour: '2-digit',
       minute: '2-digit',
       hour12: true,

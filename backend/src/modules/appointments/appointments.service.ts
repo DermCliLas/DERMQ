@@ -3,15 +3,19 @@ import {
   NotFoundException,
   ForbiddenException,
   BadRequestException,
+  ConflictException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
+import { CreateGuestAppointmentDto } from './dto/create-guest-appointment.dto';
+import { limaDayStart, limaDayEnd, limaTimeOnDay } from './clinic-time';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 import { AppointmentTimeValidator } from './validators/appointment-time.validator';
 import { GoogleCalendarService } from './google-calendar.service';
 import { EmailService } from '../notifications/email.service';
 import { Role, AppointmentStatus } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
+import { randomBytes } from 'crypto';
 
 @Injectable()
 export class AppointmentsService {
@@ -54,6 +58,10 @@ export class AppointmentsService {
       throw new NotFoundException(
         `Servicio con ID ${createAppointmentDto.serviceId} no encontrado`,
       );
+    }
+
+    if (patient.role !== Role.PATIENT) {
+      throw new BadRequestException('El usuario especificado no es un paciente');
     }
 
     // Verificar que el doctor sea realmente un doctor
@@ -231,44 +239,79 @@ export class AppointmentsService {
     return appointment;
   }
 
-  async createGuest(data: any) {
-    // Check if patient exists by email or DNI
-    let patient = await this.prisma.user.findFirst({
+  async createGuest(data: CreateGuestAppointmentDto) {
+    const email = data.email.trim().toLowerCase();
+    const dni = data.dni?.trim() || undefined;
+    const conflictMessage =
+      'No se pudo completar la reserva con estos datos. Inicia sesión o contacta a la clínica.';
+    const existing = await this.prisma.user.findFirst({
       where: {
-        OR: [{ email: data.email }, ...(data.dni ? [{ dni: data.dni }] : [])],
+        OR: [
+          { email: { equals: email, mode: 'insensitive' } },
+          ...(dni ? [{ dni }] : []),
+        ],
       },
+      select: { id: true },
     });
+    if (existing) throw new ConflictException(conflictMessage);
 
-    if (!patient) {
-      const generatedPassword =
-        'Guest_' + Math.random().toString(36).substring(7);
-      const hashedPassword = await bcrypt.hash(generatedPassword, 10);
-
+    const hashedPassword = await bcrypt.hash(
+      randomBytes(32).toString('hex'),
+      10,
+    );
+    let patient: { id: string };
+    try {
       patient = await this.prisma.user.create({
         data: {
-          email: data.email,
+          email,
           firstName: data.firstName,
           lastName: data.lastName,
-          dni: data.dni || null,
+          dni: dni || null,
           phone: data.phone || null,
           password: hashedPassword,
           role: Role.PATIENT,
         },
+        select: { id: true },
       });
+    } catch (error: any) {
+      if (error?.code === 'P2002') throw new ConflictException(conflictMessage);
+      throw error;
     }
 
-    return this.create(
-      {
-        patientId: patient.id,
-        doctorId: data.doctorId,
-        serviceId: data.serviceId,
-        date: new Date(data.date),
-        notes: data.notes,
-        status: AppointmentStatus.PENDING,
-      },
-      patient.id,
-      Role.PATIENT,
-    );
+    let appointment: any;
+    try {
+      appointment = await this.create(
+        {
+          patientId: patient.id,
+          doctorId: data.doctorId,
+          serviceId: data.serviceId,
+          date: new Date(data.date),
+          notes: data.notes,
+          status: AppointmentStatus.PENDING,
+        },
+        patient.id,
+        Role.PATIENT,
+      );
+    } catch (error) {
+      // Do not leave an unusable guest account behind when booking fails.
+      await this.prisma.user
+        .deleteMany({
+          where: {
+            id: patient.id,
+            appointmentsAsPatient: { none: {} },
+            orders: { none: {} },
+            medicalRecordsAsPatient: { none: {} },
+          },
+        })
+        .catch(() => undefined);
+      throw error;
+    }
+    // A public endpoint must not return the stored patient or doctor's contact details.
+    return {
+      id: appointment.id,
+      date: appointment.date,
+      status: appointment.status,
+    };
   }
 
   async findAll(
@@ -570,6 +613,7 @@ export class AppointmentsService {
     try {
       const oldDate = new Date(existingAppointment.date);
       const oldDateFormatted = oldDate.toLocaleDateString('es-PE', {
+        timeZone: 'America/Lima',
         weekday: 'long',
         year: 'numeric',
         month: 'long',
@@ -802,11 +846,8 @@ export class AppointmentsService {
     });
 
     // Obtener citas del doctor para ese día en base de datos local
-    const startOfDay = new Date(date);
-    startOfDay.setHours(0, 0, 0, 0);
-
-    const endOfDay = new Date(date);
-    endOfDay.setHours(23, 59, 59, 999);
+    const startOfDay = limaDayStart(date);
+    const endOfDay = limaDayEnd(date);
 
     // Obtener eventos de Google Calendar
     let googleEvents: any[] = [];
@@ -826,8 +867,7 @@ export class AppointmentsService {
     for (let hour = startHour; hour < endHour; hour++) {
       for (let minute = 0; minute < 60; minute += 30) {
         // Slots cada 30 minutos
-        const slotTime = new Date(date);
-        slotTime.setHours(hour, minute, 0, 0);
+        const slotTime = limaTimeOnDay(date, hour, minute);
 
         // Verificar si el slot está dentro del horario de negocio
         if (!(await this.timeValidator.isWithinBusinessHours(slotTime))) {
@@ -931,10 +971,8 @@ export class AppointmentsService {
       const end = new Date(start.getTime() + durationMin * 60000);
 
       // Obtener rango de todo el día para mayor eficiencia de red / paginación
-      const startOfDay = new Date(date);
-      startOfDay.setHours(0, 0, 0, 0);
-      const endOfDay = new Date(date);
-      endOfDay.setHours(23, 59, 59, 999);
+      const startOfDay = limaDayStart(date);
+      const endOfDay = limaDayEnd(date);
 
       const events = await this.googleCalendar.listEvents(doctorEmail, startOfDay, endOfDay);
       

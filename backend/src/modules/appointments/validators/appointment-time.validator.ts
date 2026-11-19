@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { limaDayEnd, limaDayStart, limaWallTime } from '../clinic-time';
 
 @Injectable()
 export class AppointmentTimeValidator {
@@ -12,11 +13,8 @@ export class AppointmentTimeValidator {
     excludeAppointmentId?: string,
     txPrisma: any = this.prisma,
   ): Promise<boolean> {
-    const startOfDay = new Date(date);
-    startOfDay.setHours(0, 0, 0, 0);
-
-    const endOfDay = new Date(date);
-    endOfDay.setHours(23, 59, 59, 999);
+    const startOfDay = limaDayStart(date);
+    const endOfDay = limaDayEnd(date);
 
     const dayAppointments = await txPrisma.appointment.findMany({
       where: {
@@ -26,7 +24,7 @@ export class AppointmentTimeValidator {
           gte: startOfDay,
           lte: endOfDay,
         },
-        status: { in: ['PENDING', 'CONFIRMED'] },
+        status: { in: ['PENDING', 'CONFIRMED', 'ARRIVED'] },
       },
       include: {
         service: {
@@ -56,11 +54,12 @@ export class AppointmentTimeValidator {
     date: Date,
     durationMinutes = 0,
   ): Promise<boolean> {
-    const day = date.getDay(); // 0 = Domingo, 1 = Lunes, ..., 6 = Sábado
+    const local = limaWallTime(date);
+    const day = local.getUTCDay(); // 0 = Domingo, 1 = Lunes, ..., 6 = Sábado
     if (day === 0) return false; // Domingo cerrado
 
-    const startHour = date.getHours();
-    const startMinute = date.getMinutes();
+    const startHour = local.getUTCHours();
+    const startMinute = local.getUTCMinutes();
     const startInMinutes = startHour * 60 + startMinute;
     const endInMinutes = startInMinutes + durationMinutes;
 

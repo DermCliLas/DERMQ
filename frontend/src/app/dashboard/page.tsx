@@ -118,8 +118,8 @@ export default function DashboardPage() {
                       <p className="text-xs text-on-surface-variant font-medium">Dr. {apt.doctor?.firstName} {apt.doctor?.lastName}</p>
                     </div>
                     <div className="text-right shrink-0">
-                      <p className="font-bold text-[#1a1c1e] text-sm">{new Date(apt.date).toLocaleDateString()}</p>
-                      <p className="text-xs text-on-surface-variant">{new Date(apt.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                      <p className="font-bold text-[#1a1c1e] text-sm">{new Date(apt.date).toLocaleDateString('es-PE', { timeZone: 'America/Lima' })}</p>
+                      <p className="text-xs text-on-surface-variant">{new Date(apt.date).toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Lima' })}</p>
                     </div>
                     <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest shrink-0 ${
                       apt.status === 'CONFIRMED'

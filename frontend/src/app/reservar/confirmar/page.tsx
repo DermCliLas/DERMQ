@@ -7,6 +7,7 @@ import { useState } from 'react'
 import BookingStepper from '@/components/booking/BookingStepper'
 import { useBooking } from '@/context/BookingContext'
 import { createAppointment, createGuestAppointment } from '@/lib/api'
+import { dateInLima } from '@/lib/booking-date'
 
 import { useAuth } from '@/context/AuthContext'
 
@@ -50,7 +51,11 @@ export default function ReservarPaso4() {
         let [hours, minutes] = time.split(':');
         if (hours === '12') hours = '00';
         if (modifier === 'PM') hours = String(parseInt(hours, 10) + 12);
-        combinedDateStr = new Date(`${dateStr}T${hours.padStart(2, '0')}:${minutes}:00`).toISOString();
+        combinedDateStr = new Date(`${dateStr}T${hours.padStart(2, '0')}:${minutes}:00-05:00`).toISOString();
+      }
+
+      if (dateInLima(combinedDateStr) !== booking.selectedDate) {
+        throw new Error('El horario ya no coincide con la fecha seleccionada. Vuelve al paso anterior y elige un horario de nuevo.')
       }
 
       if (user) {
