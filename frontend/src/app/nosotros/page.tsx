@@ -557,10 +557,10 @@ export default function NosotrosPage() {
               Pilares Institucionales
             </span>
             <h2 className="text-4xl sm:text-6xl font-headline font-black tracking-tighter mb-5" style={{ color: '#02696A' }}>
-              Los tres pilares que <em style={{ color: '#8C4E31' }}>nos definen.</em>
+              Los pilares que <em style={{ color: '#8C4E31' }}>nos definen.</em>
             </h2>
             <p className="text-xl max-w-2xl mx-auto font-medium text-[#52525b]">
-              Conocimiento médico, tecnología especializada y seguridad: los principios innegociables con los que nació y se consolida Dermatología Clínica y Láser S.A.C.
+              Conocimiento médico, tecnología especializada, seguridad y enfoque humano: los principios innegociables con los que nació y se consolida Dermatología Clínica y Láser S.A.C.
             </p>
           </motion.div>
 
